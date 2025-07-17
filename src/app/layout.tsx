@@ -4,10 +4,11 @@ import { ThemeProvider } from 'next-themes';
 import { Toaster } from 'react-hot-toast';
 import { Provider } from 'react-redux';
 
-import { store } from '@/store';
-import { AuthProvider } from '@/lib/auth/AuthProvider';
+// import { store } from '@/store';
+
 import { ErrorBoundary } from '@/components/ui/error-boundary';
 import '@/styles/globals.css';
+import { AuthProvider } from '@/components';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -62,34 +63,34 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={inter.className}>
-        <ErrorBoundary>
-          <Provider store={store}>
-            <ThemeProvider
-              attribute="class"
-              defaultTheme="system"
-              enableSystem
-              disableTransitionOnChange
-            >
-              <AuthProvider>
-                <div className="min-h-screen bg-background font-sans antialiased">
-                  {children}
-                </div>
-                <Toaster
-                  position="top-right"
-                  toastOptions={{
-                    duration: 4000,
-                    style: {
-                      background: 'hsl(var(--background))',
-                      color: 'hsl(var(--foreground))',
-                      border: '1px solid hsl(var(--border))',
-                    },
-                  }}
-                />
-              </AuthProvider>
-            </ThemeProvider>
-          </Provider>
-        </ErrorBoundary>
+        {/* <ErrorBoundary> */}
+        {/* <Provider store={store}> */}
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="system"
+          enableSystem
+          disableTransitionOnChange
+        >
+          <AuthProvider>
+            <div className="min-h-screen bg-background font-sans antialiased">
+              {children}
+            </div>
+            <Toaster
+              position="top-right"
+              toastOptions={{
+                duration: 4000,
+                style: {
+                  background: 'hsl(var(--background))',
+                  color: 'hsl(var(--foreground))',
+                  border: '1px solid hsl(var(--border))',
+                },
+              }}
+            />
+          </AuthProvider>
+        </ThemeProvider>
+        {/* </Provider> */}
+        {/* </ErrorBoundary> */}
       </body>
     </html>
   );
-} 
+}

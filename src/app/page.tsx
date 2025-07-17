@@ -5,17 +5,17 @@ import { verifyAuth } from '@/lib/auth/verify-auth';
 
 export default async function HomePage() {
   const cookieStore = cookies();
-  const token = cookieStore.get('auth-token')?.value;
+  // const token = cookieStore.get('auth-token')?.value;
 
-  if (!token) {
-    redirect('/auth/login');
-  }
+  // if (!token) {
+  //   redirect('/auth/login');
+  // }
 
-  const isValidToken = await verifyAuth(token);
+  // const isValidToken = await verifyAuth(token);
 
-  if (!isValidToken) {
-    redirect('/auth/login');
-  }
+  // if (!isValidToken) {
+  //   redirect('/auth/login');
+  // }
 
   redirect('/dashboard');
 } 
