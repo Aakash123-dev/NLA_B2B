@@ -1,6 +1,8 @@
-// import { configureStore, combineReducers } from '@reduxjs/toolkit';
-// import { persistStore, persistReducer } from 'redux-persist';
-// import storage from 'redux-persist/lib/storage';
+"use client"
+import { configureStore, combineReducers } from '@reduxjs/toolkit';
+import { persistStore, persistReducer } from 'redux-persist';
+import storage from 'redux-persist/lib/storage';
+import projectReducer from './slices/projectSlice';
 
 // import authSlice from './slices/authSlice';
 // import userSlice from './slices/userSlice';
@@ -11,41 +13,42 @@
 // import uiSlice from './slices/uiSlice';
 // import adminSlice from './slices/adminSlice';
 
-// const rootReducer = combineReducers({
-//   auth: authSlice,
-//   user: userSlice,
-//   project: projectSlice,
-//   model: modelSlice,
-//   insights: insightsSlice,
-//   chart: chartSlice,
-//   ui: uiSlice,
-//   admin: adminSlice,
-// });
+const rootReducer = combineReducers({
+  //   auth: authSlice,
+  //   user: userSlice,
+  //   project: projectSlice,
+  //   model: modelSlice,
+  //   insights: insightsSlice,
+  //   chart: chartSlice,
+  //   ui: uiSlice,
+  //   admin: adminSlice,
+  projects: projectReducer,
+});
 
-// const persistConfig = {
-//   key: 'root',
-//   storage,
-//   whitelist: ['auth', 'user', 'ui'], // Only persist these reducers
-//   blacklist: ['project', 'model', 'insights', 'chart', 'admin'], // Don't persist these
-// };
+const persistConfig = {
+  key: 'root',
+  storage,
+  whitelist: ['auth', 'user', 'ui'], // Only persist these reducers
+  blacklist: ['project', 'model', 'insights', 'chart', 'admin'], // Don't persist these
+};
 
-// const persistedReducer = persistReducer(persistConfig, rootReducer);
+const persistedReducer = persistReducer(persistConfig, rootReducer);
 
-// export const store = configureStore({
-//   reducer: persistedReducer,
-//   middleware: (getDefaultMiddleware) =>
-//     getDefaultMiddleware({
-//       serializableCheck: {
-//         ignoredActions: ['persist/PERSIST', 'persist/REHYDRATE'],
-//       },
-//     }),
-//   devTools: process.env.NODE_ENV !== 'production',
-// });
+export const store = configureStore({
+  reducer: persistedReducer,
+  middleware: (getDefaultMiddleware) =>
+    getDefaultMiddleware({
+      serializableCheck: {
+        ignoredActions: ['persist/PERSIST', 'persist/REHYDRATE'],
+      },
+    }),
+  devTools: process.env.NODE_ENV !== 'production',
+});
 
-// export const persistor = persistStore(store);
+export const persistor = persistStore(store);
 
-// export type RootState = ReturnType<typeof store.getState>;
-// export type AppDispatch = typeof store.dispatch;
+export type RootState = ReturnType<typeof store.getState>;
+export type AppDispatch = typeof store.dispatch;
 
-// // Typed hooks for use throughout the app
-// export { useAppDispatch, useAppSelector } from './hooks'; 
+// Typed hooks for use throughout the app
+export { useAppDispatch, useAppSelector } from './hooks';
