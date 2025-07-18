@@ -1,0 +1,284 @@
+# Gazelle NextJS Phase 5 - Cursor Rules
+
+## Project Overview
+This is a Next.js 15.4.1 application with TypeScript, Tailwind CSS, and Redux Toolkit for state management. The project is migrated from React + Node.js backend to a unified Next.js application with API routes.
+
+## Core Technologies
+- **Framework**: Next.js 15.4.1 (App Router)
+- **Language**: TypeScript
+- **Styling**: Tailwind CSS
+- **State Management**: Redux Toolkit with Redux Persist
+- **Database**: PostgreSQL with Drizzle ORM
+- **Authentication**: JWT with Next.js API routes
+- **UI Components**: Headless UI + Custom components
+- **Icons**: Lucide React
+- **Charts**: Recharts + ApexCharts
+- **Forms**: React Hook Form + Zod validation
+- **File Upload**: Multer for API routes
+- **Email**: Nodemailer
+- **Logging**: Winston
+
+## Project Structure
+
+```
+src/
+├── app/                    # Next.js App Router
+│   ├── api/               # API routes
+│   ├── auth/              # Authentication pages
+│   ├── dashboard/         # Dashboard pages
+│   ├── admin/             # Admin pages
+│   ├── design-studio/     # Design studio pages
+│   ├── insights/          # Insights pages
+│   ├── chat/              # Chat pages
+│   ├── simulation/        # Simulation pages
+│   ├── calendar/          # Calendar pages
+│   ├── layout.tsx         # Root layout
+│   └── page.tsx           # Home page
+├── components/            # Reusable components
+│   ├── ui/               # Base UI components
+│   ├── forms/            # Form components
+│   ├── charts/           # Chart components
+│   ├── layout/           # Layout components
+│   └── navigation/       # Navigation components
+├── lib/                  # Utility libraries
+│   ├── auth/             # Authentication utilities
+│   ├── db/               # Database utilities
+│   ├── api/              # API utilities
+│   └── validations/      # Zod schemas
+├── hooks/                # Custom React hooks
+├── store/                # Redux store
+│   ├── slices/           # Redux slices
+│   └── middleware/       # Redux middleware
+├── types/                # TypeScript types
+├── utils/                # Utility functions
+├── styles/               # Global styles
+└── config/               # Configuration files
+```
+
+## Coding Standards
+
+### TypeScript
+- Use strict TypeScript configuration
+- Always define interfaces for props and state
+- Use type assertions sparingly, prefer type guards
+- Export types from dedicated type files
+- Use `interface` for object shapes, `type` for unions/intersections
+
+### React/Next.js
+- Use functional components with hooks
+- Prefer Server Components when possible
+- Use 'use client' directive only when necessary
+- Use proper error boundaries for error handling
+- Implement proper loading states and error states
+- Use Next.js built-in optimizations (Image, Link, etc.)
+
+### API Routes
+- Use proper HTTP status codes
+- Implement proper error handling
+- Use middleware for authentication
+- Validate input data with Zod
+- Use try-catch blocks for async operations
+- Return consistent response formats
+
+### State Management
+- Use Redux Toolkit for complex state
+- Use React state for component-specific state
+- Implement proper loading and error states
+- Use selectors for derived state
+- Keep state normalized when possible
+
+### Styling
+- Use Tailwind CSS for styling
+- Follow mobile-first approach
+- Use CSS custom properties for theme variables
+- Implement dark mode support
+- Use responsive design principles
+- Keep components accessible (ARIA attributes)
+
+### File Naming
+- Use kebab-case for directories
+- Use PascalCase for React components
+- Use camelCase for utility functions
+- Use UPPER_CASE for constants
+- Add appropriate file extensions (.ts, .tsx, .js, .jsx)
+
+### Code Organization
+- Group related functionality together
+- Use barrel exports (index.ts files)
+- Keep components small and focused
+- Separate concerns (UI, logic, data)
+- Use custom hooks for shared logic
+
+## Database Schema
+Based on the existing backend, maintain these key entities:
+- Users (authentication and profile)
+- Projects (project management)
+- Models (design studio models)
+- Insights (analytics and insights)
+- Charts (data visualizations)
+- Categories and Products (product management)
+- Events (calendar and scheduling)
+- Admin Questions (admin functionality)
+
+## API Endpoints Structure
+```
+/api/
+├── auth/
+│   ├── login
+│   ├── logout
+│   ├── register
+│   ├── forgot-password
+│   └── reset-password
+├── users/
+├── projects/
+├── models/
+├── insights/
+├── charts/
+├── admin/
+├── upload/
+└── events/
+```
+
+## Security Guidelines
+- Always validate and sanitize input
+- Use proper authentication middleware
+- Implement rate limiting
+- Use HTTPS in production
+- Sanitize SQL queries (use ORM)
+- Implement proper CORS settings
+- Use environment variables for secrets
+
+## Performance Guidelines
+- Use Next.js Image component for images
+- Implement proper caching strategies
+- Use lazy loading for heavy components
+- Optimize bundle size
+- Use proper database indexing
+- Implement pagination for large datasets
+
+## Testing Guidelines
+- Write unit tests for utility functions
+- Test React components with React Testing Library
+- Test API endpoints
+- Use meaningful test descriptions
+- Mock external dependencies
+- Aim for good test coverage
+
+## Error Handling
+- Use error boundaries for React errors
+- Implement proper API error responses
+- Log errors appropriately
+- Show user-friendly error messages
+- Handle loading states properly
+
+## Code Quality
+- Use ESLint and Prettier
+- Follow consistent code formatting
+- Write meaningful commit messages
+- Use TypeScript strict mode
+- Implement proper error handling
+- Add JSDoc comments for complex functions
+
+## Environment Setup
+- Use .env.local for local development
+- Never commit sensitive data
+- Use different environments (dev, staging, prod)
+- Document environment variables in .env.example
+
+## Migration Notes
+- Gradually migrate existing React components
+- Maintain API compatibility during migration
+- Use proper data migration strategies
+- Test thoroughly during migration
+- Document migration steps
+
+## Common Patterns
+
+### API Route Pattern
+```typescript
+import { NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
+
+const schema = z.object({
+  // define schema
+});
+
+export async function POST(request: NextRequest) {
+  try {
+    const body = await request.json();
+    const validatedData = schema.parse(body);
+    
+    // Handle request
+    
+    return NextResponse.json({ data: result });
+  } catch (error) {
+    return NextResponse.json(
+      { error: 'Internal server error' },
+      { status: 500 }
+    );
+  }
+}
+```
+
+### Component Pattern
+```typescript
+import { ReactNode } from 'react';
+
+interface Props {
+  children: ReactNode;
+  className?: string;
+}
+
+export function Component({ children, className }: Props) {
+  return (
+    <div className={cn('base-styles', className)}>
+      {children}
+    </div>
+  );
+}
+```
+
+### Hook Pattern
+```typescript
+export function useCustomHook(param: string) {
+  const [state, setState] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    // Effect logic
+  }, [param]);
+
+  return { state, loading, error };
+}
+```
+
+## Deployment Guidelines
+- Use proper build optimization
+- Implement proper environment configuration
+- Use CDN for static assets
+- Implement proper monitoring
+- Use proper CI/CD pipeline
+- Monitor performance metrics
+
+## Documentation
+- Document complex business logic
+- Keep README updated
+- Document API endpoints
+- Use inline comments for complex code
+- Maintain changelog
+- Document deployment procedures
+
+## Best Practices
+- Keep components pure when possible
+- Use proper dependency arrays in useEffect
+- Implement proper cleanup in useEffect
+- Use proper key props in lists
+- Avoid prop drilling, use context when needed
+- Implement proper accessibility features
+- Use semantic HTML elements
+- Implement proper SEO optimization
+- Use proper caching strategies
+- Monitor and optimize performance
+
+Remember to maintain consistency with the existing codebase while following these guidelines. Always consider the user experience and performance implications of your code changes. 
