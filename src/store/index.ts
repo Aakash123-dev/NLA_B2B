@@ -1,12 +1,11 @@
-"use client"
+'use client';
 import { configureStore, combineReducers } from '@reduxjs/toolkit';
 import { persistStore, persistReducer } from 'redux-persist';
 import storage from 'redux-persist/lib/storage';
-import projectReducer from './slices/projectSlice';
+import projectSlice from './slices/projectSlice';
 
 // import authSlice from './slices/authSlice';
 // import userSlice from './slices/userSlice';
-// import projectSlice from './slices/projectSlice';
 // import modelSlice from './slices/modelSlice';
 // import insightsSlice from './slices/insightsSlice';
 // import chartSlice from './slices/chartSlice';
@@ -16,13 +15,12 @@ import projectReducer from './slices/projectSlice';
 const rootReducer = combineReducers({
   //   auth: authSlice,
   //   user: userSlice,
-  //   project: projectSlice,
   //   model: modelSlice,
   //   insights: insightsSlice,
   //   chart: chartSlice,
   //   ui: uiSlice,
   //   admin: adminSlice,
-  projects: projectReducer,
+  projects: projectSlice,
 });
 
 const persistConfig = {
