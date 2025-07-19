@@ -3,17 +3,15 @@
 import React, { useEffect, useState } from 'react';
 import dynamic from 'next/dynamic';
 import { ApexOptions } from 'apexcharts';
+import { useDispatch, useSelector } from 'react-redux';
+import { AppDispatch, RootState } from '@/store';
+import { fetchChartData } from '@/store/slices/chartsSlices';
 
-// Load ApexCharts dynamically to avoid SSR issues in Next.js
-const ReactApexCharts = dynamic(() => import('react-apexcharts'), { ssr: false });
 
-// Type definitions
-type ChartItem = {
-  Brand: string;
-  Retailer: string;
-  Product: string;
-  Price_avg_last_4_weeks: number;
-};
+// Load ApexCharts dynamically to avoid SSR issues
+const ReactApexCharts = dynamic(() => import('react-apexcharts'), {
+  ssr: false,
+});
 
 type RetailerGroup = {
   label: string;
@@ -25,39 +23,56 @@ type ChartGroup = {
   retailers: RetailerGroup[];
 };
 
-// Dummy chart data simulating API or Redux
-const dummyChartData: ChartItem[] = [
-  { Brand: 'Nike', Retailer: 'Amazon', Product: 'Shoe A', Price_avg_last_4_weeks: 100 },
-  { Brand: 'Nike', Retailer: 'Flipkart', Product: 'Shoe A', Price_avg_last_4_weeks: 110 },
-  { Brand: 'Nike', Retailer: 'Amazon', Product: 'Shoe B', Price_avg_last_4_weeks: 120 },
-  { Brand: 'Adidas', Retailer: 'Amazon', Product: 'Sneaker A', Price_avg_last_4_weeks: 130 },
-  { Brand: 'Adidas', Retailer: 'Flipkart', Product: 'Sneaker B', Price_avg_last_4_weeks: 125 },
-];
-
 const ChartOnly: React.FC = () => {
+  const dispatch = useDispatch<AppDispatch>();
+  const { data: chartItems, loading } = useSelector(
+    (state: RootState) => state.chart
+  );
+
   const [chartDataArray, setChartDataArray] = useState<ChartGroup[]>([]);
 
+  // Fetch from Redux on mount
   useEffect(() => {
+    dispatch(fetchChartData({ projectId: 762, modelId: 916 }));
+  }, [dispatch]);
+
+  // Transform Redux chartItems into chartDataArray
+  useEffect(() => {
+    if (!chartItems || chartItems.length === 0) return;
+
     const groupedData: Record<string, Record<string, RetailerGroup>> = {};
 
-    dummyChartData.forEach((item) => {
-      const { Brand, Retailer, Product, Price_avg_last_4_weeks } = item;
+    chartItems.forEach(
+      ({ Brand, Retailer, Product, Price_avg_last_4_weeks }) => {
+        if (!groupedData[Brand]) groupedData[Brand] = {};
+        if (!groupedData[Brand][Retailer]) {
+          groupedData[Brand][Retailer] = { label: Retailer, data: [] };
+        }
 
-      if (!groupedData[Brand]) groupedData[Brand] = {};
-      if (!groupedData[Brand][Retailer]) {
-        groupedData[Brand][Retailer] = { label: Retailer, data: [] };
+        groupedData[Brand][Retailer].data.push({
+          x: Product,
+          y: Price_avg_last_4_weeks,
+        });
       }
+    );
 
-      groupedData[Brand][Retailer].data.push({ x: Product, y: Price_avg_last_4_weeks });
-    });
-
-    const newDataArray: ChartGroup[] = Object.entries(groupedData).map(([brand, retailers]) => ({
-      brand,
-      retailers: Object.values(retailers),
-    }));
+    const newDataArray: ChartGroup[] = Object.entries(groupedData).map(
+      ([brand, retailers]) => ({
+        brand,
+        retailers: Object.values(retailers),
+      })
+    );
 
     setChartDataArray(newDataArray);
-  }, []);
+  }, [chartItems]);
+
+  if (loading) {
+    return (
+      <div style={{ textAlign: 'center', padding: '2rem' }}>
+        <p>Loading chart data...</p>
+      </div>
+    );
+  }
 
   return (
     <div>
@@ -65,7 +80,8 @@ const ChartOnly: React.FC = () => {
         const allXAxisLabels = Array.from(
           new Set(
             chartData.retailers.reduce(
-              (labels, retailer) => labels.concat(retailer.data.map((item) => item.x)),
+              (labels, retailer) =>
+                labels.concat(retailer.data.map((item) => item.x)),
               [] as string[]
             )
           )
@@ -115,7 +131,12 @@ const ChartOnly: React.FC = () => {
         return (
           <div key={index} style={{ marginBottom: '40px' }}>
             <h6 style={{ textAlign: 'center' }}>{chartData.brand}</h6>
-            <ReactApexCharts options={options} series={seriesData} type="bar" height={450} />
+            <ReactApexCharts
+              options={options}
+              series={seriesData}
+              type="bar"
+              height={450}
+            />
           </div>
         );
       })}

@@ -10,4 +10,8 @@ export const API_ENDPOINTS = {
     DELETE: (projectId: number) => `/project/delete/${projectId}`,
     DUPLICATE: (projectId: number) => `/project/duplicate/${projectId}`,
   },
+  INSIGHTS: {
+    CHART1: (projectId: number, modelId: number) =>
+      `/insights/chart1?project_id=${projectId}&model_id=${modelId}`,
+  },
 };
