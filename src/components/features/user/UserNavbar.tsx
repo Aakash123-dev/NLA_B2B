@@ -118,9 +118,9 @@ const UserNavbar = () => {
   }, []);
 
   const navItems = [
-    { name: 'Home', href: '/user', icon: Home },
-    { name: 'Price Optimization', href: '/user/projects', icon: FolderOpen },
-    { name: 'Key Metrics', href: '/user/metrics', icon: Gauge },
+    { name: 'Dashboard', href: '/user', icon: Gauge },
+    { name: 'Projects', href: '/user/projects', icon: FolderOpen },
+    { name: 'Key Metrics', href: '/user/metrics', icon: BarChart3 },
     { name: 'Promo Optimization', href: '/user/promo-optimization', icon: Percent },
     { name: 'Gazelle AI', href: '/user/chat-with-ai', icon: Brain },
     { name: 'Help & Support', href: '/user/help', icon: HelpCircle },

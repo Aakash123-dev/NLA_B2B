@@ -164,10 +164,16 @@ function DesignStudioInner({ selectedProject }: DesignStudioProps) {
       const insightsUrl = `/user/insights?project=${projectId}&model=${modelId}`;
       window.location.href = insightsUrl;
     } else {
+      // Use default values if parameters are missing to ensure insights page works
+      const defaultProjectId = projectId || '1009';
+      const defaultModelId = modelId || '1195';
+      const insightsUrl = `/user/insights?project=${defaultProjectId}&model=${defaultModelId}`;
+      window.location.href = insightsUrl;
+      
       showToast({
-        title: 'Navigation Error',
-        message: 'Project and Model IDs are required to navigate to insights',
-        type: 'error'
+        title: 'Navigation Info',
+        message: `Navigating to insights with default project (${defaultProjectId}) and model (${defaultModelId})`,
+        type: 'info'
       });
     }
   };
@@ -176,6 +182,21 @@ function DesignStudioInner({ selectedProject }: DesignStudioProps) {
     // For insights-template nodes, navigate directly to insights page
     if (nodeType === 'insights-template') {
       handleInsightsTemplateNavigation();
+      return;
+    }
+    
+    // For pricing nodes, navigate directly to pricing model page
+    if (nodeType === 'pricing') {
+      // Get URL parameters and preserve them when navigating to pricing
+      const urlParams = new URLSearchParams(window.location.search);
+      const projectId = urlParams.get('project');
+      const modelId = urlParams.get('model');
+      
+      const params = new URLSearchParams();
+      if (projectId) params.set('project', projectId);
+      if (modelId) params.set('model', modelId);
+      
+      window.location.href = `/user/pricing-model?${params.toString()}`;
       return;
     }
     

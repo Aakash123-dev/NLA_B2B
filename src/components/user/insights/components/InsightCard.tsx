@@ -248,7 +248,7 @@ export const InsightCard: React.FC<InsightCardProps> = ({
               </div>
 
               <div>
-                <Label>Chart Type</Label>
+                <Label>Download Chart Type By</Label>
                 <Select value={downloadType} onValueChange={setDownloadType}>
                   <SelectTrigger>
                     <SelectValue />

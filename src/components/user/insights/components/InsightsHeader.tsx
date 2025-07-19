@@ -1,5 +1,7 @@
+'use client';
 import React from 'react';
 import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
 import { 
   ArrowLeft,
   Download,
@@ -27,6 +29,28 @@ interface InsightsHeaderProps {
 }
 
 export const InsightsHeader: React.FC<InsightsHeaderProps> = ({ onShowPasswordShare }) => {
+  // Get URL parameters for project and model
+  let projectId = null;
+  let modelId = null;
+  
+  try {
+    const searchParams = useSearchParams();
+    projectId = searchParams.get("project");
+    modelId = searchParams.get("model");
+  } catch (error) {
+    console.log("useSearchParams not available, using fallback");
+  }
+
+  // Construct the back link to design studio with parameters
+  const getBackLink = () => {
+    const params = new URLSearchParams();
+    if (projectId) params.set('project', projectId);
+    if (modelId) params.set('model', modelId);
+    
+    const queryString = params.toString();
+    return `/user/design-studio${queryString ? `?${queryString}` : ''}`;
+  };
+
   return (
     <div className="bg-gradient-to-br from-slate-50 via-white to-slate-50">
       <div className="w-full px-6 lg:px-12 py-6">
@@ -34,7 +58,7 @@ export const InsightsHeader: React.FC<InsightsHeaderProps> = ({ onShowPasswordSh
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-4">
             <Link 
-              href="/user/projects"
+              href={getBackLink()}
               className="flex items-center justify-center w-10 h-10 text-slate-700 bg-white hover:bg-blue-50 hover:text-blue-700 transition-all duration-300 rounded-xl border border-slate-200 shadow-sm hover:shadow-md hover:-translate-y-0.5 transform"
             >
               <ArrowLeft className="w-5 h-5" />
@@ -99,7 +123,7 @@ export const InsightsHeader: React.FC<InsightsHeaderProps> = ({ onShowPasswordSh
               <div className="flex items-center gap-4">
                 <div className="flex items-center gap-2 min-w-0">
                   <Filter className="w-4 h-4 text-slate-500 flex-shrink-0" />
-                  <span className="text-sm font-medium text-slate-700 whitespace-nowrap">Main Filter:</span>
+                  <span className="text-sm font-medium text-slate-700 whitespace-nowrap">GEO Filter:</span>
                 </div>
                 <Select defaultValue="rma-to-retailer">
                   <SelectTrigger className="w-[200px] bg-slate-50 border-slate-300 shadow-sm hover:border-slate-400 hover:bg-white transition-all duration-200">

@@ -181,7 +181,7 @@ export default function ProjectFilterBar({
 
 			<div className="flex items-center gap-3 text-sm text-slate-600">
 				<span className="font-medium">Sort by:</span>
-				<select className="border border-slate-200 rounded-xl px-4 py-2 bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 cursor-pointer font-medium text-slate-800 shadow-sm transition-all duration-300">
+				<select className="border border-slate-200 rounded-xl px-8 py-2 bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 cursor-pointer font-medium text-slate-800 shadow-sm transition-all duration-300">
 					<option>Last Updated</option>
 					<option>Date Created</option>
 				</select>

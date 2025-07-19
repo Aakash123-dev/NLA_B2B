@@ -1,8 +1,12 @@
 "use client"
 import React, { useEffect, useState } from "react";
-import ApexCharts from "react-apexcharts";
+import dynamic from 'next/dynamic';
+import { ApexOptions } from 'apexcharts';
 // import ChartSummary from "./ChartSummary";
 // import Pagination from "./pagination/Pagination";
+
+// Load ApexCharts dynamically to avoid SSR issues in Next.js
+const ApexCharts = dynamic(() => import('react-apexcharts'), { ssr: false });
 
 interface Dataset {
   label: string;
