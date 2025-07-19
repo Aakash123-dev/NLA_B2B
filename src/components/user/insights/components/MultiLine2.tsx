@@ -1,10 +1,14 @@
 'use client';
 import React, { useState } from 'react';
-import ApexCharts from 'react-apexcharts';
+import dynamic from 'next/dynamic';
+import { ApexOptions } from 'apexcharts';
 // import Pagination from "./pagination/Pagination";
 import dayjs from 'dayjs';
 import isoWeek from 'dayjs/plugin/isoWeek';
 // import ChartSummary from "./ChartSummary";
+
+// Load ApexCharts dynamically to avoid SSR issues in Next.js
+const ApexCharts = dynamic(() => import('react-apexcharts'), { ssr: false });
 
 dayjs.extend(isoWeek);
 
@@ -159,7 +163,7 @@ const MultiLine2: React.FC<{ isLoading?: boolean }> = ({ isLoading }) => {
     return arr.map((item, i) => (i % 2 === 0 ? item : ''));
   };
 
-  const getChartOptions = (data: TransformedChart): ApexCharts.ApexOptions => ({
+  const getChartOptions = (data: TransformedChart): ApexOptions => ({
     chart: {
       stacked: isStacked,
       zoom: { enabled: false },

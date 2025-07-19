@@ -1,4 +1,4 @@
-import { Plus } from "lucide-react";
+import { Plus, Palette } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
 	Dialog,
@@ -235,6 +235,48 @@ export default function CreateProjectModal({
 								placeholder="Enter project description"
 								className="w-full h-20"
 							/>
+						</div>
+
+						{/* Header Color Selection */}
+						<div className="space-y-3">
+							<Label className="text-sm font-medium text-slate-700 flex items-center gap-2">
+								<Palette className="w-4 h-4" />
+								Header Color Theme
+							</Label>
+							<div className="grid grid-cols-5 gap-3">
+								{[
+									{ name: 'blue', bg: 'bg-gradient-to-br from-blue-50 to-blue-100', accent: 'bg-blue-600' },
+									{ name: 'purple', bg: 'bg-gradient-to-br from-purple-50 to-purple-100', accent: 'bg-purple-600' },
+									{ name: 'emerald', bg: 'bg-gradient-to-br from-emerald-50 to-emerald-100', accent: 'bg-emerald-600' },
+									{ name: 'orange', bg: 'bg-gradient-to-br from-orange-50 to-orange-100', accent: 'bg-orange-600' },
+									{ name: 'rose', bg: 'bg-gradient-to-br from-rose-50 to-rose-100', accent: 'bg-rose-600' },
+									{ name: 'cyan', bg: 'bg-gradient-to-br from-cyan-50 to-cyan-100', accent: 'bg-cyan-600' },
+									{ name: 'lime', bg: 'bg-gradient-to-br from-lime-50 to-lime-100', accent: 'bg-lime-600' },
+									{ name: 'fuchsia', bg: 'bg-gradient-to-br from-fuchsia-50 to-fuchsia-100', accent: 'bg-fuchsia-600' },
+									{ name: 'indigo', bg: 'bg-gradient-to-br from-indigo-50 to-indigo-100', accent: 'bg-indigo-600' },
+									{ name: 'teal', bg: 'bg-gradient-to-br from-teal-50 to-teal-100', accent: 'bg-teal-600' },
+								].map((color) => (
+									<button
+										key={color.name}
+										type="button"
+										onClick={() => setNewProject(prev => ({ ...prev, headerColor: color.name }))}
+										className={`relative w-full h-16 rounded-xl ${color.bg} border-2 transition-all duration-200 hover:scale-105 ${
+											newProject.headerColor === color.name 
+												? 'border-gray-800 shadow-lg' 
+												: 'border-gray-200 hover:border-gray-300'
+										}`}
+									>
+										<div className={`absolute bottom-2 right-2 w-3 h-3 rounded-full ${color.accent}`} />
+										{newProject.headerColor === color.name && (
+											<div className="absolute inset-0 bg-black/10 rounded-xl flex items-center justify-center">
+												<div className="w-6 h-6 bg-white rounded-full flex items-center justify-center">
+													<div className="w-3 h-3 bg-gray-800 rounded-full" />
+												</div>
+											</div>
+										)}
+									</button>
+								))}
+							</div>
 						</div>
 					</div>
 

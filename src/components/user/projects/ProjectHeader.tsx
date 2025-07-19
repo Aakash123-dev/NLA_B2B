@@ -24,7 +24,7 @@ export default function ProjectHeader({
 			<div className="w-full px-6 lg:px-12 py-6">
 				<div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
 					<div className="flex items-center gap-4">
-						<div className="w-8 h-8 bg-[#009bcc] rounded-lg flex items-center justify-center">
+						<div className="w-8 h-8 bg-black rounded-lg flex items-center justify-center">
 							<FolderOpen className="w-4 h-4 text-white" />
 						</div>
 						<div>

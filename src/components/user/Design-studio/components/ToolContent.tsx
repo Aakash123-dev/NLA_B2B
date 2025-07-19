@@ -3,8 +3,9 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { ArrowLeft, Link as LinkIcon } from 'lucide-react';
+import { ArrowLeft, Link as LinkIcon, Settings } from 'lucide-react';
 import { NodeConfigProps } from '../types';
+import { useRouter } from 'next/navigation';
 
 interface ToolContentProps extends NodeConfigProps {
   connectedNodes?: any[];
@@ -24,6 +25,20 @@ export function ToolContent({
   handleTabClick,
   handleNodeDoubleClick
 }: ToolContentProps) {
+  const router = useRouter();
+
+  const handlePricingConfigure = () => {
+    // Get URL parameters and preserve them when navigating to pricing
+    const urlParams = new URLSearchParams(window.location.search);
+    const projectId = urlParams.get('project');
+    const modelId = urlParams.get('model');
+    
+    const params = new URLSearchParams();
+    if (projectId) params.set('project', projectId);
+    if (modelId) params.set('model', modelId);
+    
+    router.push(`/user/pricing-model?${params.toString()}`);
+  };
   const toolHeader = (
     <div className="mb-8">
       <div className="flex items-center justify-between">
@@ -83,6 +98,15 @@ export function ToolContent({
       return (
         <div className="p-8 space-y-6">
           {toolHeader}
+          <div className="mb-6">
+            <Button
+              onClick={handlePricingConfigure}
+              className="bg-gradient-to-r from-emerald-500 to-cyan-500 hover:from-emerald-600 hover:to-cyan-600 text-white px-6 py-2 rounded-lg flex items-center gap-2 font-medium"
+            >
+              <Settings className="w-4 h-4" />
+              Configure Pricing Model
+            </Button>
+          </div>
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <Card className="bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm border border-slate-200 dark:border-slate-700/50">
               <CardHeader>

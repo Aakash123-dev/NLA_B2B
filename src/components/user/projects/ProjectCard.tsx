@@ -15,13 +15,14 @@ import {
 	CalendarClock,
 	Clock,
 	Copy,
-	FileOutput,
-	FlaskConical,
-	Lightbulb,
 	MoreVertical,
 	Pencil,
 	Star,
 	Trash2,
+	Target,
+	Database,
+	Timer,
+	Palette,
 } from "lucide-react";
 import { ProjectType } from "./ProjectTypes";
 import Image from "next/image";
@@ -33,6 +34,7 @@ interface ProjectCardProps {
 	handleEditProject: (project: ProjectType) => void;
 	handleDeleteProject: (project: ProjectType) => void;
 	handleDuplicateProject: (project: ProjectType) => void;
+	handleColorChange?: (project: ProjectType, color: string) => void;
 }
 
 export default function ProjectCard({
@@ -42,296 +44,352 @@ export default function ProjectCard({
 	handleEditProject,
 	handleDeleteProject,
 	handleDuplicateProject,
+	handleColorChange,
 }: ProjectCardProps) {
-	// Feature icons mapping
-	const featureIcons: Record<string, React.ReactNode> = {
-		"Design Studio": <Activity className="w-5 h-5" />,
-		Insights: <Lightbulb className="w-5 h-5" />,
-		Simulator: <FlaskConical className="w-5 h-5" />,
-		Output: <FileOutput className="w-5 h-5" />,
+	// Format dates
+	const formatDate = (dateString: string | Date) => {
+		const date = new Date(dateString);
+		return date.toLocaleDateString("en-US", {
+			day: "2-digit",
+			month: "short",
+			year: "numeric",
+		}) + ", " + date.toLocaleTimeString("en-US", {
+			hour: "2-digit",
+			minute: "2-digit",
+			hour12: true,
+		}).toLowerCase();
 	};
 
-	// Feature colors mapping
-	const featureColors: Record<
-		string,
-		{
-			bg: string;
-			text: string;
-			hover: string;
-			border: string;
-			icon: string;
-			gradient: string;
+	// Generate unique dashboard-style color themes for each card based on project id
+	const getCardTheme = (id: number, headerColor?: string) => {
+		// If project has a specific headerColor, use it
+		if (headerColor) {
+			return getThemeFromColor(headerColor);
 		}
-	> = {
-		"Design Studio": {
-			bg: "bg-gradient-to-r from-white via-[#F2F7F2] to-white",
-			text: "text-[#6F826A]",
-			hover: "hover:shadow-[0_0_0_2px_#A0DAA9]",
-			border: "border-[#A0DAA9]",
-			icon: "text-[#6F826A]",
-			gradient: "bg-gradient-to-r from-[#A0DAA9] via-white to-[#A0DAA9]",
-		},
-		Insights: {
-			bg: "bg-gradient-to-r from-white via-[#F0EDF5] to-white",
-			text: "text-[#555879]",
-			hover: "hover:shadow-[0_0_0_2px_#C8A4D4]",
-			border: "border-[#C8A4D4]",
-			icon: "text-[#555879]",
-			gradient: "bg-gradient-to-r from-[#C8A4D4] via-white to-[#C8A4D4]",
-		},
-		Simulator: {
-			bg: "bg-gradient-to-r from-white via-[#F6F0E8] to-white",
-			text: "text-[#A17A55]",
-			hover: "hover:shadow-[0_0_0_2px_#FDE2B4]",
-			border: "border-[#FDE2B4]",
-			icon: "text-[#A17A55]",
-			gradient: "bg-gradient-to-r from-[#FDE2B4] via-white to-[#FDE2B4]",
-		},
-		Output: {
-			bg: "bg-gradient-to-r from-white via-[#EDF4F5] to-white",
-			text: "text-[#604652]",
-			hover: "hover:shadow-[0_0_0_2px_#AEDEE0]",
-			border: "border-[#AEDEE0]",
-			icon: "text-[#604652]",
-			gradient: "bg-gradient-to-r from-[#AEDEE0] via-white to-[#AEDEE0]",
-		},
+
+		// Default themes array
+		const themes = [
+			{
+				header: 'bg-gradient-to-br from-blue-50 to-blue-100',
+				accent: 'bg-gradient-to-r from-blue-600 to-blue-700',
+				text: 'text-blue-700',
+				light: 'text-blue-400',
+				hover: 'hover:bg-blue-50/80',
+				card: 'bg-gradient-to-br from-blue-50 to-blue-100',
+				overlay: 'bg-gradient-to-br from-blue-600 to-blue-700',
+			},
+			{
+				header: 'bg-gradient-to-br from-purple-50 to-purple-100',
+				accent: 'bg-gradient-to-r from-purple-600 to-purple-700',
+				text: 'text-purple-700',
+				light: 'text-purple-400',
+				hover: 'hover:bg-purple-50/80',
+				card: 'bg-gradient-to-br from-purple-50 to-purple-100',
+				overlay: 'bg-gradient-to-br from-purple-600 to-purple-700',
+			},
+			{
+				header: 'bg-gradient-to-br from-emerald-50 to-emerald-100',
+				accent: 'bg-gradient-to-r from-emerald-600 to-emerald-700',
+				text: 'text-emerald-700',
+				light: 'text-emerald-400',
+				hover: 'hover:bg-emerald-50/80',
+				card: 'bg-gradient-to-br from-emerald-50 to-emerald-100',
+				overlay: 'bg-gradient-to-br from-emerald-600 to-emerald-700',
+			},
+			{
+				header: 'bg-gradient-to-br from-orange-50 to-orange-100',
+				accent: 'bg-gradient-to-r from-orange-600 to-orange-700',
+				text: 'text-orange-700',
+				light: 'text-orange-400',
+				hover: 'hover:bg-orange-50/80',
+				card: 'bg-gradient-to-br from-orange-50 to-orange-100',
+				overlay: 'bg-gradient-to-br from-orange-600 to-orange-700',
+			},
+			{
+				header: 'bg-gradient-to-br from-rose-50 to-rose-100',
+				accent: 'bg-gradient-to-r from-rose-600 to-rose-700',
+				text: 'text-rose-700',
+				light: 'text-rose-400',
+				hover: 'hover:bg-rose-50/80',
+				card: 'bg-gradient-to-br from-rose-50 to-rose-100',
+				overlay: 'bg-gradient-to-br from-rose-600 to-rose-700',
+			},
+			{
+				header: 'bg-gradient-to-br from-cyan-50 to-cyan-100',
+				accent: 'bg-gradient-to-r from-cyan-600 to-cyan-700',
+				text: 'text-cyan-700',
+				light: 'text-cyan-400',
+				hover: 'hover:bg-cyan-50/80',
+				card: 'bg-gradient-to-br from-cyan-50 to-cyan-100',
+				overlay: 'bg-gradient-to-br from-cyan-600 to-cyan-700',
+			},
+			{
+				header: 'bg-gradient-to-br from-lime-50 to-lime-100',
+				accent: 'bg-gradient-to-r from-lime-600 to-lime-700',
+				text: 'text-lime-700',
+				light: 'text-lime-400',
+				hover: 'hover:bg-lime-50/80',
+				card: 'bg-gradient-to-br from-lime-50 to-lime-100',
+				overlay: 'bg-gradient-to-br from-lime-600 to-lime-700',
+			},
+			{
+				header: 'bg-gradient-to-br from-fuchsia-50 to-fuchsia-100',
+				accent: 'bg-gradient-to-r from-fuchsia-600 to-fuchsia-700',
+				text: 'text-fuchsia-700',
+				light: 'text-fuchsia-400',
+				hover: 'hover:bg-fuchsia-50/80',
+				card: 'bg-gradient-to-br from-fuchsia-50 to-fuchsia-100',
+				overlay: 'bg-gradient-to-br from-fuchsia-600 to-fuchsia-700',
+			},
+		];
+		return themes[id % themes.length];
 	};
 
-	const fixedFeatures = ["Design Studio", "Insights", "Simulator", "Output"];
-	console.log(project?.Models, "AlProjectData");
+	// Function to generate theme from color selection
+	const getThemeFromColor = (colorName: string) => {
+		const colorThemes = {
+			blue: {
+				header: 'bg-gradient-to-br from-blue-50 to-blue-100',
+				accent: 'bg-gradient-to-r from-blue-600 to-blue-700',
+				text: 'text-blue-700',
+				light: 'text-blue-400',
+				hover: 'hover:bg-blue-50/80',
+				card: 'bg-gradient-to-br from-blue-50 to-blue-100',
+				overlay: 'bg-gradient-to-br from-blue-600 to-blue-700',
+			},
+			purple: {
+				header: 'bg-gradient-to-br from-purple-50 to-purple-100',
+				accent: 'bg-gradient-to-r from-purple-600 to-purple-700',
+				text: 'text-purple-700',
+				light: 'text-purple-400',
+				hover: 'hover:bg-purple-50/80',
+				card: 'bg-gradient-to-br from-purple-50 to-purple-100',
+				overlay: 'bg-gradient-to-br from-purple-600 to-purple-700',
+			},
+			emerald: {
+				header: 'bg-gradient-to-br from-emerald-50 to-emerald-100',
+				accent: 'bg-gradient-to-r from-emerald-600 to-emerald-700',
+				text: 'text-emerald-700',
+				light: 'text-emerald-400',
+				hover: 'hover:bg-emerald-50/80',
+				card: 'bg-gradient-to-br from-emerald-50 to-emerald-100',
+				overlay: 'bg-gradient-to-br from-emerald-600 to-emerald-700',
+			},
+			orange: {
+				header: 'bg-gradient-to-br from-orange-50 to-orange-100',
+				accent: 'bg-gradient-to-r from-orange-600 to-orange-700',
+				text: 'text-orange-700',
+				light: 'text-orange-400',
+				hover: 'hover:bg-orange-50/80',
+				card: 'bg-gradient-to-br from-orange-50 to-orange-100',
+				overlay: 'bg-gradient-to-br from-orange-600 to-orange-700',
+			},
+			rose: {
+				header: 'bg-gradient-to-br from-rose-50 to-rose-100',
+				accent: 'bg-gradient-to-r from-rose-600 to-rose-700',
+				text: 'text-rose-700',
+				light: 'text-rose-400',
+				hover: 'hover:bg-rose-50/80',
+				card: 'bg-gradient-to-br from-rose-50 to-rose-100',
+				overlay: 'bg-gradient-to-br from-rose-600 to-rose-700',
+			},
+			cyan: {
+				header: 'bg-gradient-to-br from-cyan-50 to-cyan-100',
+				accent: 'bg-gradient-to-r from-cyan-600 to-cyan-700',
+				text: 'text-cyan-700',
+				light: 'text-cyan-400',
+				hover: 'hover:bg-cyan-50/80',
+				card: 'bg-gradient-to-br from-cyan-50 to-cyan-100',
+				overlay: 'bg-gradient-to-br from-cyan-600 to-cyan-700',
+			},
+			lime: {
+				header: 'bg-gradient-to-br from-lime-50 to-lime-100',
+				accent: 'bg-gradient-to-r from-lime-600 to-lime-700',
+				text: 'text-lime-700',
+				light: 'text-lime-400',
+				hover: 'hover:bg-lime-50/80',
+				card: 'bg-gradient-to-br from-lime-50 to-lime-100',
+				overlay: 'bg-gradient-to-br from-lime-600 to-lime-700',
+			},
+			fuchsia: {
+				header: 'bg-gradient-to-br from-fuchsia-50 to-fuchsia-100',
+				accent: 'bg-gradient-to-r from-fuchsia-600 to-fuchsia-700',
+				text: 'text-fuchsia-700',
+				light: 'text-fuchsia-400',
+				hover: 'hover:bg-fuchsia-50/80',
+				card: 'bg-gradient-to-br from-fuchsia-50 to-fuchsia-100',
+				overlay: 'bg-gradient-to-br from-fuchsia-600 to-fuchsia-700',
+			},
+			indigo: {
+				header: 'bg-gradient-to-br from-indigo-50 to-indigo-100',
+				accent: 'bg-gradient-to-r from-indigo-600 to-indigo-700',
+				text: 'text-indigo-700',
+				light: 'text-indigo-400',
+				hover: 'hover:bg-indigo-50/80',
+				card: 'bg-gradient-to-br from-indigo-50 to-indigo-100',
+				overlay: 'bg-gradient-to-br from-indigo-600 to-indigo-700',
+			},
+			teal: {
+				header: 'bg-gradient-to-br from-teal-50 to-teal-100',
+				accent: 'bg-gradient-to-r from-teal-600 to-teal-700',
+				text: 'text-teal-700',
+				light: 'text-teal-400',
+				hover: 'hover:bg-teal-50/80',
+				card: 'bg-gradient-to-br from-teal-50 to-teal-100',
+				overlay: 'bg-gradient-to-br from-teal-600 to-teal-700',
+			},
+		};
+		
+		return colorThemes[colorName as keyof typeof colorThemes] || colorThemes.blue;
+	};
+
+	const theme = getCardTheme(project.id, project.headerColor);
 
 	return (
 		<div
 			key={project.id}
-			className="group bg-white rounded-3xl border border-slate-200 shadow-md hover:shadow-lg hover:border-slate-300 transition-all duration-300 overflow-hidden min-h-[380px] flex flex-col relative"
+			className={`group relative overflow-hidden border-0 ${theme.card} hover:shadow-xl transition-all duration-500 hover:scale-105 cursor-pointer w-full min-h-[340px] flex flex-col rounded-3xl shadow-lg`}
 		>
-			{/* Inner container to handle gradient border */}
-			<div className="relative bg-white/95 rounded-3xl h-full flex flex-col z-10 backdrop-blur-sm">
-				{/* Enhanced Card Header */}
-				<div className="relative h-14 flex-shrink-0">
-					<div
-						className={`h-full bg-slate-300 relative overflow-hidden rounded-t-3xl`}
-					>
-						{/* Animated Background Pattern */}
-						<div className="absolute bg-gradient-to-t from-black/20 via-transparent to-white/10 backdrop-blur-[1px]" />
-						{/* Modern shimmering effect */}
-						<div className="absolute opacity-40 bg-[radial-gradient(circle_at_50%_120%,rgba(255,255,255,0.9),transparent_70%)]" />
-						<div className="absolute opacity-30 bg-[linear-gradient(45deg,transparent_25%,rgba(255,255,255,0.4)_50%,transparent_75%)] bg-[length:250%_250%] animate-shimmer" />
-						{/* Subtle grain texture */}
-						<div className="absolute opacity-10 bg-[url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIzMDAiIGhlaWdodD0iMzAwIj48ZmlsdGVyIGlkPSJhIiB4PSIwIiB5PSIwIj48ZmVUdXJidWxlbmNlIGJhc2VGcmVxdWVuY3k9Ii43NSIgc3RpdGNoVGlsZXM9InN0aXRjaCIgdHlwZT0iZnJhY3RhbE5vaXNlIi8+PGZlQ29sb3JNYXRyaXggdHlwZT0ic2F0dXJhdGUiIHZhbHVlcz0iMCIvPjwvZmlsdGVyPjxwYXRoIGQ9Ik0wIDBoMzAwdjMwMEgweiIgZmlsdGVyPSJ1cmwoI2EpIiBvcGFjaXR5PSIuMDUiLz48L3N2Zz4=')]" />
+			{/* Dashboard-style overlay */}
+			<div className={`absolute inset-0 ${theme.overlay} opacity-5`} />
+			
+			{/* Header */}
+			<div className={`relative ${theme.header} px-6 py-2.5 border-b border-white/20`}>
+				<div className="flex items-center justify-between">
+					<div className="flex items-center space-x-3">
+						<div className={`${theme.accent} w-8 h-8 rounded-2xl flex items-center justify-center shadow-lg`}>
+							<span className="text-white font-bold text-sm">
+								{project.project_name ? project.project_name.charAt(0).toUpperCase() : "P"}
+							</span>
+						</div>
+						<div>
+							<h2 className="text-lg font-bold text-slate-900">
+								{project.project_name || "Project 7"}
+							</h2>
+							<span className={`${theme.text} bg-white/90 px-2 py-0.5 rounded-full text-xs font-semibold shadow-sm inline-block mt-0.5`}>
+								v{project.project_version || "1"}
+							</span>
+						</div>
+					</div>
+					<div className="flex items-center space-x-2">
+						<Button
+							variant="ghost"
+							size="sm"
+							onClick={() => toggleFavorite(project.id)}
+							className={`${theme.hover} p-2 rounded-xl transition-all duration-200 group h-auto w-auto border-0 bg-white/60 backdrop-blur-sm`}
+						>
+							<Star
+								className={`w-4 h-4 ${
+									favorites.includes(project.id)
+										? "fill-amber-400 text-amber-400"
+										: "text-gray-500 group-hover:text-gray-700"
+								}`}
+							/>
+						</Button>
 
-						{/* Enhanced Logo Section - Matching Navbar */}
-						<div className="absolute top-3 left-4">
-							<div className="w-8 h-8 bg-[#ffffff] rounded-xl flex items-center justify-center shadow-lg">
-								<span className="text-[#009bcc] font-bold text-sm">G</span>
-								{/* <Image className="rounde" width={30} height={30} src={project?.company_logo} alt="companylogo" /> */}
+						<DropdownMenu>
+							<DropdownMenuTrigger asChild>
+								<Button
+									variant="ghost"
+									size="sm"
+									className={`${theme.hover} p-2 rounded-xl transition-all duration-200 group h-auto w-auto border-0 bg-white/60 backdrop-blur-sm`}
+								>
+									<MoreVertical className="w-4 h-4 text-gray-500 group-hover:text-gray-700" />
+								</Button>
+							</DropdownMenuTrigger>
+							<DropdownMenuContent
+								align="end"
+								className="w-52 bg-white/90 backdrop-blur-xl shadow-2xl border border-white/20 rounded-2xl p-2"
+							>
+								<DropdownMenuItem
+									onClick={() => handleDuplicateProject(project)}
+									className="text-gray-700 hover:bg-blue-50/80 hover:text-blue-600 px-4 py-3 cursor-pointer text-sm rounded-xl font-medium flex items-center gap-3 whitespace-nowrap"
+								>
+									<Copy className="w-4 h-4 flex-shrink-0" />
+									Duplicate Project
+								</DropdownMenuItem>
+								<DropdownMenuItem
+									onClick={() => handleEditProject(project)}
+									className="text-gray-700 hover:bg-emerald-50/80 hover:text-emerald-600 px-4 py-3 cursor-pointer text-sm rounded-xl font-medium flex items-center gap-3"
+								>
+									<Pencil className="w-4 h-4" />
+									Edit Project
+								</DropdownMenuItem>
+								<DropdownMenuSeparator className="my-1" />
+								<DropdownMenuItem
+									onClick={() => handleDeleteProject(project)}
+									className="text-red-600 hover:bg-red-50/80 px-4 py-3 cursor-pointer text-sm rounded-xl font-medium flex items-center gap-3"
+								>
+									<Trash2 className="w-4 h-4" />
+									Delete Project
+								</DropdownMenuItem>
+							</DropdownMenuContent>
+						</DropdownMenu>
+					</div>
+				</div>
+			</div>
+
+			{/* Content - Fixed height with proper spacing */}
+			<div className="relative px-6 py-3 flex-1 flex flex-col min-h-0 bg-white/80 backdrop-blur-sm">
+				{/* Description */}
+				<p className="text-slate-600 text-sm mb-3 leading-relaxed font-medium">
+					{project.description || "Modern optimization project with advanced analytics and reporting capabilities."}
+				</p>
+
+				{/* Details - Scrollable if needed */}
+				<div className="space-y-2.5 flex-1">
+					<div className="flex items-center justify-between py-1">
+						<div className="flex items-center space-x-3">
+							<Database className="w-4 h-4 text-slate-400" />
+							<span className="text-sm text-slate-500 font-medium">Table</span>
+						</div>
+						<span className="text-sm font-semibold text-slate-800">Table 1</span>
+					</div>
+
+					<div className="flex items-center justify-between py-1">
+						<div className="flex items-center space-x-3">
+							<Target className="w-4 h-4 text-slate-400" />
+							<span className="text-sm text-slate-500 font-medium">Target Brand</span>
+						</div>
+						<span className="text-sm font-semibold text-slate-800">Brand 1</span>
+					</div>
+
+					<div className="flex items-center justify-between py-1">
+						<div className="flex items-center space-x-3">
+							<Timer className="w-4 h-4 text-slate-400" />
+							<span className="text-sm text-slate-500 font-medium">Model Run</span>
+						</div>
+						<span className="text-sm font-semibold text-slate-800">52 Weeks</span>
+					</div>
+
+					<div className="pt-2.5 border-t border-slate-200/60 space-y-1.5">
+						<div className="flex items-center justify-between">
+							<div className="flex items-center space-x-3">
+								<Clock className="w-4 h-4 text-slate-400" />
+								<span className="text-xs text-slate-500 font-medium">Created</span>
 							</div>
+							<span className="text-xs text-slate-700 font-semibold">{formatDate(project.date_created)}</span>
 						</div>
 
-						{/* Enhanced Action Buttons */}
-						<div className="absolute top-3 right-4 flex gap-2">
-							<Button
-								variant="ghost"
-								size="sm"
-								onClick={() => toggleFavorite(project.id)}
-								className="h-8 w-8 p-0 rounded-lg bg-white border border-slate-200 hover:bg-slate-50 hover:scale-110 transition-all duration-300 shadow-lg"
-							>
-								<Star
-									className={`h-3 w-3 ${
-										favorites.includes(project.id)
-											? "fill-amber-500 text-amber-500"
-											: "text-slate-700"
-									}`}
-								/>
-							</Button>
-
-							<DropdownMenu>
-								<DropdownMenuTrigger asChild>
-									<Button
-										variant="ghost"
-										size="sm"
-										className="h-8 w-8 p-0 rounded-lg bg-white border border-slate-200 hover:bg-slate-50 hover:scale-110 transition-all duration-300 shadow-lg flex-shrink-0"
-									>
-										<MoreVertical className="h-3 w-3 text-slate-700" />
-									</Button>
-								</DropdownMenuTrigger>
-								<DropdownMenuContent
-									align="end"
-									className="w-56 min-w-[12rem] bg-white shadow-2xl border border-slate-200 rounded-2xl p-2"
-								>
-									<DropdownMenuItem
-										onClick={() => handleDuplicateProject(project)}
-										className="text-slate-700 hover:bg-blue-50 hover:text-blue-700 px-4 py-3 cursor-pointer text-sm rounded-xl font-medium flex items-center whitespace-nowrap"
-									>
-										<Copy className="w-4 h-4 mr-3 flex-shrink-0" />
-										<span className="flex-shrink-0">Duplicate Project</span>
-									</DropdownMenuItem>
-									<DropdownMenuItem
-										onClick={() => handleEditProject(project)}
-										className="text-slate-700 hover:bg-emerald-50 hover:text-emerald-700 px-4 py-3 cursor-pointer text-sm rounded-xl font-medium flex items-center whitespace-nowrap"
-									>
-										<Pencil className="w-4 h-4 mr-3 flex-shrink-0" />
-										<span className="flex-shrink-0">Edit Project</span>
-									</DropdownMenuItem>
-									<DropdownMenuSeparator className="my-2" />
-									<DropdownMenuItem
-										onClick={() => handleDeleteProject(project)}
-										className="text-red-600 hover:bg-red-50 px-4 py-3 cursor-pointer text-sm rounded-xl font-medium flex items-center whitespace-nowrap"
-									>
-										<Trash2 className="w-4 h-4 mr-3 flex-shrink-0" />
-										<span className="flex-shrink-0">Delete Project</span>
-									</DropdownMenuItem>
-								</DropdownMenuContent>
-							</DropdownMenu>
+						<div className="flex items-center justify-between">
+							<div className="flex items-center space-x-3">
+								<CalendarClock className="w-4 h-4 text-slate-400" />
+								<span className="text-xs text-slate-500 font-medium">Last Updated</span>
+							</div>
+							<span className="text-xs text-slate-700 font-semibold">{formatDate(project.updatedAt)}</span>
 						</div>
 					</div>
 				</div>
 
-				{/* Enhanced Card Body */}
-				<div className="flex-1 p-6 flex flex-col">
-					{/* Project Title with Version Badge */}
-					<div className="mb-4">
-						<div className="flex items-center gap-2 mb-3">
-							<h3 className="font-bold text-xl text-slate-800 leading-tight flex-1">
-								{project.project_name}
-							</h3>
-
-							<Badge
-								variant="outline"
-								className="text-xs font-semibold border-slate-300 text-slate-700 px-2 py-1 bg-white rounded-lg shadow-sm whitespace-nowrap"
-							>
-								v{project.project_version}
-							</Badge>
-						</div>
-						<div className="space-y-2">
-							<div className="flex items-center gap-2 text-xs text-slate-800">
-								<Clock className="w-4 h-4 text-blue-500" />
-								<span className="text-[14px]">Table: Table 1</span>
-								<span>
-									{" "}
-									{/* {new Date(project.date_created).toLocaleString("en-IN", {
-										year: "numeric",
-										month: "short",
-										day: "numeric",
-										hour: "2-digit",
-										minute: "2-digit",
-										hour12: true,
-									})} */}
-								</span>
-							</div>
-							<div className="flex items-center gap-2 text-xs text-slate-800">
-								<CalendarClock className="w-4 h-4 text-emerald-500" />
-								<span className="text-[14px]">Target Brand: Brand 1</span>
-								<span>
-									{/* {new Date(project.updatedAt).toLocaleString("en-IN", {
-										year: "numeric",
-										month: "short",
-										day: "numeric",
-										hour: "2-digit",
-										minute: "2-digit",
-										hour12: true,
-									})} */}
-								</span>
-							</div>
-							<div className="flex items-center gap-2 text-xs text-slate-800">
-								<CalendarClock className="w-4 h-4 text-emerald-500" />
-								<span className="text-[14px]">Model Run: 52 Weeks </span>
-								<span>
-									{/* {new Date(project.updatedAt).toLocaleString("en-IN", {
-										year: "numeric",
-										month: "short",
-										day: "numeric",
-										hour: "2-digit",
-										minute: "2-digit",
-										hour12: true,
-									})} */}
-								</span>
-							</div>
-						</div>
-
-						{/* Compact Timestamps Section */}
-						<div className="space-y-2 mt-2">
-							<div className="flex items-center gap-2 text-xs text-slate-800">
-								<Clock className="w-4 h-4 text-blue-500" />
-								<span className="text-[14px]">Created:</span>
-								<span className="text-[14px]">
-									{" "}
-									{new Date(project.date_created).toLocaleString("en-IN", {
-										year: "numeric",
-										month: "short",
-										day: "numeric",
-										hour: "2-digit",
-										minute: "2-digit",
-										hour12: true,
-									})}
-								</span>
-							</div>
-							<div className="flex items-center gap-2 text-xs text-slate-800">
-								<CalendarClock className="w-4 h-4 text-emerald-500" />
-								<span className="text-[14px]">Last Updated:</span>
-								<span className="text-[14px]">
-									{new Date(project.updatedAt).toLocaleString("en-IN", {
-										year: "numeric",
-										month: "short",
-										day: "numeric",
-										hour: "2-digit",
-										minute: "2-digit",
-										hour12: true,
-									})}
-								</span>
-							</div>
-						</div>
-					</div>
-
-					{/* Enhanced Feature Buttons */}
-					<div className="mb-6">
-						<h4 className="text-sm font-semibold text-slate-700 mb-3">
-							Available Features
-						</h4>
-						<div className="grid grid-cols-2 gap-3">
-							{fixedFeatures.map((feature, index) => {
-								const getFeatureLink = (
-									featureName: string,
-									projectId: number,
-									modelId?: number
-								) => {
-									switch (featureName) {
-										case "Design Studio":
-											return `/user/design-studio?project=${projectId}&model=${
-												modelId ?? ""
-											}`;
-										case "Insights":
-											return `/user/insights?project=${projectId}&model=${
-												modelId ?? ""
-											}`;
-										case "Simulator":
-											return `/user/simulator?project=${projectId}`;
-										case "Output":
-											return `/user/output?project=${projectId}`;
-										default:
-											return "#";
-									}
-								};
-
-								const modelId = project?.Models?.[0]?.id;
-
-								return (
-									<Link
-										key={index}
-										href={getFeatureLink(feature, project.id, modelId)}
-										className={`flex items-center justify-center gap-2 ${featureColors[feature].bg} ${featureColors[feature].text} border ${featureColors[feature].border} ${featureColors[feature].hover} h-12 px-3 text-sm font-semibold transition-all duration-300 hover:scale-105 hover:shadow-lg rounded-xl group cursor-pointer`}
-									>
-										<span className="transition-transform duration-300 group-hover:scale-110">
-											{featureIcons[feature]}
-										</span>
-										<span className="truncate">
-											{feature === "Design Studio" ? "Studio" : feature}
-										</span>
-									</Link>
-								);
-							})}
-						</div>
-					</div>
+				{/* Button - Fixed at bottom */}
+				<div className="mt-3 pt-2.5 border-t border-slate-200/60">
+					<Link
+						href={`/user/design-studio?project=${project.id}&model=${project?.Models?.[0]?.id ?? ""}`}
+						className={`w-full ${theme.accent} hover:shadow-lg text-white font-semibold py-2.5 px-5 rounded-2xl transition-all duration-300 text-sm shadow-md flex items-center justify-center gap-2 cursor-pointer group`}
+					>
+						<Activity className="w-4 h-4 group-hover:scale-110 transition-transform duration-200" />
+						Design Studio
+					</Link>
 				</div>
 			</div>
 		</div>

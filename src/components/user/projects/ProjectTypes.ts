@@ -23,6 +23,7 @@ export interface NewProjectData {
   version: string;
   description: string;
   bannerColor: string;
+  headerColor: string;
   icon: string;
   logo: string;
   retailers: string[];
