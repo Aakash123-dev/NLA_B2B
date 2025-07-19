@@ -1,6 +1,6 @@
 // src/services/projectService.ts
 import { API_ENDPOINTS } from '@/constants/endPoints/endPoints';
-import axiosInstance from './axiosInstance';
+import { axiosInstance } from './axiosInstance';
 
 export const fetchProjectsFromAPI = async (
   page: number,

@@ -48,13 +48,14 @@
 // export type AppDispatch = typeof store.dispatch;
 
 // // Typed hooks for use throughout the app
-// export { useAppDispatch, useAppSelector } from './hooks'; 
+// export { useAppDispatch, useAppSelector } from './hooks';
 
 'use client';
 import { configureStore, combineReducers } from '@reduxjs/toolkit';
 import { persistStore, persistReducer } from 'redux-persist';
 import storage from 'redux-persist/lib/storage';
 import projectSlice from './slices/projectSlice';
+import chartslice from './slices/chartsSlices';
 
 // import authSlice from './slices/authSlice';
 // import userSlice from './slices/userSlice';
@@ -73,6 +74,7 @@ const rootReducer = combineReducers({
   //   ui: uiSlice,
   //   admin: adminSlice,
   projects: projectSlice,
+  chart: chartslice,
 });
 
 const persistConfig = {

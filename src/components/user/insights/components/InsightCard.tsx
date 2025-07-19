@@ -28,6 +28,11 @@ import PriceSlopeChart from './PriceSlopeChart';
 import StackedLineChart from './MultiLine';
 import MultiLine2 from './MultiLine2';
 import MyChart from './LineBar';
+import PromotedDepthChart from './PromotedDepthChart';
+import PromotionalLiftChart from './PromotionalLiftCharts';
+import LiftChart from './LiftChart';
+import ElasticityStratagyChart from './ElasticityStratagyChart';
+import ProfitCurvesChart from './ProfitCurvesCharts';
 
 interface InsightCardProps {
   insight: InsightType;
@@ -99,6 +104,16 @@ export const InsightCard: React.FC<InsightCardProps> = ({
                     <StackedLineChart />
                   ) : index === 4 ? (
                     <MultiLine2 />
+                  ) : index === 5 ? (
+                    <PromotedDepthChart />
+                  ) : index === 6 ? (
+                    <PromotionalLiftChart />
+                  ) : index === 7 ? (
+                    <LiftChart />
+                  ) : index === 8 ? (
+                    <ElasticityStratagyChart isLoading={false} />
+                  ) : index === 9 ? (
+                    <ProfitCurvesChart />
                   ) : (
                     <div className="flex h-full items-center justify-center text-sm text-slate-500">
                       No chart data available
@@ -249,7 +264,7 @@ export const InsightCard: React.FC<InsightCardProps> = ({
               </div>
 
               <div className="mt-4">
-           <Button
+                <Button
                   variant="outline"
                   className="flex h-9 w-full items-center justify-center gap-2 rounded-md border-indigo-200 bg-gradient-to-r from-indigo-50 to-violet-50 text-indigo-700 transition-all duration-200 hover:border-indigo-300 hover:from-indigo-100 hover:to-violet-100 hover:text-indigo-800"
                   onClick={() => {
