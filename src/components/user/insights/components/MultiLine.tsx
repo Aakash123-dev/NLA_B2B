@@ -1,11 +1,12 @@
-"use client"
-import React, { useEffect, useState } from "react";
+'use client';
+
+import React, { useMemo, useState } from 'react';
 import dynamic from 'next/dynamic';
 import { ApexOptions } from 'apexcharts';
-// import ChartSummary from "./ChartSummary";
-// import Pagination from "./pagination/Pagination";
+import { useSelector } from 'react-redux';
+import { RootState } from '@/store'; // make sure this path is correct for your project
 
-// Load ApexCharts dynamically to avoid SSR issues in Next.js
+// Dynamically load ApexCharts
 const ApexCharts = dynamic(() => import('react-apexcharts'), { ssr: false });
 
 interface Dataset {
@@ -32,94 +33,81 @@ interface ChartData {
   };
 }
 
-const mockChart4Data = [
-  {
-    Retailer: "Retailer A",
-    Product: "Product A",
-    "-10%_BPE_Volume_Impact": -20,
-    "-8%_BPE_Volume_Impact": -15,
-    "-6%_BPE_Volume_Impact": -10,
-    "-4%_BPE_Volume_Impact": -5,
-    "-2%_BPE_Volume_Impact": 0,
-    "0%_BPE_Volume_Impact": 5,
-    "2%_BPE_Volume_Impact": 10,
-    "4%_BPE_Volume_Impact": 15,
-    "6%_BPE_Volume_Impact": 20,
-    "8%_BPE_Volume_Impact": 25,
-    "10%_BPE_Volume_Impact": 30,
-    "-10%_BPE_Dollar_Impact": -5,
-    "-8%_BPE_Dollar_Impact": -3,
-    "-6%_BPE_Dollar_Impact": -1,
-    "-4%_BPE_Dollar_Impact": 0,
-    "-2%_BPE_Dollar_Impact": 2,
-    "0%_BPE_Dollar_Impact": 4,
-    "2%_BPE_Dollar_Impact": 6,
-    "4%_BPE_Dollar_Impact": 8,
-    "6%_BPE_Dollar_Impact": 10,
-    "8%_BPE_Dollar_Impact": 12,
-    "10%_BPE_Dollar_Impact": 14,
-  },
-  // Add more mock objects as needed
-];
-
 const StackedLineChart: React.FC = () => {
-  const [chartData, setChartData] = useState<ChartData[]>([]);
-  const [chartType, setChartType] = useState<"line" | "bar">("line");
+  const rawChartData = useSelector(
+    (state: RootState) => state.chart.data4
+  ); // from your Redux slice
+
+  const [chartType, setChartType] = useState<'line' | 'bar'>('line');
   const [isStacked, setIsStacked] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 5;
+  const itemsPerPage = 1;
 
-  useEffect(() => {
-    const transformedData: ChartData[] = [];
-    mockChart4Data.forEach((item) => {
-      const retailer = item.Retailer;
-      const product = item.Product;
+  const labels = useMemo(
+    () => [
+      '-10%',
+      '-8%',
+      '-6%',
+      '-4%',
+      '-2%',
+      '0%',
+      '2%',
+      '4%',
+      '6%',
+      '8%',
+      '10%',
+    ],
+    []
+  );
 
-      const labels = [
-        "-10%", "-8%", "-6%", "-4%", "-2%",
-        "0%", "2%", "4%", "6%", "8%", "10%",
-      ];
+  // Transform raw data from Redux only when rawChartData changes
+  const chartData: ChartData[] = useMemo(() => {
+    if (!rawChartData) return [];
 
-      const volumeData = labels.map((label) => item[`${label}_BPE_Volume_Impact`] ?? 0);
-      const dollarData = labels.map((label) => item[`${label}_BPE_Dollar_Impact`] ?? 0);
+    return rawChartData.map((item: any) => {
+      const volumeData = labels.map(
+        (label) => item[`${label}_BPE_Volume_Impact`] ?? 0
+      );
+      const dollarData = labels.map(
+        (label) => item[`${label}_BPE_Dollar_Impact`] ?? 0
+      );
 
-      transformedData.push({
+      return {
         multiAxes: false,
         xycoordinated: false,
         quadrant: true,
-        Retailer: retailer,
-        Product: product,
-        xAxisTitle: "Price Change %",
-        yAxisTitle: "Volume/Dollar Impact",
+        Retailer: item.Retailer,
+        Product: item.Product,
+        xAxisTitle: 'Price Change %',
+        yAxisTitle: 'Volume/Dollar Impact',
         data: {
           labels,
           datasets: [
             {
-              label: "% Volume",
+              label: '% Volume',
               data: volumeData,
-              borderColor: "rgb(255, 99, 132)",
-              backgroundColor: "rgba(255, 99, 132, 0.5)",
-              pointStyle: "circle",
+              borderColor: 'rgb(255, 99, 132)',
+              backgroundColor: 'rgba(255, 99, 132, 0.5)',
+              pointStyle: 'circle',
               pointRadius: 8,
               pointHoverRadius: 15,
             },
             {
-              label: "% Dollar",
+              label: '% Dollar',
               data: dollarData,
-              borderColor: "rgb(54, 162, 235)",
-              backgroundColor: "rgba(54, 162, 235, 0.5)",
-              pointStyle: "triangle",
+              borderColor: 'rgb(54, 162, 235)',
+              backgroundColor: 'rgba(54, 162, 235, 0.5)',
+              pointStyle: 'triangle',
               pointRadius: 8,
               pointHoverRadius: 15,
             },
           ],
         },
-      });
+      };
     });
-    setChartData(transformedData);
-  }, []);
+  }, [rawChartData, labels]);
 
-  const getApexOptions = (data: ChartData) => ({
+  const getApexOptions = (data: ChartData): ApexOptions => ({
     chart: {
       type: chartType,
       height: 450,
@@ -162,7 +150,7 @@ const StackedLineChart: React.FC = () => {
     yaxis: {
       title: { text: `${data.yAxisTitle} (%)` },
       labels: {
-        formatter: (val: number) => `${val.toFixed(2)}%`,
+        formatter: (val: number) => `${(val * 100).toFixed(2)}%`,
       },
     },
     annotations: {
@@ -172,32 +160,52 @@ const StackedLineChart: React.FC = () => {
       name: d.label,
       data: d.data,
     })),
-    colors: ["#2c99f4", "#40d68e"],
+    colors: ['#2c99f4', '#40d68e'],
     stroke: { curve: 'straight', width: 4 },
   });
 
-  const startIndex = (currentPage - 1) * itemsPerPage;
-  const visibleChartData = chartData.slice(startIndex, startIndex + itemsPerPage);
+  const handlePrev = () => {
+    if (currentPage > 1) setCurrentPage((prev) => prev - 1);
+  };
+
+  const handleNext = () => {
+    if (currentPage < chartData.length) setCurrentPage((prev) => prev + 1);
+  };
+
+  const currentChart = chartData[currentPage - 1];
 
   return (
     <div>
-      {/* <ChartSummary chartData={mockChart4Data} chartType="chart4" /> */}
-      {visibleChartData.map((chart, i) => (
-        <div key={i} style={{ marginBottom: '40px' }}>
-          <ApexCharts
-            options={getApexOptions(chart)}
-            series={getApexOptions(chart).series}
-            type={chartType}
-            height={450}
-          />
-        </div>
-      ))}
-      {/* <Pagination
-        currentPage={currentPage}
-        totalItems={chartData.length}
-        itemsPerPage={itemsPerPage}
-        onPageChange={setCurrentPage}
-      /> */}
+      {currentChart && (
+        <ApexCharts
+          options={getApexOptions(currentChart)}
+          series={getApexOptions(currentChart).series}
+          type={chartType}
+          height={450}
+        />
+      )}
+
+      <div
+        style={{
+          display: 'flex',
+          justifyContent: 'center',
+          gap: '1rem',
+          marginTop: '20px',
+        }}
+      >
+        <button onClick={handlePrev} disabled={currentPage === 1}>
+          Previous
+        </button>
+        <span>
+          Page {currentPage} of {chartData.length}
+        </span>
+        <button
+          onClick={handleNext}
+          disabled={currentPage === chartData.length}
+        >
+          Next
+        </button>
+      </div>
     </div>
   );
 };

@@ -1,20 +1,11 @@
 'use client';
 
-import React, { useState } from "react";
-import ApexCharts from "react-apexcharts";
-// import Pagination from "./pagination/Pagination";
-// import ChartSummary from "./ChartSummary";
+import React, { useMemo, useState } from 'react';
+import { useSelector } from 'react-redux';
+import { RootState } from '@/store';
+import ApexCharts from 'react-apexcharts';
 
 // Types
-type ChartDataItem = {
-  Retailer: string;
-  Product: string;
-  tpr_avg: number;
-  fo_avg: number;
-  do_avg: number;
-  fd_avg: number;
-};
-
 type SeriesItem = {
   name: string;
   data: number[];
@@ -31,103 +22,54 @@ type RetailerChart = {
   };
 };
 
-// Static mock data
-const mockChart7Data: ChartDataItem[] = [
-  {
-    Retailer: "Retailer A",
-    Product: "Product 1",
-    tpr_avg: 10,
-    fo_avg: 5,
-    do_avg: 3,
-    fd_avg: 7,
-  },
-  {
-    Retailer: "Retailer A",
-    Product: "Product 2",
-    tpr_avg: 12,
-    fo_avg: 4,
-    do_avg: 6,
-    fd_avg: 8,
-  },
-  {
-    Retailer: "Retailer B",
-    Product: "Product X",
-    tpr_avg: 8,
-    fo_avg: 6,
-    do_avg: 5,
-    fd_avg: 4,
-  },
-  {
-    Retailer: "Retailer B",
-    Product: "Product Y",
-    tpr_avg: 11,
-    fo_avg: 7,
-    do_avg: 2,
-    fd_avg: 5,
-  },
-];
-
-// Component
 const PromotionalLiftChart: React.FC = () => {
+  const chart7Data = useSelector((state: RootState) => state.chart.data7);
+
   const [chartType, setChartType] = useState<'bar' | 'line'>('bar');
   const [isStacked, setIsStacked] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 2;
+  const itemsPerPage = 1;
 
-  const retailers: { [key: string]: RetailerChart } = {};
+  // Memoize chart transformation
+  const chartData: RetailerChart[] = useMemo(() => {
+    const retailers: { [key: string]: RetailerChart } = {};
 
-  mockChart7Data.forEach((item) => {
-    const retailer = item.Retailer;
+    chart7Data.forEach((item) => {
+      const retailer = item.Retailer;
 
-    if (!retailers[retailer]) {
-      retailers[retailer] = {
-        Retailer: retailer,
-        xAxisTitle: "Products",
-        yAxisTitle: "Promotional Lifts",
-        data: {
-          categories: [],
-          series: [
-            { name: "TPR", data: [], type: chartType },
-            { name: "Feature Only", data: [], type: chartType },
-            { name: "Display Only", data: [], type: chartType },
-            { name: "Feature and Display", data: [], type: chartType },
-          ],
-        },
-      };
-    }
+      if (!retailers[retailer]) {
+        retailers[retailer] = {
+          Retailer: retailer,
+          xAxisTitle: 'Products',
+          yAxisTitle: 'TPR Avg',
+          data: {
+            categories: [],
+            series: [{ name: 'TPR Avg', data: [], type: chartType }],
+          },
+        };
+      }
 
-    retailers[retailer].data.categories.push(item.Product);
-    retailers[retailer].data.series[0].data.push(item.tpr_avg || 0);
-    retailers[retailer].data.series[1].data.push(item.fo_avg || 0);
-    retailers[retailer].data.series[2].data.push(item.do_avg || 0);
-    retailers[retailer].data.series[3].data.push(item.fd_avg || 0);
-  });
+      retailers[retailer].data.categories.push(item.Product);
+      retailers[retailer].data.series[0].data.push(item.tpr_avg || 0);
+    });
 
-  const restructuredData: RetailerChart[] = Object.values(retailers);
+    return Object.values(retailers);
+  }, [chart7Data, chartType]);
 
-  const paginate = (
-    data: RetailerChart[],
-    currentPage: number,
-    itemsPerPage: number
-  ) => {
+  const paginatedData = useMemo(() => {
     const start = (currentPage - 1) * itemsPerPage;
-    return data.slice(start, start + itemsPerPage);
-  };
-
-  const paginatedData = paginate(restructuredData, currentPage, itemsPerPage);
+    return chartData.slice(start, start + itemsPerPage);
+  }, [chartData, currentPage]);
 
   const getChartOptions = (data: RetailerChart): ApexCharts.ApexOptions => ({
     chart: {
       stacked: isStacked,
-      zoom: {
-        enabled: false,
-      },
+      zoom: { enabled: false },
       toolbar: {
         show: true,
         tools: {
           download: true,
           selection: true,
-          zoom: false,
           zoomin: true,
           zoomout: true,
           pan: true,
@@ -138,75 +80,64 @@ const PromotionalLiftChart: React.FC = () => {
     title: {
       text: data.Retailer,
       align: 'center',
-      style: {
-        fontSize: '16px',
-      },
+      style: { fontSize: '16px' },
     },
     xaxis: {
       categories: data.data.categories,
       labels: {
         rotate: -45,
-        style: {
-          fontSize: '10px',
-        },
-        rotateAlways: true,
+        style: { fontSize: '10px' },
         formatter: (value: string) => {
-          const maxLabelLength = 15;
-          return value?.length > maxLabelLength
-            ? value.substring(0, maxLabelLength - 3) + "..."
-            : value;
+          if (!value) return '';
+          return value.length > 15 ? value.substring(0, 12) + '...' : value;
         },
       },
-      axisBorder: {
-        show: true,
-        color: '#000000',
-      },
-      title: {
-        text: data.xAxisTitle,
-      },
+      title: { text: data.xAxisTitle },
     },
     yaxis: {
-      title: {
-        text: data.yAxisTitle,
-      },
+      title: { text: data.yAxisTitle },
       labels: {
         formatter: (value: number) => Math.round(value),
       },
     },
     legend: {
+      show: true,
       position: 'top',
       horizontalAlign: 'center',
-      floating: true,
-      offsetY: -20,
-    },
-    dataLabels: {
-      enabled: false,
-    },
-    markers: {
-      size: 5,
-      hover: {
-        size: 6,
+      floating: false,
+      offsetY: 0,
+      markers: {
+        width: 12,
+        height: 12,
+        radius: 2,
+      },
+      onItemClick: {
+        toggleDataSeries: true,
+      },
+      onItemHover: {
+        highlightDataSeries: true,
       },
     },
+    dataLabels: { enabled: false },
     stroke: {
       curve: 'straight',
-      width: 0,
-      colors: ["#ea580c", "#14532d", "#ef4444", "#0ea5e9"],
+      width: 2, // ✅ was 0 before, which caused invisibility
+      colors: ['#2c99f4'],
     },
-    grid: {
-      show: false,
-      borderColor: '#e7e7e7',
+    markers: {
+      size: chartType === 'line' ? 5 : 0,
+      hover: { size: 6 },
     },
-    colors: ["#2c99f4", "#fa518a", "#f9be56", "#b386e1"],
+    colors: ['#2c99f4'],
     tooltip: {
-      shared: false,
-      intersect: true,
       y: {
         formatter: (value: number) => `${Math.round(value)}%`,
       },
       x: {
         formatter: (_value: string, { dataPointIndex }: any) => {
-          return data.data.categories[dataPointIndex];
+          const label = data.data.categories?.[dataPointIndex];
+          if (!label) return '';
+          return label.length > 15 ? label.substring(0, 12) + '...' : label;
         },
       },
     },
@@ -214,27 +145,49 @@ const PromotionalLiftChart: React.FC = () => {
 
   return (
     <div>
-      {/* Optional: Add ChartSummary if needed */}
-      {/* <ChartSummary chartData={mockChart7Data} chartType="chart7" /> */}
-
       {paginatedData.map((data, index) => (
-        <div key={index} style={{ marginBottom: "50px" }}>
+        <div key={index} style={{ marginBottom: '50px' }}>
           <ApexCharts
             options={getChartOptions(data)}
             series={data.data.series}
+            type={chartType} // ✅ Ensure chart type is passed explicitly
             height={500}
             width="100%"
           />
         </div>
       ))}
 
-      {/* Optional: Add Pagination component */}
-      {/* <Pagination
-        currentPage={currentPage}
-        totalItems={restructuredData.length}
-        itemsPerPage={itemsPerPage}
-        onPageChange={(page: number) => setCurrentPage(page)}
-      /> */}
+      {/* Pagination Controls */}
+      <div
+        style={{
+          display: 'flex',
+          justifyContent: 'center',
+          gap: '1rem',
+          marginTop: '20px',
+        }}
+      >
+        <button
+          onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+          disabled={currentPage === 1}
+        >
+          Previous
+        </button>
+        <span>
+          Page {currentPage} of {Math.ceil(chartData.length / itemsPerPage)}
+        </span>
+        <button
+          onClick={() =>
+            setCurrentPage((prev) =>
+              prev < Math.ceil(chartData.length / itemsPerPage)
+                ? prev + 1
+                : prev
+            )
+          }
+          disabled={currentPage === Math.ceil(chartData.length / itemsPerPage)}
+        >
+          Next
+        </button>
+      </div>
     </div>
   );
 };

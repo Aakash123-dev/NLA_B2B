@@ -2,64 +2,38 @@
 
 import React, { useState } from 'react';
 import ApexCharts from 'react-apexcharts';
-// import Pagination from './pagination/Pagination';
+import { ApexOptions } from 'apexcharts';
+import { ProfitCurvesChartData } from '../../../../constants/chartData/data';
 
-// Types
-type Dataset = {
-  label: string;
-  data: number[];
+// Pagination component
+const Pagination = ({
+  currentPage,
+  totalItems,
+  itemsPerPage,
+  onPageChange,
+}: any) => {
+  const totalPages = Math.ceil(totalItems / itemsPerPage);
+
+  return (
+    <div style={{ display: 'flex', justifyContent: 'center', marginTop: 20 }}>
+      <button
+        onClick={() => onPageChange(currentPage - 1)}
+        disabled={currentPage === 1}
+      >
+        Prev
+      </button>
+      <span style={{ margin: '0 10px' }}>
+        {`Page ${currentPage} of ${totalPages}`}
+      </span>
+      <button
+        onClick={() => onPageChange(currentPage + 1)}
+        disabled={currentPage === totalPages}
+      >
+        Next
+      </button>
+    </div>
+  );
 };
-
-type ChartData = {
-  xAxisTitle: string;
-  leftyAxisTitle: string;
-  rightyAxisTitle: string;
-  data: {
-    labels: string[];
-    datasets: Dataset[];
-  };
-};
-
-// Static mock data
-const ProfitCurvesChartData: ChartData[] = [
-  {
-    xAxisTitle: 'Months',
-    leftyAxisTitle: 'Units Sold',
-    rightyAxisTitle: 'Profit (USD)',
-    data: {
-      labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May'],
-      datasets: [
-        {
-          label: 'Units Sold',
-          data: [120, 150, 170, 140, 160],
-        },
-        {
-          label: 'Profit',
-          data: [2000, 2500, 3000, 2200, 2800],
-        },
-      ],
-    },
-  },
-  {
-    xAxisTitle: 'Months',
-    leftyAxisTitle: 'Units Sold',
-    rightyAxisTitle: 'Profit (USD)',
-    data: {
-      labels: ['Jun', 'Jul', 'Aug', 'Sep', 'Oct'],
-      datasets: [
-        {
-          label: 'Units Sold',
-          data: [130, 160, 180, 150, 170],
-        },
-        {
-          label: 'Profit',
-          data: [2100, 2600, 3100, 2300, 2900],
-        },
-      ],
-    },
-  },
-  // Add more data chunks for pagination if needed
-];
 
 const ProfitCurvesChart: React.FC = () => {
   const [chartType, setChartType] = useState<'line' | 'bar'>('line');
@@ -67,7 +41,7 @@ const ProfitCurvesChart: React.FC = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 1;
 
-  const getOptions = (data: ChartData) => {
+  const getOptions = (data: any): ApexOptions => {
     const {
       xAxisTitle,
       leftyAxisTitle,
@@ -141,7 +115,6 @@ const ProfitCurvesChart: React.FC = () => {
         curve: 'straight',
         width: 4,
       },
-      colors: ['#2c99f4', '#40d68e'],
       markers: {
         size: 3,
         strokeColors: ['#0ea5e9', '#14532d'],
@@ -154,52 +127,61 @@ const ProfitCurvesChart: React.FC = () => {
         {
           title: { text: leftyAxisTitle },
           labels: {
-            formatter: (value: number) => value,
+            formatter: (value: number) => value.toLocaleString(),
           },
         },
         {
           opposite: true,
           title: { text: rightyAxisTitle },
           labels: {
-            formatter: (value: number) => `$${value}`,
+            formatter: (value: number) => `$${value.toFixed(2)}`,
           },
         },
       ],
-      series: chartData.datasets.map((dataset) => ({
-        name: dataset.label,
-        data: dataset.data,
-      })),
+      colors: ['#2c99f4', '#40d68e'],
     };
+  };
+
+  const getSeries = (data: any) => {
+    return data.data.datasets.map((ds: any) => ({
+      name: ds.label,
+      data: ds.data,
+      type: chartType,
+    }));
   };
 
   // Pagination logic
   const startIndex = (currentPage - 1) * itemsPerPage;
-  const endIndex = startIndex + itemsPerPage;
-  const visibleData = ProfitCurvesChartData.slice(startIndex, endIndex);
+  const visibleData = ProfitCurvesChartData.slice(
+    startIndex,
+    startIndex + itemsPerPage
+  );
 
   return (
     <div>
       {visibleData.map((val, i) => (
         <div
           key={i}
-          style={{ marginBottom: i !== visibleData.length - 1 ? '50px' : '0' }}
+          style={{
+            marginBottom: i !== visibleData.length - 1 ? '50px' : '0',
+          }}
         >
           <ApexCharts
             options={getOptions(val)}
-            series={getOptions(val).series}
+            series={getSeries(val)}
             type={chartType}
             height={500}
           />
         </div>
       ))}
-      {/* {ProfitCurvesChartData.length > itemsPerPage && (
+      {ProfitCurvesChartData.length > itemsPerPage && (
         <Pagination
           currentPage={currentPage}
           totalItems={ProfitCurvesChartData.length}
           itemsPerPage={itemsPerPage}
           onPageChange={setCurrentPage}
         />
-      )} */}
+      )}
     </div>
   );
 };

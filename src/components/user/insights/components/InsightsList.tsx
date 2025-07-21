@@ -1,9 +1,14 @@
-import React from 'react';
+"use client"
+import React, { useEffect } from 'react';
 import { ChevronDown, Sparkles, Download } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { InsightCard } from './InsightCard';
 import type { InsightType } from '../types';
+import { useDispatch } from 'react-redux';
+import { AppDispatch, RootState } from '@/store';
+import { useSelector } from 'react-redux';
+import { fetchChartData } from '@/store/slices/chartsSlices';
 
 interface InsightsListProps {
   filteredInsights: InsightType[];
@@ -48,8 +53,8 @@ export const InsightsList: React.FC<InsightsListProps> = ({
   notes,
   setNotes,
 }) => {
+ 
   const { toast } = useToast();
-  console.log(filteredInsights, 'all filteres');
   return (
     <div className="w-full px-6 py-4 lg:px-12">
       <div className="mb-4 flex items-center justify-between">
@@ -134,7 +139,7 @@ export const InsightsList: React.FC<InsightsListProps> = ({
                 notes={notes}
                 setNotes={setNotes}
                 toast={toast}
-				 index = {index}
+                index={index}
               />
             )}
           </div>

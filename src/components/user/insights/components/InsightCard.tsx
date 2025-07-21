@@ -1,4 +1,5 @@
-import React from 'react';
+'use client';
+import React, { useEffect, useState } from 'react';
 import { FileText, Save, Download } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -23,7 +24,6 @@ import {
 } from 'recharts';
 import type { InsightType } from '../types';
 import { retailers, brands, ppgCategories } from '../data';
-import ChartOnly from './chart1';
 import PriceSlopeChart from './PriceSlopeChart';
 import StackedLineChart from './MultiLine';
 import MultiLine2 from './MultiLine2';
@@ -33,6 +33,15 @@ import PromotionalLiftChart from './PromotionalLiftCharts';
 import LiftChart from './LiftChart';
 import ElasticityStratagyChart from './ElasticityStratagyChart';
 import ProfitCurvesChart from './ProfitCurvesCharts';
+import { AppDispatch } from '@/store';
+import { useDispatch } from 'react-redux';
+import { fetchChartData } from '@/store/slices/chartsSlices';
+import dynamic from 'next/dynamic';
+
+const ChartOnly = dynamic(() => import('./chart1'), {
+  ssr: false,
+  loading: () => <div style={{ textAlign: 'center' }}>Loading chart...</div>,
+});
 
 interface InsightCardProps {
   insight: InsightType;
@@ -56,6 +65,7 @@ interface InsightCardProps {
     description: string;
     duration: number;
   }) => void;
+  index: number;
 }
 
 export const InsightCard: React.FC<InsightCardProps> = ({
@@ -78,7 +88,13 @@ export const InsightCard: React.FC<InsightCardProps> = ({
   toast,
   index,
 }) => {
-  console.log(index, 'filter');
+  const [isVisible, setIsVisible] = useState(false);
+
+  useEffect(() => {
+    const timeout = setTimeout(() => setIsVisible(true), 4); // delay mount
+    return () => clearTimeout(timeout);
+  }, []);
+
   return (
     <div className="border-t border-gray-200 p-6">
       {/* Chart and Filters Section */}
@@ -93,45 +109,35 @@ export const InsightCard: React.FC<InsightCardProps> = ({
             </CardHeader>
             <CardContent>
               <div className="mb-4 h-80 w-full">
-                <ResponsiveContainer width="100%" height="100%">
-                  {index === 0 ? (
-                    <ChartOnly />
-                  ) : index === 1 ? (
-                    <PriceSlopeChart />
-                  ) : index === 2 ? (
-                    <MyChart />
-                  ) : index === 3 ? (
-                    <StackedLineChart />
-                  ) : index === 4 ? (
-                    <MultiLine2 />
-                  ) : index === 5 ? (
-                    <PromotedDepthChart />
-                  ) : index === 6 ? (
-                    <PromotionalLiftChart />
-                  ) : index === 7 ? (
-                    <LiftChart />
-                  ) : index === 8 ? (
-                    <ElasticityStratagyChart isLoading={false} />
-                  ) : index === 9 ? (
-                    <ProfitCurvesChart />
-                  ) : (
-                    <div className="flex h-full items-center justify-center text-sm text-slate-500">
-                      No chart data available
-                    </div>
-                  )}
-
-                  {/* <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
-                    <XAxis dataKey="name" tick={{ fontSize: 12 }} />
-                    <YAxis tick={{ fontSize: 12 }} />
-                    {showLegend && <Legend />} */}
-                  {/* <Tooltip /> */}
-                  {/* <Bar 
-                      dataKey="value"
-                      fill={getCurrentColors()[0]} 
-                      radius={[4, 4, 0, 0]}
-                    /> */}
-                  {/* </BarChartComponent> */}
-                </ResponsiveContainer>
+                {isVisible && (
+                  <ResponsiveContainer width="100%" height="100%">
+                    {index === 0 ? (
+                      <ChartOnly />
+                    ) : index === 1 ? (
+                      <PriceSlopeChart />
+                    ) : index === 2 ? (
+                      <MyChart />
+                    ) : index === 3 ? (
+                      <StackedLineChart />
+                    ) : index === 4 ? (
+                      <MultiLine2 />
+                    ) : index === 5 ? (
+                      <PromotedDepthChart />
+                    ) : index === 6 ? (
+                      <PromotionalLiftChart />
+                    ) : index === 7 ? (
+                      <LiftChart />
+                    ) : index === 8 ? (
+                      <ElasticityStratagyChart isLoading={false} />
+                    ) : index === 9 ? (
+                      <ProfitCurvesChart />
+                    ) : (
+                      <div className="flex h-full items-center justify-center text-sm text-slate-500">
+                        No chart data available
+                      </div>
+                    )}
+                  </ResponsiveContainer>
+                )}
               </div>
             </CardContent>
           </Card>
