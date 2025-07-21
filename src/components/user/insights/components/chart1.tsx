@@ -1,14 +1,11 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import dynamic from 'next/dynamic';
 import { ApexOptions } from 'apexcharts';
-import { useDispatch, useSelector } from 'react-redux';
-import { AppDispatch, RootState } from '@/store';
-import { fetchChartData } from '@/store/slices/chartsSlices';
+import { useSelector } from 'react-redux';
+import { RootState } from '@/store';
 
-
-// Load ApexCharts dynamically to avoid SSR issues
 const ReactApexCharts = dynamic(() => import('react-apexcharts'), {
   ssr: false,
 });
@@ -24,21 +21,15 @@ type ChartGroup = {
 };
 
 const ChartOnly: React.FC = () => {
-  const dispatch = useDispatch<AppDispatch>();
   const { data: chartItems, loading } = useSelector(
     (state: RootState) => state.chart
   );
 
-  const [chartDataArray, setChartDataArray] = useState<ChartGroup[]>([]);
+  const [currentPage, setCurrentPage] = useState(1);
+  const chartsPerPage = 2;
 
-  // Fetch from Redux on mount
-  useEffect(() => {
-    dispatch(fetchChartData({ projectId: 762, modelId: 916 }));
-  }, [dispatch]);
-
-  // Transform Redux chartItems into chartDataArray
-  useEffect(() => {
-    if (!chartItems || chartItems.length === 0) return;
+  const chartDataArray = useMemo<ChartGroup[]>(() => {
+    if (!chartItems || chartItems.length === 0) return [];
 
     const groupedData: Record<string, Record<string, RetailerGroup>> = {};
 
@@ -56,27 +47,37 @@ const ChartOnly: React.FC = () => {
       }
     );
 
-    const newDataArray: ChartGroup[] = Object.entries(groupedData).map(
-      ([brand, retailers]) => ({
-        brand,
-        retailers: Object.values(retailers),
-      })
-    );
-
-    setChartDataArray(newDataArray);
+    return Object.entries(groupedData).map(([brand, retailers]) => ({
+      brand,
+      retailers: Object.values(retailers),
+    }));
   }, [chartItems]);
 
   if (loading) {
     return (
       <div style={{ textAlign: 'center', padding: '2rem' }}>
-        <p>Loading chart data...</p>
+        Loading chart data...
       </div>
     );
   }
 
+  if (chartDataArray.length === 0) {
+    return (
+      <div style={{ textAlign: 'center', padding: '2rem' }}>
+        No chart data available.
+      </div>
+    );
+  }
+
+  // Pagination logic
+  const totalPages = Math.ceil(chartDataArray.length / chartsPerPage);
+  const startIdx = (currentPage - 1) * chartsPerPage;
+  const endIdx = startIdx + chartsPerPage;
+  const chartsToShow = chartDataArray.slice(startIdx, endIdx);
+
   return (
     <div>
-      {chartDataArray.map((chartData, index) => {
+      {chartsToShow.map((chartData, index) => {
         const allXAxisLabels = Array.from(
           new Set(
             chartData.retailers.reduce(
@@ -140,6 +141,36 @@ const ChartOnly: React.FC = () => {
           </div>
         );
       })}
+
+      {/* Pagination Controls */}
+      <div
+        style={{
+          display: 'flex',
+          justifyContent: 'center',
+          marginTop: '2rem',
+          gap: '1rem',
+        }}
+      >
+        <button
+          onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+          disabled={currentPage === 1}
+        >
+          Previous
+        </button>
+
+        <span>
+          Page {currentPage} of {totalPages}
+        </span>
+
+        <button
+          onClick={() =>
+            setCurrentPage((prev) => Math.min(prev + 1, totalPages))
+          }
+          disabled={currentPage === totalPages}
+        >
+          Next
+        </button>
+      </div>
     </div>
   );
 };

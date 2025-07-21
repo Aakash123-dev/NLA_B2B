@@ -1,9 +1,9 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import ApexCharts from 'react-apexcharts';
-// import Pagination from './pagination/Pagination';
-// import ChartSummary from './ChartSummary';
+import { useSelector } from 'react-redux';
+import { RootState } from '@/store';
 
 // Types
 type RawDataItem = {
@@ -28,97 +28,61 @@ type TransformedItem = {
   };
 };
 
-// Static mock data
-const mockChartData: RawDataItem[] = [
-  {
-    Retailer: 'Retailer A',
-    Product: 'Product 1',
-    '10%_TPR': 5,
-    '20%_TPR': 12,
-    '10%_FO': 8,
-    '20%_FO': 15,
-    '10%_DO': 6,
-    '20%_DO': 10,
-  },
-  {
-    Retailer: 'Retailer B',
-    Product: 'Product 2',
-    '10%_TPR': 7,
-    '20%_TPR': 13,
-    '10%_FD': 9,
-    '20%_FD': 16,
-  },
-];
-
-// Function to rename label names
-function getRenamedLabel(originalLabel: string): string {
-  switch (originalLabel) {
-    case 'FO':
-      return 'Feature Only';
-    case 'DO':
-      return 'Display Only';
-    case 'FD':
-      return 'Feature and Display';
-    case 'TPR':
-    default:
-      return originalLabel;
-  }
-}
-
 const LiftChart: React.FC = () => {
   const [isStacked, setIsStacked] = useState(false);
   const [chartType, setChartType] = useState<'line' | 'bar'>('line');
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 5;
+  const itemsPerPage = 1;
 
-  // Transform static data
-  const transformedData: TransformedItem[] = mockChartData.map((item) => {
-    const transformedItem: TransformedItem = {
-      Retailer: item.Retailer,
-      Product: item.Product,
-      xAxisTitle: '% Discount',
-      yAxisTitle: '% Volume Lift',
-      data: {
-        categories: [],
-        series: [],
-      },
-    };
+  const chart8Data = useSelector(
+    (state: RootState) => state.chart.data8 || []
+  ) as RawDataItem[];
 
-    const seriesMapping: { [label: string]: TransformedSeries } = {};
+  const transformedData = useMemo(() => {
+    return chart8Data.map((item) => {
+      const transformedItem: TransformedItem = {
+        Retailer: item.Retailer,
+        Product: item.Product,
+        xAxisTitle: '% Discount',
+        yAxisTitle: '% Volume Lift',
+        data: {
+          categories: [],
+          series: [],
+        },
+      };
 
-    for (const key in item) {
-      if (key.includes('%_')) {
-        const [percent, originalLabel] = key.split('_');
-        const label = getRenamedLabel(originalLabel);
-        const percentage = percent.replace('%', '');
+      const seriesMap: { [label: string]: TransformedSeries } = {};
 
-        transformedItem.data.categories.push(`${percentage}%`);
+      for (const key in item) {
+        if (key.includes('%_')) {
+          const [percent, originalLabel] = key.split('_');
+          const label = originalLabel === 'TPR' ? 'TPR' : originalLabel;
 
-        if (!seriesMapping[label]) {
-          seriesMapping[label] = {
-            name: label,
-            data: [],
-          };
+          if (!seriesMap[label]) {
+            seriesMap[label] = {
+              name: label,
+              data: [],
+            };
+          }
+
+          transformedItem.data.categories.push(percent);
+          seriesMap[label].data.push(Number(item[key]));
         }
-
-        seriesMapping[label].data.push(Number(item[key]));
       }
-    }
 
-    transformedItem.data.series = Object.values(seriesMapping);
-    return transformedItem;
-  });
+      transformedItem.data.series = Object.values(seriesMap);
+      return transformedItem;
+    });
+  }, [chart8Data]);
 
-  // Pagination logic
-  const startIndex = (currentPage - 1) * itemsPerPage;
-  const visibleChartData = transformedData.slice(
-    startIndex,
-    startIndex + itemsPerPage
+  const visibleChartData = useMemo(
+    () =>
+      transformedData.slice(
+        (currentPage - 1) * itemsPerPage,
+        currentPage * itemsPerPage
+      ),
+    [transformedData, currentPage]
   );
-
-  const handlePageChange = (pageNumber: number) => {
-    setCurrentPage(pageNumber);
-  };
 
   const getChartOptions = (data: TransformedItem): ApexCharts.ApexOptions => ({
     chart: {
@@ -163,10 +127,7 @@ const LiftChart: React.FC = () => {
     title: {
       text: `${data.Retailer} - ${data.Product}`,
       align: 'center',
-      margin: 10,
-      style: {
-        fontSize: '14px',
-      },
+      style: { fontSize: '14px' },
     },
     xaxis: {
       categories: data.data.categories,
@@ -184,10 +145,6 @@ const LiftChart: React.FC = () => {
       y: {
         formatter: (value) => `${value.toFixed(0)}%`,
       },
-    },
-    markers: {
-      size: 5,
-      hover: { size: 6 },
     },
     stroke: {
       curve: 'straight',
@@ -210,7 +167,6 @@ const LiftChart: React.FC = () => {
 
   return (
     <div>
-      {/* <ChartSummary chartData={mockChartData} chartType="chart8" /> */}
       {visibleChartData.map((data, index) => (
         <div key={index} style={{ marginBottom: '50px' }}>
           <ApexCharts
@@ -222,12 +178,42 @@ const LiftChart: React.FC = () => {
           />
         </div>
       ))}
-      {/* <Pagination
-        currentPage={currentPage}
-        totalItems={transformedData.length}
-        itemsPerPage={itemsPerPage}
-        onPageChange={handlePageChange}
-      /> */}
+
+      {/* Pagination Controls */}
+      <div
+        style={{
+          display: 'flex',
+          justifyContent: 'center',
+          gap: 10,
+          marginTop: 20,
+        }}
+      >
+        <button
+          onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+          disabled={currentPage === 1}
+        >
+          Prev
+        </button>
+        <span>
+          Page {currentPage} of{' '}
+          {Math.ceil(transformedData.length / itemsPerPage)}
+        </span>
+        <button
+          onClick={() =>
+            setCurrentPage((prev) =>
+              Math.min(
+                prev + 1,
+                Math.ceil(transformedData.length / itemsPerPage)
+              )
+            )
+          }
+          disabled={
+            currentPage === Math.ceil(transformedData.length / itemsPerPage)
+          }
+        >
+          Next
+        </button>
+      </div>
     </div>
   );
 };

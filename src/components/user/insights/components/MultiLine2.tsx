@@ -1,18 +1,18 @@
 'use client';
-import React, { useState } from 'react';
+
+import React, { useMemo, useState } from 'react';
 import dynamic from 'next/dynamic';
 import { ApexOptions } from 'apexcharts';
-// import Pagination from "./pagination/Pagination";
 import dayjs from 'dayjs';
 import isoWeek from 'dayjs/plugin/isoWeek';
-// import ChartSummary from "./ChartSummary";
+import { useSelector } from 'react-redux';
+import { RootState } from '@/store';
 
-// Load ApexCharts dynamically to avoid SSR issues in Next.js
 const ApexCharts = dynamic(() => import('react-apexcharts'), { ssr: false });
 
 dayjs.extend(isoWeek);
 
-// ✅ Types
+// Types
 type ChartItem = {
   WeekEnding: string;
   Product: string;
@@ -51,67 +51,36 @@ type TransformedChart = {
   };
 };
 
-// ✅ Static Sample Data
-const staticChartData: ChartItem[] = [
-  {
-    WeekEnding: '2025-07-05',
-    Product: 'Product A',
-    Retailer: 'Retailer 1',
-    Price: 12.5,
-    Total_Volume: 100,
-  },
-  {
-    WeekEnding: '2025-07-05',
-    Product: 'Product A',
-    Retailer: 'Retailer 1',
-    Price: 13.0,
-    Total_Volume: 110,
-  },
-  {
-    WeekEnding: '2025-07-12',
-    Product: 'Product A',
-    Retailer: 'Retailer 1',
-    Price: 12.8,
-    Total_Volume: 105,
-  },
-  {
-    WeekEnding: '2025-07-05',
-    Product: 'Product B',
-    Retailer: 'Retailer 2',
-    Price: 22.0,
-    Total_Volume: 80,
-  },
-  {
-    WeekEnding: '2025-07-12',
-    Product: 'Product B',
-    Retailer: 'Retailer 2',
-    Price: 21.5,
-    Total_Volume: 90,
-  },
-];
-
 const MultiLine2: React.FC<{ isLoading?: boolean }> = ({ isLoading }) => {
-  const chart5Data: ChartItem[] = staticChartData;
+  const chart5Data = useSelector((state: RootState) => state.chart.data5);
+  console.log(chart5Data, "allChart5")
+
   const [isStacked, setIsStacked] = useState(false);
   const [chartType, setChartType] = useState<'line' | 'bar'>('line');
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 1;
 
-  const transformedData: { [key: string]: TransformedChart } = {};
+  const transformedChartData = useMemo(() => {
+    if (!chart5Data || chart5Data.length === 0) return [];
 
-  const groupByWeek = (data: ChartItem[]): GroupedData => {
-    const weeklyData: GroupedData = {};
+    const cleanedData: ChartItem[] = chart5Data.map((item: any) => ({
+      Product: item.Product,
+      Retailer: item.Retailer,
+      WeekEnding: dayjs(item.WeekEnding, 'MM-DD-YY').format('YYYY-MM-DD'),
+      Price: Number(item.Price || 0),
+      Total_Volume: Number(item.Total_Volume || 0),
+    }));
 
-    data.forEach((item) => {
+    const groupedData: GroupedData = {};
+    cleanedData.forEach((item) => {
       const weekEnding = item.WeekEnding;
       const product = item.Product;
       const retailer = item.Retailer;
       const key = `${product}_${retailer}`;
 
-      if (!weeklyData[key]) {
-        weeklyData[key] = {};
-      }
-
-      if (!weeklyData[key][weekEnding]) {
-        weeklyData[key][weekEnding] = {
+      if (!groupedData[key]) groupedData[key] = {};
+      if (!groupedData[key][weekEnding]) {
+        groupedData[key][weekEnding] = {
           totalPrice: 0,
           totalUnits: 0,
           count: 0,
@@ -119,49 +88,47 @@ const MultiLine2: React.FC<{ isLoading?: boolean }> = ({ isLoading }) => {
         };
       }
 
-      weeklyData[key][weekEnding].totalPrice += item.Price;
-      weeklyData[key][weekEnding].totalUnits += item.Total_Volume;
-      weeklyData[key][weekEnding].count += 1;
+      groupedData[key][weekEnding].totalPrice += item.Price;
+      groupedData[key][weekEnding].totalUnits += item.Total_Volume;
+      groupedData[key][weekEnding].count += 1;
     });
 
-    return weeklyData;
-  };
+    const transformedData: TransformedChart[] = [];
 
-  const groupedData = groupByWeek(chart5Data);
+    Object.keys(groupedData).forEach((key) => {
+      const chart: TransformedChart = {
+        Retailer: key.split('_')[1],
+        Product: key.split('_')[0],
+        xAxisTitle: 'Week-Year',
+        leftyAxisTitle: 'Units',
+        rightyAxisTitle: 'Price ($)',
+        data: {
+          categories: [],
+          series: [
+            { name: 'Units', data: [] },
+            { name: 'Price', data: [] },
+          ],
+        },
+      };
 
-  Object.keys(groupedData).forEach((key) => {
-    transformedData[key] = {
-      Retailer: key.split('_')[1],
-      Product: key.split('_')[0],
-      xAxisTitle: 'Week-Year',
-      leftyAxisTitle: 'Units',
-      rightyAxisTitle: 'Price ($)',
-      data: {
-        categories: [],
-        series: [
-          { name: 'Units', data: [] },
-          { name: 'Price', data: [] },
-        ],
-      },
-    };
+      Object.keys(groupedData[key]).forEach((weekYear) => {
+        const { totalPrice, totalUnits, count } = groupedData[key][weekYear];
+        const avgPrice = totalPrice / count;
+        const avgUnits = totalUnits / count;
 
-    Object.keys(groupedData[key]).forEach((weekYear) => {
-      const { totalPrice, totalUnits, count } = groupedData[key][weekYear];
-      const avgPrice = totalPrice / count;
-      const avgUnits = totalUnits / count;
+        chart.data.categories.push(weekYear);
+        chart.data.series[0].data.push(avgUnits);
+        chart.data.series[1].data.push(avgPrice);
+      });
 
-      transformedData[key].data.categories.push(weekYear);
-      transformedData[key].data.series[0].data.push(avgUnits);
-      transformedData[key].data.series[1].data.push(avgPrice);
+      transformedData.push(chart);
     });
-  });
 
-  const transformedChartData: TransformedChart[] =
-    Object.values(transformedData);
+    return transformedData;
+  }, [chart5Data]);
 
-  const getEvenIndexElements = (arr: string[]): string[] => {
-    return arr.map((item, i) => (i % 2 === 0 ? item : ''));
-  };
+  const getEvenIndexElements = (arr: string[]): string[] =>
+    arr.map((item, i) => (i % 2 === 0 ? item : ''));
 
   const getChartOptions = (data: TransformedChart): ApexOptions => ({
     chart: {
@@ -259,27 +226,27 @@ const MultiLine2: React.FC<{ isLoading?: boolean }> = ({ isLoading }) => {
     })),
   });
 
-  const itemsPerPage = 5;
-  const [currentPage, setCurrentPage] = useState(1);
-
+  const totalPages = Math.ceil(transformedChartData.length / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
   const endIndex = startIndex + itemsPerPage;
   const visibleChartData = transformedChartData.slice(startIndex, endIndex);
 
-  const handlePageChange = (pageNumber: number) => {
-    setCurrentPage(pageNumber);
+  const handlePrev = () => {
+    if (currentPage > 1) setCurrentPage((prev) => prev - 1);
   };
+
+  const handleNext = () => {
+    if (currentPage < totalPages) setCurrentPage((prev) => prev + 1);
+  };
+
+  if (!chart5Data || chart5Data.length === 0) {
+    return <div>Loading chart data...</div>;
+  }
 
   return (
     <div>
-      {/* <ChartSummary chartData={staticChartData} chartType="chart5" /> */}
       {visibleChartData.map((val, i) => (
-        <div
-          key={i}
-          style={{
-            marginBottom: i !== transformedChartData.length - 1 ? '50px' : '0',
-          }}
-        >
+        <div key={i} style={{ marginBottom: '40px' }}>
           <ApexCharts
             options={getChartOptions(val)}
             series={val.data.series}
@@ -289,12 +256,42 @@ const MultiLine2: React.FC<{ isLoading?: boolean }> = ({ isLoading }) => {
           />
         </div>
       ))}
-      {/* <Pagination
-        currentPage={currentPage}
-        totalItems={transformedChartData.length}
-        itemsPerPage={itemsPerPage}
-        onPageChange={handlePageChange}
-      /> */}
+
+      {transformedChartData.length > itemsPerPage && (
+        <div style={{ display: 'flex', justifyContent: 'center', gap: '1rem' }}>
+          <button
+            onClick={handlePrev}
+            disabled={currentPage === 1}
+            style={{
+              padding: '8px 16px',
+              background: '#14532d',
+              color: '#fff',
+              border: 'none',
+              borderRadius: '4px',
+              cursor: currentPage === 1 ? 'not-allowed' : 'pointer',
+            }}
+          >
+            Prev
+          </button>
+          <span style={{ alignSelf: 'center' }}>
+            Page {currentPage} of {totalPages}
+          </span>
+          <button
+            onClick={handleNext}
+            disabled={currentPage === totalPages}
+            style={{
+              padding: '8px 16px',
+              background: '#14532d',
+              color: '#fff',
+              border: 'none',
+              borderRadius: '4px',
+              cursor: currentPage === totalPages ? 'not-allowed' : 'pointer',
+            }}
+          >
+            Next
+          </button>
+        </div>
+      )}
     </div>
   );
 };

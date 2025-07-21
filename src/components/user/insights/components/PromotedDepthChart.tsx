@@ -1,15 +1,8 @@
 'use client';
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import ApexCharts from 'react-apexcharts';
-// import Pagination from './pagination/Pagination';
-// import ChartSummary from './ChartSummary';
-
-type ChartDataItem = {
-  Retailer: string;
-  Product: string;
-  Average_discount_depth: number;
-  Promo_Price_Elasticity: number;
-};
+import { useSelector } from 'react-redux';
+import { RootState } from '@/store';
 
 type SeriesItem = {
   name: string;
@@ -28,73 +21,53 @@ type RetailerChart = {
   };
 };
 
-// --- Static Data ---
-const mockChart6Data: ChartDataItem[] = [
-  {
-    Retailer: 'Retailer A',
-    Product: 'Product 1',
-    Average_discount_depth: 12.5,
-    Promo_Price_Elasticity: -1.5,
-  },
-  {
-    Retailer: 'Retailer A',
-    Product: 'Product 2',
-    Average_discount_depth: 15,
-    Promo_Price_Elasticity: -2.0,
-  },
-  {
-    Retailer: 'Retailer B',
-    Product: 'Product X',
-    Average_discount_depth: 10,
-    Promo_Price_Elasticity: -1.8,
-  },
-  {
-    Retailer: 'Retailer B',
-    Product: 'Product Y',
-    Average_discount_depth: 8.2,
-    Promo_Price_Elasticity: -1.3,
-  },
-];
-
 const PromotedDepthChart: React.FC = () => {
   const [isStacked, setIsStacked] = useState(false);
   const [chartType, setChartType] = useState<'bar' | 'line'>('bar');
   const [chartType2, setChartType2] = useState<'bar' | 'line'>('line');
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 1;
 
-  const retailers: { [key: string]: RetailerChart } = {};
+  // ✅ Access chart6 data from Redux
+  const chart6Data = useSelector((state: RootState) => state.chart.data6);
 
-  mockChart6Data.forEach((item) => {
-    const retailer = item.Retailer;
-    if (!retailers[retailer]) {
-      retailers[retailer] = {
-        Retailer: retailer,
-        xAxisTitle: 'Products',
-        yAxisTitle: 'Promo Price Elasticity',
-        y1AxisTitle: 'Average Discount Depth',
-        data: {
-          categories: [],
-          series: [
-            {
-              name: 'Average Discount Depth',
-              type: chartType2,
-              data: [],
-            },
-            {
-              name: 'Promo Price Elasticity',
-              type: chartType,
-              data: [],
-            },
-          ],
-        },
-      };
-    }
+  // ✅ Transform data using useMemo
+  const restructuredData = useMemo(() => {
+    const retailers: { [key: string]: RetailerChart } = {};
 
-    retailers[retailer].data.categories.push(item.Product);
-    retailers[retailer].data.series[0].data.push(item.Average_discount_depth);
-    retailers[retailer].data.series[1].data.push(item.Promo_Price_Elasticity);
-  });
+    chart6Data?.forEach((item) => {
+      const retailer = item.Retailer;
+      if (!retailers[retailer]) {
+        retailers[retailer] = {
+          Retailer: retailer,
+          xAxisTitle: 'Products',
+          yAxisTitle: 'Promo Price Elasticity',
+          y1AxisTitle: 'Average Discount Depth',
+          data: {
+            categories: [],
+            series: [
+              {
+                name: 'Average Discount Depth',
+                type: chartType2,
+                data: [],
+              },
+              {
+                name: 'Promo Price Elasticity',
+                type: chartType,
+                data: [],
+              },
+            ],
+          },
+        };
+      }
 
-  const restructuredData: RetailerChart[] = Object.values(retailers);
+      retailers[retailer].data.categories.push(item.Product);
+      retailers[retailer].data.series[0].data.push(item.Average_discount_depth);
+      retailers[retailer].data.series[1].data.push(item.Promo_Price_Elasticity);
+    });
+
+    return Object.values(retailers);
+  }, [chart6Data, chartType, chartType2]);
 
   const getChartOptions = (data: RetailerChart) => ({
     chart: {
@@ -107,7 +80,6 @@ const PromotedDepthChart: React.FC = () => {
           selection: true,
           pan: true,
           reset: true,
-          customIcons: [],
         },
       },
     },
@@ -189,9 +161,6 @@ const PromotedDepthChart: React.FC = () => {
     },
   });
 
-  const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 2;
-
   const paginate = (
     data: RetailerChart[],
     currentPage: number,
@@ -205,7 +174,6 @@ const PromotedDepthChart: React.FC = () => {
 
   return (
     <div>
-      {/* <ChartSummary chartData={mockChart6Data} chartType="chart6" /> */}
       {paginatedData.map((data, index) => (
         <div key={index} style={{ marginBottom: '50px' }}>
           <h6 style={{ textAlign: 'center' }}>{data.Retailer}</h6>
@@ -217,12 +185,27 @@ const PromotedDepthChart: React.FC = () => {
           />
         </div>
       ))}
-      {/* <Pagination
-        currentPage={currentPage}
-        totalItems={restructuredData.length}
-        itemsPerPage={itemsPerPage}
-        onPageChange={(page: number) => setCurrentPage(page)}
-      /> */}
+
+      <div style={{ display: 'flex', justifyContent: 'center', gap: 10 }}>
+        <button
+          disabled={currentPage === 1}
+          onClick={() => setCurrentPage((prev) => prev - 1)}
+        >
+          Prev
+        </button>
+        <span>
+          Page {currentPage} of{' '}
+          {Math.ceil(restructuredData.length / itemsPerPage)}
+        </span>
+        <button
+          disabled={
+            currentPage === Math.ceil(restructuredData.length / itemsPerPage)
+          }
+          onClick={() => setCurrentPage((prev) => prev + 1)}
+        >
+          Next
+        </button>
+      </div>
     </div>
   );
 };

@@ -1,14 +1,12 @@
 'use client';
 
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import ReactECharts from 'echarts-for-react';
-// import Pagination from './pagination/Pagination';
-// import ChartSummary from './ChartSummary';
+import { useDispatch, useSelector } from 'react-redux';
+import { RootState, AppDispatch } from '@/store';
+import { fetchChart9DataThunk } from '@/store/slices/chartsSlices';
 
-type ChartPoint = {
-  x: number;
-  y: number;
-};
+type ChartPoint = { x: number; y: number };
 
 type Dataset = {
   label: string;
@@ -33,53 +31,22 @@ type RetailerChart = {
 const ElasticityStratagyChart: React.FC<{ isLoading: boolean }> = ({
   isLoading,
 }) => {
-  const [chartData, setChartData] = useState<RetailerChart[]>([]);
+  const dispatch = useDispatch<AppDispatch>();
+  const { data9, loading } = useSelector((state: RootState) => state.chart);
+  const [currentPage, setCurrentPage] = useState<number>(1);
+  const itemsPerPage = 5;
+  const chartRef = useRef<any>(null);
 
-  // Static raw input data
-  const rawData = [
-    {
-      Retailer: 'Retailer A',
-      Product: 'Product 1',
-      Base_Price_Elasticity: -1.5,
-      Promo_Price_Elasticity: -2.3,
-    },
-    {
-      Retailer: 'Retailer A',
-      Product: 'Product 2',
-      Base_Price_Elasticity: -0.8,
-      Promo_Price_Elasticity: -1.9,
-    },
-    {
-      Retailer: 'Retailer B',
-      Product: 'Product 1',
-      Base_Price_Elasticity: -1.2,
-      Promo_Price_Elasticity: -0.7,
-    },
-    {
-      Retailer: 'Retailer B',
-      Product: 'Product 3',
-      Base_Price_Elasticity: -2.4,
-      Promo_Price_Elasticity: -2.1,
-    },
-    {
-      Retailer: 'Retailer C',
-      Product: 'Product 4',
-      Base_Price_Elasticity: -3.5,
-      Promo_Price_Elasticity: -3.0,
-    },
-    {
-      Retailer: 'Retailer C',
-      Product: 'Product 5',
-      Base_Price_Elasticity: -1.1,
-      Promo_Price_Elasticity: -2.8,
-    },
-  ];
+  useEffect(() => {
+    if (!data9 || data9.length === 0) {
+      dispatch(fetchChart9DataThunk({ projectId: 762, modelId: 916 }));
+    }
+  }, [data9, dispatch]);
 
-  // Convert raw input data into structured chart data
-  const transformData = (data: typeof rawData): RetailerChart[] => {
+  const transformedData = useMemo(() => {
     const chartDataMap: Record<string, RetailerChart> = {};
 
-    data.forEach((item) => {
+    data9?.forEach((item: any) => {
       const retailer = item.Retailer;
       if (!chartDataMap[retailer]) {
         chartDataMap[retailer] = {
@@ -88,9 +55,7 @@ const ElasticityStratagyChart: React.FC<{ isLoading: boolean }> = ({
           xycoordinated: false,
           xAxisTitle: 'Base Price Elasticity',
           yAxisTitle: 'Promo Price Elasticity',
-          data: {
-            datasets: [],
-          },
+          data: { datasets: [] },
         };
       }
 
@@ -107,15 +72,34 @@ const ElasticityStratagyChart: React.FC<{ isLoading: boolean }> = ({
     });
 
     return Object.values(chartDataMap);
-  };
-
-  useEffect(() => {
-    const transformed = transformData(rawData);
-    setChartData(transformed);
-  }, []);
+  }, [data9]);
 
   const getDataOption = (chartData: RetailerChart) => {
-    const datasets = chartData?.data?.datasets ?? [];
+    const datasets = chartData?.data?.datasets?.filter(Boolean) || [];
+
+    let maxX = Number.MIN_SAFE_INTEGER;
+    let maxY = Number.MIN_SAFE_INTEGER;
+    let minX = Number.MAX_SAFE_INTEGER;
+    let minY = Number.MAX_SAFE_INTEGER;
+
+    datasets.forEach((dataset) => {
+      dataset.data.forEach(({ x, y }) => {
+        maxX = Math.max(maxX, x);
+        minX = Math.min(minX, x);
+        maxY = Math.max(maxY, y);
+        minY = Math.min(minY, y);
+      });
+    });
+
+    const absMax = Math.max(
+      Math.abs(minX),
+      Math.abs(maxX),
+      Math.abs(minY),
+      Math.abs(maxY)
+    );
+    const buffer = 0.1;
+    const max = absMax + absMax * buffer;
+    const min = -max;
 
     return {
       title: {
@@ -128,62 +112,55 @@ const ElasticityStratagyChart: React.FC<{ isLoading: boolean }> = ({
         trigger: 'item',
         formatter: (params: any) => {
           const dataset = datasets[params.seriesIndex];
-          const dataItem = dataset?.data[params.dataIndex];
-          return `${dataset?.label}<br />Base Price Elasticity: ${dataItem.x.toFixed(
-            2
-          )}<br />Promo Price Elasticity: ${dataItem.y.toFixed(2)}`;
+          const dataItem = dataset?.data?.[params.dataIndex];
+          if (!dataItem) return '';
+          return `${dataset.label}<br />Base Price Elasticity: ${dataItem.x.toFixed(2)}<br />Promo Price Elasticity: ${dataItem.y.toFixed(2)}`;
+        },
+      },
+      toolbox: {
+        show: true,
+        feature: {
+          saveAsImage: { show: true },
         },
       },
       xAxis: {
         type: 'value',
         name: chartData.xAxisTitle,
-        inverse: true,
-        min: -4,
-        max: 0,
-        axisLabel: {
-          formatter: (value: number) => value.toFixed(2),
-        },
         nameLocation: 'middle',
         nameGap: 25,
-        nameTextStyle: { fontWeight: 'bold' },
+        inverse: true,
+        min,
+        max: 0,
         splitLine: { show: true },
+        nameTextStyle: { fontWeight: 'bold' },
+        axisLabel: { formatter: (val: number) => val.toFixed(2) },
       },
       yAxis: {
         type: 'value',
         name: chartData.yAxisTitle,
-        inverse: true,
-        min: -4,
-        max: 0,
-        axisLabel: {
-          formatter: (value: number) => value.toFixed(2),
-          rotate: 90,
-          align: 'center',
-        },
         nameLocation: 'middle',
         nameGap: 40,
-        nameTextStyle: { fontWeight: 'bold' },
+        inverse: true,
+        min,
+        max: 0,
         splitLine: { show: true },
+        nameTextStyle: { fontWeight: 'bold' },
+        axisLabel: { rotate: 90, formatter: (val: number) => val.toFixed(2) },
       },
       series: datasets.map((dataset) => ({
         name: dataset.label,
         type: 'scatter',
-        data: dataset.data.map((d) => [d.x, d.y]),
+        data: dataset.data.map(({ x, y }) => [x, y]),
         symbolSize: 20,
         itemStyle: {
           borderColor: dataset.borderColor,
           backgroundColor: dataset.backgroundColor,
         },
-        emphasis: {
-          focus: 'series',
-        },
+        emphasis: { focus: 'series' },
         markLine: {
           data: [{ xAxis: -2 }, { yAxis: -2 }],
           symbol: ['none', 'none'],
-          lineStyle: {
-            color: '#93969E',
-            type: 'solid',
-            width: 1,
-          },
+          lineStyle: { color: '#93969E', type: 'solid', width: 1 },
         },
       })),
       graphic: [
@@ -235,44 +212,60 @@ const ElasticityStratagyChart: React.FC<{ isLoading: boolean }> = ({
     };
   };
 
-  // Pagination
-  const [currentPage, setCurrentPage] = useState<number>(1);
-  const itemsPerPage = 2;
-
-  const paginate = (
-    data: RetailerChart[],
-    currentPage: number,
-    itemsPerPage: number
-  ) => {
+  const paginatedData = useMemo(() => {
     const start = (currentPage - 1) * itemsPerPage;
-    return data.slice(start, start + itemsPerPage);
-  };
+    return transformedData.slice(start, start + itemsPerPage);
+  }, [transformedData, currentPage]);
 
-  const paginatedData = paginate(chartData, currentPage, itemsPerPage);
+  const totalPages = Math.ceil(transformedData.length / itemsPerPage);
 
   return (
     <div>
-      {/* <ChartSummary chartData={rawData} chartType="chart9" /> */}
-      {paginatedData.map((chart, i) => (
-        <ReactECharts
-          key={i}
-          option={getDataOption(chart)}
-          showLoading={isLoading}
-          style={{
-            width: '100%',
-            height: '500px',
-            marginBottom: i !== paginatedData.length - 1 ? '50px' : '0',
-          }}
-          lazyUpdate
-          notMerge
-        />
-      ))}
-      {/* <Pagination
-        currentPage={currentPage}
-        totalItems={chartData.length}
-        itemsPerPage={itemsPerPage}
-        onPageChange={setCurrentPage}
-      /> */}
+      {loading ? (
+        <div>Loading...</div>
+      ) : (
+        <>
+          {paginatedData.map((chart, i) => (
+            <ReactECharts
+              key={i}
+              option={getDataOption(chart)}
+              showLoading={isLoading}
+              style={{ width: '100%', height: '500px', marginBottom: '50px' }}
+              ref={chartRef}
+              lazyUpdate
+              notMerge
+            />
+          ))}
+
+          {/* Custom Pagination Controls */}
+          <div
+            style={{
+              display: 'flex',
+              justifyContent: 'center',
+              gap: '20px',
+              marginTop: '20px',
+            }}
+          >
+            <button
+              onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+              disabled={currentPage === 1}
+            >
+              Previous
+            </button>
+            <span>
+              Page {currentPage} of {totalPages}
+            </span>
+            <button
+              onClick={() =>
+                setCurrentPage((prev) => (prev < totalPages ? prev + 1 : prev))
+              }
+              disabled={currentPage === totalPages}
+            >
+              Next
+            </button>
+          </div>
+        </>
+      )}
     </div>
   );
 };

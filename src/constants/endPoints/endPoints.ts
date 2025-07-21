@@ -13,5 +13,21 @@ export const API_ENDPOINTS = {
   INSIGHTS: {
     CHART1: (projectId: number, modelId: number) =>
       `/insights/chart1?project_id=${projectId}&model_id=${modelId}`,
+    CHART_2: (projectId: number, modelId: number) =>
+      `/insights/chart2?project_id=${projectId}&model_id=${modelId}`,
+    CHART3: (projectId: number, modelId: number) =>
+      `/insights/chart3?project_id=${projectId}&model_id=${modelId}`,
+    CHART4: (projectId: number, modelId: number) =>
+      `/insights/chart4?project_id=${projectId}&model_id=${modelId}`,
+    CHART5: (projectId: number, modelId: number) =>
+      `/insights/chart5?project_id=${projectId}&model_id=${modelId}`,
+    CHART6: (projectId: number, modelId: number) =>
+      `/insights/chart6?project_id=${projectId}&model_id=${modelId}`,
+    CHART7: (projectId: number, modelId: number) =>
+      `/insights/chart7?project_id=${projectId}&model_id=${modelId}`,
+    CHART8: (projectId: number, modelId: number) =>
+      `/insights/chart8?project_id=${projectId}&model_id=${modelId}`,
+    CHART9: (projectId: number, modelId: number) =>
+      `/insights/chart9?project_id=${projectId}&model_id=${modelId}`,
   },
 };
