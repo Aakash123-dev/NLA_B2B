@@ -118,7 +118,7 @@ const UserNavbar = () => {
   }, []);
 
   const navItems = [
-    { name: 'Dashboard', href: '/user', icon: Gauge },
+    { name: 'Dashboard', href: '/user/dashboard', icon: Gauge },
     { name: 'Projects', href: '/user/projects', icon: FolderOpen },
     { name: 'Key Metrics', href: '/user/metrics', icon: BarChart3 },
     { name: 'Promo Optimization', href: '/user/promo-optimization', icon: Percent },

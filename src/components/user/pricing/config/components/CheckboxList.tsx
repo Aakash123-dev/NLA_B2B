@@ -22,25 +22,30 @@ export function CheckboxList({ title, items, selectedItems, onSelectionChange, h
   }
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-4">
       {title && (
-        <Label className="text-slate-700 font-medium text-sm">
-          {title} ({selectedItems.length} selected)
-        </Label>
+        <div className="flex items-center justify-between">
+          <Label className="text-slate-800 font-semibold text-base">
+            {title}
+          </Label>
+          <span className="text-xs font-medium px-2 py-1 bg-slate-100 text-slate-600 rounded-full">
+            {selectedItems.length} selected
+          </span>
+        </div>
       )}
-      <ScrollArea className={`${height} rounded-lg border border-slate-200 bg-white p-3`}>
+      <ScrollArea className={`${height} rounded-lg border-0 bg-white/70 backdrop-blur-sm p-3 shadow-sm`}>
         <div className="space-y-2">
           {items.map(item => (
-            <div key={item.id} className="flex items-center space-x-3 p-2 rounded-md hover:bg-slate-50 transition-colors duration-150">
+            <div key={item.id} className="flex items-center space-x-3 p-3 rounded-lg hover:bg-white/80 hover:shadow-sm transition-all duration-200 border border-transparent hover:border-slate-200">
               <Checkbox 
                 id={`${title.toLowerCase().replace(/\s+/g, '-')}-${item.id}`} 
                 checked={selectedItems.includes(item.id)} 
                 onCheckedChange={() => handleToggle(item.id)}
-                className="border-slate-300 data-[state=checked]:bg-blue-500 data-[state=checked]:border-blue-500"
+                className="border-slate-300 data-[state=checked]:bg-blue-500 data-[state=checked]:border-blue-500 shadow-sm"
               />
               <Label 
                 htmlFor={`${title.toLowerCase().replace(/\s+/g, '-')}-${item.id}`} 
-                className="text-sm text-slate-700 cursor-pointer flex-1 font-normal"
+                className="text-sm text-slate-700 cursor-pointer flex-1 font-medium"
               >
                 {item.name}
               </Label>
@@ -49,7 +54,7 @@ export function CheckboxList({ title, items, selectedItems, onSelectionChange, h
         </div>
       </ScrollArea>
       {selectedItems.length === 0 && (
-        <p className="text-xs text-slate-500 mt-2">No items selected</p>
+        <p className="text-xs text-slate-500 mt-2 text-center py-2">No items selected</p>
       )}
     </div>
   )
