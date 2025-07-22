@@ -39,20 +39,30 @@ export function ToolContent({
     
     router.push(`/user/pricing-model?${params.toString()}`);
   };
+
+  const handleTpoConfigure = () => {
+    // Get URL parameters and preserve them when navigating to TPO
+    const urlParams = new URLSearchParams(window.location.search);
+    const projectId = urlParams.get('project');
+    const modelId = urlParams.get('model');
+    
+    const params = new URLSearchParams();
+    if (projectId) params.set('project', projectId);
+    if (modelId) params.set('model', modelId);
+    
+    // Navigate to TPO main page first, then user can proceed to setup
+    router.push(`/user/tpo?${params.toString()}`);
+  };
   const toolHeader = (
     <div className="mb-8">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold text-slate-900 dark:text-white mb-2">{nodeName}</h1>
-          <p className="text-slate-600 dark:text-slate-400">
+                    <p className="text-slate-600 dark:text-slate-400">
             {nodeType === 'pricing' && 'Configure pricing models and competitive analysis'}
             {nodeType === 'forecasting' && 'Build predictive models for future trends'}
             {nodeType === 'insights-template' && 'Pre-built insight visualization templates'}
-            {nodeType === 'pie-chart' && 'Create pie chart visualizations for data analysis'}
-            {nodeType === 'standard-insights-report' && 'Generate standard insights reports'}
-            {nodeType === 'trade-calendar' && 'Schedule and track trading activities'}
             {nodeType === 'trade-plan-optimization' && 'Optimize trading strategies and execution plans'}
-            {nodeType === 'data-filter' && 'Filter and process data for analysis'}
             {nodeType.startsWith('template-') && 'Visualization dashboard and analytics'}
           </p>
         </div>
@@ -202,6 +212,15 @@ export function ToolContent({
       return (
         <div className="p-8 space-y-6">
           {toolHeader}
+          <div className="mb-6">
+            <Button
+              onClick={handleTpoConfigure}
+              className="bg-gradient-to-r from-emerald-500 to-cyan-500 hover:from-emerald-600 hover:to-cyan-600 text-white px-6 py-2 rounded-lg flex items-center gap-2 font-medium"
+            >
+              <Settings className="w-4 h-4" />
+              Configure Trade Plan Optimization
+            </Button>
+          </div>
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <Card className="bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm border border-slate-200 dark:border-slate-700/50">
               <CardHeader>
