@@ -1,6 +1,7 @@
 // Export all insight components
 export { InsightCard } from './InsightCard';
 export { InsightsContentSection } from './InsightsContentSection';
+export { InsightsFilters } from './InsightsFilters';
 export { InsightsHeader } from './InsightsHeader';
 export { InsightsHeaderSection } from './InsightsHeaderSection';
 export { InsightsLayout } from './InsightsLayout';
