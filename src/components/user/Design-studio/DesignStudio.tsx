@@ -200,6 +200,21 @@ function DesignStudioInner({ selectedProject }: DesignStudioProps) {
       return;
     }
     
+    // For trade-plan-optimization nodes, navigate to TPO main page first
+    if (nodeType === 'trade-plan-optimization') {
+      // Get URL parameters and preserve them when navigating to TPO
+      const urlParams = new URLSearchParams(window.location.search);
+      const projectId = urlParams.get('project');
+      const modelId = urlParams.get('model');
+      
+      const params = new URLSearchParams();
+      if (projectId) params.set('project', projectId);
+      if (modelId) params.set('model', modelId);
+      
+      window.location.href = `/user/tpo?${params.toString()}`;
+      return;
+    }
+    
     // For other nodes, open configuration panel
     setConfiguration({
       isOpen: true,
