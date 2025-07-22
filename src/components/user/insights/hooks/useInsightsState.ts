@@ -29,6 +29,11 @@ export const useInsightsState = () => {
 	const [selectedPPG, setSelectedPPG] = useState("ppg-01");
 	const [selectedUPC, setSelectedUPC] = useState("all");
 
+	// New multiselect filter states
+	const [selectedRetailers, setSelectedRetailers] = useState<string[]>([]);
+	const [selectedBrands, setSelectedBrands] = useState<string[]>([]);
+	const [selectedProducts, setSelectedProducts] = useState<string[]>([]);
+
 	// Chart states
 	const [selectedColorScheme, setSelectedColorScheme] = useState("default");
 	const [showLegend, setShowLegend] = useState(true);
@@ -179,6 +184,10 @@ export const useInsightsState = () => {
 		isLoading,
 		setApiData,
 		apiData,
+		// New multiselect filter states
+		selectedRetailers,
+		selectedBrands,
+		selectedProducts,
 	};
 
 	const actions = {
@@ -217,6 +226,15 @@ export const useInsightsState = () => {
 		generateSummary,
 		apiData,
 		setApiData,
+		// New multiselect filter actions
+		setSelectedRetailers,
+		setSelectedBrands,
+		setSelectedProducts,
+		clearAllFilters: () => {
+			setSelectedRetailers([]);
+			setSelectedBrands([]);
+			setSelectedProducts([]);
+		},
 	};
 
 	return { state, actions };

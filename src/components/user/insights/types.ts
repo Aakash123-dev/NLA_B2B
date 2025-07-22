@@ -118,6 +118,11 @@ export interface InsightsState {
 	selectedPPG: string;
 	selectedUPC: string;
 
+	// New multiselect filter states
+	selectedRetailers: string[];
+	selectedBrands: string[];
+	selectedProducts: string[];
+
 	// Chart states
 	selectedColorScheme: string;
 	showLegend: boolean;
