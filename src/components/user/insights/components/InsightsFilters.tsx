@@ -1,11 +1,7 @@
 'use client';
-
-import React, { useState, useMemo } from 'react';
+import React, { useMemo } from 'react';
 import { Check, ChevronDown, Filter, X, Search } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import {
   Command,
@@ -22,24 +18,6 @@ import {
 } from '@/components/ui/popover';
 import { useSelector } from 'react-redux';
 import { RootState } from '@/store';
-
-// Dummy data for filters when no API data is available
-const DUMMY_RETAILERS = [
-  'Walmart', 'Target', 'Kroger', 'Safeway', 'Whole Foods', 
-  'Costco', 'Publix', 'Meijer', 'H-E-B', 'King Soopers'
-];
-
-const DUMMY_BRANDS = [
-  'Starbucks', 'Dunkin', 'Folgers', 'Maxwell House', 'Peet\'s Coffee',
-  'Caribou Coffee', 'Green Mountain', 'Lavazza', 'Illy', 'Eight O\'Clock'
-];
-
-const DUMMY_PRODUCTS = [
-  'Pike Place Roast K-Cups', 'Original Blend Ground Coffee', 'Dark Roast Whole Bean',
-  'French Roast K-Cups', 'Medium Roast Ground Coffee', 'Espresso Blend',
-  'Breakfast Blend K-Cups', 'Decaf Colombian', 'Cold Brew Concentrate',
-  'Vanilla Flavored Coffee', 'Hazelnut Ground Coffee', 'Italian Roast'
-];
 
 interface InsightsFiltersProps {
   selectedRetailers: string[];
@@ -60,77 +38,157 @@ export const InsightsFilters: React.FC<InsightsFiltersProps> = ({
   setSelectedProducts,
   onClearAll,
 }) => {
-  const [openRetailer, setOpenRetailer] = useState(false);
-  const [openBrand, setOpenBrand] = useState(false);
-  const [openProduct, setOpenProduct] = useState(false);
+  // Fetch chartFilterData from Redux
+  const { data: chartFilterData } = useSelector(
+    (state: RootState) => state.chartFilter
+  );
 
-  // Get data from Redux store to extract unique values
-  const { data: chartItems } = useSelector((state: RootState) => state.chart);
 
-  // Extract unique values from chart data or use dummy data
-  const { retailers, brands, products } = useMemo(() => {
-    if (!chartItems || chartItems.length === 0) {
-      return { 
-        retailers: DUMMY_RETAILERS, 
-        brands: DUMMY_BRANDS, 
-        products: DUMMY_PRODUCTS 
-      };
-    }
+  const retailers = useMemo(
+    () => (chartFilterData ? chartFilterData.map((r) => r.name) : []),
+    [chartFilterData]
+  );
 
-    const retailerSet = new Set<string>();
-    const brandSet = new Set<string>();
-    const productSet = new Set<string>();
-
-    chartItems.forEach((item: any) => {
-      if (item.Retailer) retailerSet.add(item.Retailer);
-      if (item.Brand) brandSet.add(item.Brand);
-      if (item.Product) productSet.add(item.Product);
+  // Filter brands only belonging to selected retailers
+  const brands = useMemo(() => {
+    if (!chartFilterData || selectedRetailers.length === 0) return [];
+    const selectedRetailerData = chartFilterData.filter((r) =>
+      selectedRetailers.includes(r.name)
+    );
+    const brandsSet = new Set<string>();
+    selectedRetailerData.forEach((r) => {
+      r.brands.forEach((b) => brandsSet.add(b.name));
     });
+    return Array.from(brandsSet).sort();
+  }, [chartFilterData, selectedRetailers]);
 
-    return {
-      retailers: Array.from(retailerSet).sort(),
-      brands: Array.from(brandSet).sort(),
-      products: Array.from(productSet).sort(),
-    };
-  }, [chartItems]);
+  // Filter products only belonging to selected brands (and their selected retailers)
+  const products = useMemo(() => {
+    if (!chartFilterData || selectedBrands?.length === 0) return [];
+    let result: string[] = [];
+    chartFilterData.forEach((r) => {
+      if (
+        selectedRetailers.length === 0 ||
+        selectedRetailers.includes(r.name)
+      ) {
+        r.brands.forEach((b) => {
+          if (selectedBrands.includes(b.name)) {
+            result.push(...b.products.map((p) => p.name));
+          }
+        });
+      }
+    });
+    return Array.from(new Set(result)).sort();
+  }, [chartFilterData, selectedRetailers, selectedBrands]);
+
+  // === Helpers for updating selected Brands/Products ===
+  const getBrandsForRetailers = (retailers: string[]): string[] => {
+    if (!chartFilterData) return [];
+    const brandsSet = new Set<string>();
+    chartFilterData.forEach((r) => {
+      if (retailers.includes(r.name)) {
+        r.brands.forEach((b) => brandsSet.add(b.name));
+      }
+    });
+    return Array.from(brandsSet);
+  };
+
+  const getProductsForBrandsAndRetailers = (
+    brands: string[],
+    retailers: string[]
+  ): string[] => {
+    if (!chartFilterData) return [];
+    const productsSet = new Set<string>();
+    chartFilterData.forEach((r) => {
+      if (retailers.length === 0 || retailers.includes(r.name)) {
+        r.brands.forEach((b) => {
+          if (brands.includes(b.name)) {
+            b.products.forEach((p) => productsSet.add(p.name));
+          }
+        });
+      }
+    });
+    return Array.from(productsSet);
+  };
+
+  // === 3. Select/deselect logic ===
 
   const handleRetailerSelect = (retailer: string) => {
+    let updated: string[];
     if (selectedRetailers.includes(retailer)) {
-      setSelectedRetailers(selectedRetailers.filter(r => r !== retailer));
+      updated = selectedRetailers.filter((r) => r !== retailer);
     } else {
-      setSelectedRetailers([...selectedRetailers, retailer]);
+      updated = [...selectedRetailers, retailer];
     }
+    setSelectedRetailers(updated);
+
+    // Only keep brands still possible for these retailers
+    const possibleBrands = getBrandsForRetailers(updated);
+    setSelectedBrands((prev) => prev.filter((b) => possibleBrands.includes(b)));
+
+    // Only keep products that are still possible for those brands+retailers
+    const updatedBrands = selectedBrands.filter((b) =>
+      possibleBrands.includes(b)
+    );
+    const possibleProducts = getProductsForBrandsAndRetailers(
+      updatedBrands,
+      updated
+    );
+    setSelectedProducts((prev) =>
+      prev.filter((p) => possibleProducts.includes(p))
+    );
   };
 
   const handleBrandSelect = (brand: string) => {
+    let updated: string[];
     if (selectedBrands.includes(brand)) {
-      setSelectedBrands(selectedBrands.filter(b => b !== brand));
+      updated = selectedBrands.filter((b) => b !== brand);
     } else {
-      setSelectedBrands([...selectedBrands, brand]);
+      updated = [...selectedBrands, brand];
     }
+    setSelectedBrands(updated);
+
+    const possibleProducts = getProductsForBrandsAndRetailers(
+      updated,
+      selectedRetailers
+    );
+    setSelectedProducts((prev) =>
+      prev.filter((p) => possibleProducts.includes(p))
+    );
   };
 
   const handleProductSelect = (product: string) => {
+    let updated: string[];
     if (selectedProducts.includes(product)) {
-      setSelectedProducts(selectedProducts.filter(p => p !== product));
+      updated = selectedProducts.filter((p) => p !== product);
     } else {
-      setSelectedProducts([...selectedProducts, product]);
+      updated = [...selectedProducts, product];
     }
+    setSelectedProducts(updated);
   };
 
-  const hasActiveFilters = selectedRetailers.length > 0 || selectedBrands.length > 0 || selectedProducts.length > 0;
-  const getTotalFilters = () => selectedRetailers.length + selectedBrands.length + selectedProducts.length;
+  const hasActiveFilters =
+    selectedRetailers?.length > 0 ||
+    selectedBrands?.length > 0 ||
+    selectedProducts?.length > 0;
+
+  const getTotalFilters = () =>
+    selectedRetailers?.length + selectedBrands?.length + selectedProducts?.length;
+
+  // --- 4. UI (UI stays as in your base version) ---
 
   return (
-    <div className="w-full bg-white border-b border-gray-100">
-      <div className="px-6 lg:px-12 py-4">
-        {/* Header */}
-        <div className="flex items-center justify-between mb-4">
+    <div className="w-full border-b border-gray-100 bg-white">
+      <div className="px-6 py-4 lg:px-12">
+        <div className="mb-4 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <Filter className="w-4 h-4 text-gray-500" />
+            <Filter className="h-4 w-4 text-gray-500" />
             <span className="text-sm font-medium text-gray-700">Filters</span>
             {hasActiveFilters && (
-              <Badge variant="secondary" className="bg-blue-50 text-blue-600 border-blue-200 text-xs">
+              <Badge
+                variant="secondary"
+                className="border-blue-200 bg-blue-50 text-xs text-blue-600"
+              >
                 {getTotalFilters()}
               </Badge>
             )}
@@ -140,33 +198,34 @@ export const InsightsFilters: React.FC<InsightsFiltersProps> = ({
               variant="ghost"
               size="sm"
               onClick={onClearAll}
-              className="text-xs text-gray-500 hover:text-gray-700 h-7 px-2"
+              className="h-7 px-2 text-xs text-gray-500 hover:text-gray-700"
             >
               Clear all
             </Button>
           )}
         </div>
-
-        {/* Filter Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
           {/* Retailer Filter */}
           <div className="space-y-2">
-            <Popover open={openRetailer} onOpenChange={setOpenRetailer}>
+            <Popover>
               <PopoverTrigger asChild>
                 <Button
                   variant="outline"
                   role="combobox"
-                  aria-expanded={openRetailer}
-                  className="w-full justify-between h-10 text-sm font-normal bg-gray-50 border-gray-200 hover:bg-gray-100 focus:bg-white focus:border-blue-300"
+                  aria-expanded="false"
+                  className="h-10 w-full justify-between border-gray-200 bg-gray-50 text-sm font-normal hover:bg-gray-100"
+                  disabled={retailers.length === 0}
                 >
-                  <div className="flex items-center gap-2 flex-1 min-w-0">
-                    <span className="text-xs text-gray-500 shrink-0">Retailer:</span>
+                  <div className="flex min-w-0 flex-1 items-center gap-2">
+                    <span className="shrink-0 text-xs text-gray-500">
+                      Retailer:
+                    </span>
                     <span className="truncate text-gray-700">
-                      {selectedRetailers.length === 0
-                        ? "All retailers"
-                        : selectedRetailers.length === 1
-                        ? selectedRetailers[0]
-                        : `${selectedRetailers.length} selected`}
+                      {selectedRetailers?.length === 0
+                        ? 'All retailers'
+                        : selectedRetailers?.length === 1
+                          ? selectedRetailers[0]
+                          : `${selectedRetailers?.length} selected`}
                     </span>
                   </div>
                   <ChevronDown className="h-3 w-3 shrink-0 text-gray-400" />
@@ -176,28 +235,25 @@ export const InsightsFilters: React.FC<InsightsFiltersProps> = ({
                 <Command>
                   <div className="flex items-center border-b px-3">
                     <Search className="mr-2 h-4 w-4 shrink-0 text-gray-400" />
-                    <CommandInput 
-                      placeholder="Search retailers..." 
-                      className="flex h-10 w-full rounded-md bg-transparent py-3 text-sm outline-none placeholder:text-gray-400 disabled:cursor-not-allowed disabled:opacity-50 border-0"
-                    />
+                    <CommandInput placeholder="Search retailers..." />
                   </div>
                   <CommandList className="max-h-[300px]">
                     <CommandEmpty className="py-6 text-center text-sm text-gray-500">
                       No retailers found.
                     </CommandEmpty>
                     <CommandGroup>
-                      {retailers.map((retailer) => (
+                      {retailers?.map((retailer) => (
                         <CommandItem
                           key={retailer}
                           value={retailer}
                           onSelect={() => handleRetailerSelect(retailer)}
-                          className="cursor-pointer flex items-center gap-2 px-3 py-2 text-sm hover:bg-gray-50"
+                          className="flex cursor-pointer items-center gap-2 px-3 py-2 text-sm hover:bg-gray-50"
                         >
-                          <div className={`w-4 h-4 border border-gray-300 rounded flex items-center justify-center ${
-                            selectedRetailers.includes(retailer) ? 'bg-blue-500 border-blue-500' : ''
-                          }`}>
-                            {selectedRetailers.includes(retailer) && (
-                              <Check className="w-3 h-3 text-white" />
+                          <div
+                            className={`flex h-4 w-4 items-center justify-center rounded border ${selectedRetailers.includes(retailer) ? 'border-blue-500 bg-blue-500' : 'border-gray-300'}`}
+                          >
+                            {selectedRetailers?.includes(retailer) && (
+                              <Check className="h-3 w-3 text-white" />
                             )}
                           </div>
                           <span className="flex-1">{retailer}</span>
@@ -208,46 +264,51 @@ export const InsightsFilters: React.FC<InsightsFiltersProps> = ({
                 </Command>
               </PopoverContent>
             </Popover>
-            {selectedRetailers.length > 0 && (
+            {/* Selected retailers chips */}
+            {selectedRetailers?.length > 0 && (
               <div className="flex flex-wrap gap-1">
-                {selectedRetailers.slice(0, 3).map((retailer) => (
+                {selectedRetailers?.slice(0, 3).map((r) => (
                   <Badge
-                    key={retailer}
+                    key={r}
                     variant="secondary"
-                    className="text-xs bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-100 cursor-pointer"
-                    onClick={() => handleRetailerSelect(retailer)}
+                    className="cursor-pointer border-blue-200 bg-blue-50 text-xs text-blue-700 hover:bg-blue-100"
+                    onClick={() => handleRetailerSelect(r)}
                   >
-                    {retailer}
-                    <X className="w-3 h-3 ml-1" />
+                    {r} <X className="ml-1 h-3 w-3" />
                   </Badge>
                 ))}
-                {selectedRetailers.length > 3 && (
-                  <Badge variant="secondary" className="text-xs bg-gray-100 text-gray-600">
-                    +{selectedRetailers.length - 3} more
+                {selectedRetailers?.length > 3 && (
+                  <Badge
+                    variant="secondary"
+                    className="bg-gray-100 text-xs text-gray-600"
+                  >
+                    +{selectedRetailers?.length - 3} more
                   </Badge>
                 )}
               </div>
             )}
           </div>
-
           {/* Brand Filter */}
           <div className="space-y-2">
-            <Popover open={openBrand} onOpenChange={setOpenBrand}>
+            <Popover>
               <PopoverTrigger asChild>
                 <Button
                   variant="outline"
                   role="combobox"
-                  aria-expanded={openBrand}
-                  className="w-full justify-between h-10 text-sm font-normal bg-gray-50 border-gray-200 hover:bg-gray-100 focus:bg-white focus:border-blue-300"
+                  aria-expanded="false"
+                  className="h-10 w-full justify-between border-gray-200 bg-gray-50 text-sm font-normal hover:bg-gray-100"
+                  disabled={brands?.length === 0}
                 >
-                  <div className="flex items-center gap-2 flex-1 min-w-0">
-                    <span className="text-xs text-gray-500 shrink-0">Brand:</span>
+                  <div className="flex min-w-0 flex-1 items-center gap-2">
+                    <span className="shrink-0 text-xs text-gray-500">
+                      Brand:
+                    </span>
                     <span className="truncate text-gray-700">
-                      {selectedBrands.length === 0
-                        ? "All brands"
-                        : selectedBrands.length === 1
-                        ? selectedBrands[0]
-                        : `${selectedBrands.length} selected`}
+                      {selectedBrands?.length === 0
+                        ? 'All brands'
+                        : selectedBrands?.length === 1
+                          ? selectedBrands[0]
+                          : `${selectedBrands?.length} selected`}
                     </span>
                   </div>
                   <ChevronDown className="h-3 w-3 shrink-0 text-gray-400" />
@@ -257,28 +318,25 @@ export const InsightsFilters: React.FC<InsightsFiltersProps> = ({
                 <Command>
                   <div className="flex items-center border-b px-3">
                     <Search className="mr-2 h-4 w-4 shrink-0 text-gray-400" />
-                    <CommandInput 
-                      placeholder="Search brands..." 
-                      className="flex h-10 w-full rounded-md bg-transparent py-3 text-sm outline-none placeholder:text-gray-400 disabled:cursor-not-allowed disabled:opacity-50 border-0"
-                    />
+                    <CommandInput placeholder="Search brands..." />
                   </div>
                   <CommandList className="max-h-[300px]">
                     <CommandEmpty className="py-6 text-center text-sm text-gray-500">
                       No brands found.
                     </CommandEmpty>
                     <CommandGroup>
-                      {brands.map((brand) => (
+                      {brands?.map((brand) => (
                         <CommandItem
                           key={brand}
                           value={brand}
                           onSelect={() => handleBrandSelect(brand)}
-                          className="cursor-pointer flex items-center gap-2 px-3 py-2 text-sm hover:bg-gray-50"
+                          className="flex cursor-pointer items-center gap-2 px-3 py-2 text-sm hover:bg-gray-50"
                         >
-                          <div className={`w-4 h-4 border border-gray-300 rounded flex items-center justify-center ${
-                            selectedBrands.includes(brand) ? 'bg-green-500 border-green-500' : ''
-                          }`}>
-                            {selectedBrands.includes(brand) && (
-                              <Check className="w-3 h-3 text-white" />
+                          <div
+                            className={`flex h-4 w-4 items-center justify-center rounded border ${selectedBrands.includes(brand) ? 'border-green-500 bg-green-500' : 'border-gray-300'}`}
+                          >
+                            {selectedBrands?.includes(brand) && (
+                              <Check className="h-3 w-3 text-white" />
                             )}
                           </div>
                           <span className="flex-1">{brand}</span>
@@ -289,46 +347,50 @@ export const InsightsFilters: React.FC<InsightsFiltersProps> = ({
                 </Command>
               </PopoverContent>
             </Popover>
-            {selectedBrands.length > 0 && (
+            {selectedBrands?.length > 0 && (
               <div className="flex flex-wrap gap-1">
-                {selectedBrands.slice(0, 3).map((brand) => (
+                {selectedBrands?.slice(0, 3).map((b) => (
                   <Badge
-                    key={brand}
+                    key={b}
                     variant="secondary"
-                    className="text-xs bg-green-50 text-green-700 border-green-200 hover:bg-green-100 cursor-pointer"
-                    onClick={() => handleBrandSelect(brand)}
+                    className="cursor-pointer border-green-200 bg-green-50 text-xs text-green-700 hover:bg-green-100"
+                    onClick={() => handleBrandSelect(b)}
                   >
-                    {brand}
-                    <X className="w-3 h-3 ml-1" />
+                    {b} <X className="ml-1 h-3 w-3" />
                   </Badge>
                 ))}
-                {selectedBrands.length > 3 && (
-                  <Badge variant="secondary" className="text-xs bg-gray-100 text-gray-600">
-                    +{selectedBrands.length - 3} more
+                {selectedBrands?.length > 3 && (
+                  <Badge
+                    variant="secondary"
+                    className="bg-gray-100 text-xs text-gray-600"
+                  >
+                    +{selectedBrands?.length - 3} more
                   </Badge>
                 )}
               </div>
             )}
           </div>
-
           {/* Product Filter */}
           <div className="space-y-2">
-            <Popover open={openProduct} onOpenChange={setOpenProduct}>
+            <Popover>
               <PopoverTrigger asChild>
                 <Button
                   variant="outline"
                   role="combobox"
-                  aria-expanded={openProduct}
-                  className="w-full justify-between h-10 text-sm font-normal bg-gray-50 border-gray-200 hover:bg-gray-100 focus:bg-white focus:border-blue-300"
+                  aria-expanded="false"
+                  className="h-10 w-full justify-between border-gray-200 bg-gray-50 text-sm font-normal hover:bg-gray-100"
+                  disabled={products.length === 0}
                 >
-                  <div className="flex items-center gap-2 flex-1 min-w-0">
-                    <span className="text-xs text-gray-500 shrink-0">Product:</span>
+                  <div className="flex min-w-0 flex-1 items-center gap-2">
+                    <span className="shrink-0 text-xs text-gray-500">
+                      Product:
+                    </span>
                     <span className="truncate text-gray-700">
-                      {selectedProducts.length === 0
-                        ? "All products"
-                        : selectedProducts.length === 1
-                        ? selectedProducts[0]
-                        : `${selectedProducts.length} selected`}
+                      {selectedProducts?.length === 0
+                        ? 'All products'
+                        : selectedProducts?.length === 1
+                          ? selectedProducts[0]
+                          : `${selectedProducts?.length} selected`}
                     </span>
                   </div>
                   <ChevronDown className="h-3 w-3 shrink-0 text-gray-400" />
@@ -338,28 +400,25 @@ export const InsightsFilters: React.FC<InsightsFiltersProps> = ({
                 <Command>
                   <div className="flex items-center border-b px-3">
                     <Search className="mr-2 h-4 w-4 shrink-0 text-gray-400" />
-                    <CommandInput 
-                      placeholder="Search products..." 
-                      className="flex h-10 w-full rounded-md bg-transparent py-3 text-sm outline-none placeholder:text-gray-400 disabled:cursor-not-allowed disabled:opacity-50 border-0"
-                    />
+                    <CommandInput placeholder="Search products..." />
                   </div>
                   <CommandList className="max-h-[300px]">
                     <CommandEmpty className="py-6 text-center text-sm text-gray-500">
                       No products found.
                     </CommandEmpty>
                     <CommandGroup>
-                      {products.map((product) => (
+                      {products?.map((product) => (
                         <CommandItem
                           key={product}
                           value={product}
                           onSelect={() => handleProductSelect(product)}
-                          className="cursor-pointer flex items-center gap-2 px-3 py-2 text-sm hover:bg-gray-50"
+                          className="flex cursor-pointer items-center gap-2 px-3 py-2 text-sm hover:bg-gray-50"
                         >
-                          <div className={`w-4 h-4 border border-gray-300 rounded flex items-center justify-center ${
-                            selectedProducts.includes(product) ? 'bg-purple-500 border-purple-500' : ''
-                          }`}>
-                            {selectedProducts.includes(product) && (
-                              <Check className="w-3 h-3 text-white" />
+                          <div
+                            className={`flex h-4 w-4 items-center justify-center rounded border ${selectedProducts?.includes(product) ? 'border-purple-500 bg-purple-500' : 'border-gray-300'}`}
+                          >
+                            {selectedProducts?.includes(product) && (
+                              <Check className="h-3 w-3 text-white" />
                             )}
                           </div>
                           <span className="flex-1">{product}</span>
@@ -370,22 +429,24 @@ export const InsightsFilters: React.FC<InsightsFiltersProps> = ({
                 </Command>
               </PopoverContent>
             </Popover>
-            {selectedProducts.length > 0 && (
+            {selectedProducts?.length > 0 && (
               <div className="flex flex-wrap gap-1">
-                {selectedProducts.slice(0, 3).map((product) => (
+                {selectedProducts?.slice(0, 3).map((p) => (
                   <Badge
-                    key={product}
+                    key={p}
                     variant="secondary"
-                    className="text-xs bg-purple-50 text-purple-700 border-purple-200 hover:bg-purple-100 cursor-pointer"
-                    onClick={() => handleProductSelect(product)}
+                    className="cursor-pointer border-purple-200 bg-purple-50 text-xs text-purple-700 hover:bg-purple-100"
+                    onClick={() => handleProductSelect(p)}
                   >
-                    {product}
-                    <X className="w-3 h-3 ml-1" />
+                    {p} <X className="ml-1 h-3 w-3" />
                   </Badge>
                 ))}
-                {selectedProducts.length > 3 && (
-                  <Badge variant="secondary" className="text-xs bg-gray-100 text-gray-600">
-                    +{selectedProducts.length - 3} more
+                {selectedProducts?.length > 3 && (
+                  <Badge
+                    variant="secondary"
+                    className="bg-gray-100 text-xs text-gray-600"
+                  >
+                    +{selectedProducts?.length - 3} more
                   </Badge>
                 )}
               </div>

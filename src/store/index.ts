@@ -56,6 +56,7 @@ import { persistStore, persistReducer } from 'redux-persist';
 import storage from 'redux-persist/lib/storage';
 import projectSlice from './slices/projectSlice';
 import chartslice from './slices/chartsSlices';
+import chartFilter from './slices/chartFilterSlices';
 
 // import authSlice from './slices/authSlice';
 // import userSlice from './slices/userSlice';
@@ -75,6 +76,7 @@ const rootReducer = combineReducers({
   //   admin: adminSlice,
   projects: projectSlice,
   chart: chartslice,
+  chartFilter: chartFilter,
 });
 
 const persistConfig = {
