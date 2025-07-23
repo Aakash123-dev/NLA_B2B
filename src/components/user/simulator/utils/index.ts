@@ -1,3 +1,5 @@
+export * from './productUtils';
+
 import { SimulationProduct } from '../types';
 
 /**

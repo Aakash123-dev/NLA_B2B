@@ -4,9 +4,31 @@ import React from 'react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { CheckCircle2, Link as LinkIcon, Database, Store, Package, Columns, TrendingUp, DollarSign, Calendar, BarChart3 } from 'lucide-react'
+import { 
+  CheckCircle2, 
+  Download, 
+  Share2, 
+  BarChart3, 
+  TrendingUp, 
+  DollarSign, 
+  Target, 
+  Calendar,
+  Database,
+  Store,
+  Package,
+  Columns,
+  FileText,
+  Eye,
+  RefreshCw,
+  ArrowLeft,
+  Sparkles,
+  Trophy,
+  AlertCircle,
+  Info,
+  Link as LinkIcon
+} from 'lucide-react'
 import { ConfigStepProps } from '../types'
-import { getSelectedNames, getAllSelectedNames, getDisplayValue, formatCurrency } from '../utils'
+import { getSelectedNames, getDisplayValue, formatCurrency, getAllSelectedNames } from '../utils'
 import { databases, retailers, brands, products, availableColumns } from '../constants'
 
 interface ResultsStepProps extends ConfigStepProps {
@@ -16,6 +38,42 @@ interface ResultsStepProps extends ConfigStepProps {
   onBackToSummary: () => void
 }
 
+// Mock results data
+const mockResults = {
+  executionSummary: {
+    totalProcessingTime: '3m 42s',
+    dataPointsProcessed: '1.2M',
+    modelsExecuted: 5,
+    accuracy: '94.7%'
+  },
+  keyInsights: [
+    {
+      title: 'Optimal Price Point Identified',
+      description: 'Found 23% revenue increase opportunity at $12.99 price point',
+      impact: 'High',
+      confidence: 94
+    },
+    {
+      title: 'Seasonal Patterns Detected',
+      description: 'Q4 shows 31% higher price elasticity than Q2',
+      impact: 'Medium',  
+      confidence: 87
+    },
+    {
+      title: 'Regional Variations Found',
+      description: 'West Coast markets can support 15% premium pricing',
+      impact: 'High',
+      confidence: 91
+    }
+  ],
+  performanceMetrics: {
+    revenueImpact: '+$2.4M',
+    marginImprovement: '+18.5%',
+    demandResponse: '8.3%',
+    competitiveAdvantage: '+2.1pts'
+  }
+}
+
 export function ResultsStep({ 
   formData, 
   connectedNodes = [], 
@@ -23,170 +81,369 @@ export function ResultsStep({
   onRestart,
   onBackToSummary 
 }: ResultsStepProps) {
+  const selectedDatabase = databases.find(db => db.id === formData.selectedDatabase)
+
   return (
-    <div className="max-w-6xl mx-auto space-y-8">
+    <div className="h-full max-w-full mx-auto">
+      {/* Header */}
+      <div className="mb-8">
+        <div className="flex items-center gap-4 mb-6">
+          <div className="p-3 bg-emerald-50 rounded-xl shadow-sm">
+            <CheckCircle2 className="w-6 h-6 text-emerald-600" />
+          </div>
+          <div className="flex-1">
+            <h2 className="text-2xl font-bold text-slate-800 mb-2">Analysis Complete</h2>
+            <p className="text-slate-600">Your pricing model has been successfully executed and results are ready for review</p>
+          </div>
+          <div className="flex gap-3">
+            <Button 
+              onClick={onBackToSummary}
+              variant="outline" 
+              size="sm"
+              className="gap-2"
+            >
+              <ArrowLeft className="w-4 h-4" />
+              Back to Summary
+            </Button>
+            <Button 
+              onClick={onRestart}
+              variant="outline" 
+              size="sm"
+              className="gap-2"
+            >
+              <RefreshCw className="w-4 h-4" />
+              New Analysis
+            </Button>
+          </div>
+        </div>
+      </div>
 
-      {/* Connected Tools Section */}
-      <Card className="border-0 shadow-sm bg-white/50 backdrop-blur-sm">
-        <CardHeader className="pb-0">
-          <CardTitle className="text-slate-900 flex items-center gap-3 text-xl font-semibold">
-            <div className="p-2 bg-blue-50 rounded-lg">
-              <LinkIcon className="w-5 h-5 text-blue-600" />
-            </div>
-            Connected Tools
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="pt-0">
-          {connectedNodes.length > 0 ? (
-            <div className="flex flex-wrap gap-3">
-              {connectedNodes.map(connectedNode => (
-                <Button
-                  key={connectedNode.id}
-                  variant="outline"
-                  className="border-slate-200 text-slate-700 hover:bg-blue-50 hover:border-blue-300 transition-all duration-200"
-                  onClick={() => onOpenNodeTab?.(connectedNode.id)}
-                >
-                  <LinkIcon className="mr-2 h-4 w-4" />
-                  {connectedNode.name} {connectedNode.version && `v${connectedNode.version}`}
+      <div className="grid grid-cols-12 gap-6 h-full">
+        {/* Left Section - Results Details */}
+        <div className="col-span-8 space-y-6">
+          
+          {/* Execution Summary */}
+          <Card className="border border-slate-200 shadow-sm">
+            <CardHeader className="pb-4">
+              <CardTitle className="text-lg font-semibold text-slate-800 flex items-center gap-3">
+                <div className="p-2 bg-blue-50 rounded-lg">
+                  <BarChart3 className="w-5 h-5 text-blue-600" />
+                </div>
+                Execution Summary
+                <Badge variant="secondary" className="ml-auto bg-emerald-100 text-emerald-700 border-emerald-200">
+                  Completed
+                </Badge>
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-4 gap-4">
+                <div className="text-center p-4 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-lg border border-blue-200">
+                  <div className="text-2xl font-bold text-blue-800 mb-1">
+                    {mockResults.executionSummary.totalProcessingTime}
+                  </div>
+                  <div className="text-sm text-blue-600 font-medium">Processing Time</div>
+                </div>
+                
+                <div className="text-center p-4 bg-gradient-to-br from-purple-50 to-violet-50 rounded-lg border border-purple-200">
+                  <div className="text-2xl font-bold text-purple-800 mb-1">
+                    {mockResults.executionSummary.dataPointsProcessed}
+                  </div>
+                  <div className="text-sm text-purple-600 font-medium">Data Points</div>
+                </div>
+                
+                <div className="text-center p-4 bg-gradient-to-br from-emerald-50 to-green-50 rounded-lg border border-emerald-200">
+                  <div className="text-2xl font-bold text-emerald-800 mb-1">
+                    {mockResults.executionSummary.modelsExecuted}
+                  </div>
+                  <div className="text-sm text-emerald-600 font-medium">Models Run</div>
+                </div>
+                
+                <div className="text-center p-4 bg-gradient-to-br from-orange-50 to-red-50 rounded-lg border border-orange-200">
+                  <div className="text-2xl font-bold text-orange-800 mb-1">
+                    {mockResults.executionSummary.accuracy}
+                  </div>
+                  <div className="text-sm text-orange-600 font-medium">Accuracy</div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Key Insights */}
+          <Card className="border border-slate-200 shadow-sm">
+            <CardHeader className="pb-4">
+              <CardTitle className="text-lg font-semibold text-slate-800 flex items-center gap-3">
+                <div className="p-2 bg-purple-50 rounded-lg">
+                  <Sparkles className="w-5 h-5 text-purple-600" />
+                </div>
+                Key Insights & Recommendations
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                {mockResults.keyInsights.map((insight, index) => (
+                  <div key={index} className="p-4 bg-slate-50 rounded-lg border border-slate-200">
+                    <div className="flex items-start justify-between mb-2">
+                      <div className="flex items-center gap-3">
+                        <div className={`p-2 rounded-lg ${
+                          insight.impact === 'High' ? 'bg-red-100' : 'bg-yellow-100'
+                        }`}>
+                          {insight.impact === 'High' ? (
+                            <Trophy className="w-4 h-4 text-red-600" />
+                          ) : (
+                            <Info className="w-4 h-4 text-yellow-600" />
+                          )}
+                        </div>
+                        <div>
+                          <h4 className="text-sm font-semibold text-slate-800">{insight.title}</h4>
+                          <p className="text-xs text-slate-600 mt-1">{insight.description}</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Badge 
+                          variant="secondary" 
+                          className={`text-xs ${
+                            insight.impact === 'High' ? 'bg-red-100 text-red-700' : 'bg-yellow-100 text-yellow-700'
+                          }`}
+                        >
+                          {insight.impact} Impact
+                        </Badge>
+                        <div className="text-xs text-slate-500">{insight.confidence}% confidence</div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Performance Metrics */}
+          <Card className="border border-slate-200 shadow-sm">
+            <CardHeader className="pb-4">
+              <CardTitle className="text-lg font-semibold text-slate-800 flex items-center gap-3">
+                <div className="p-2 bg-emerald-50 rounded-lg">
+                  <TrendingUp className="w-5 h-5 text-emerald-600" />
+                </div>
+                Performance Metrics
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="p-4 bg-gradient-to-br from-emerald-50 to-green-50 rounded-lg border border-emerald-200">
+                  <div className="flex items-center gap-3 mb-2">
+                    <div className="p-2 bg-emerald-500 rounded-lg">
+                      <DollarSign className="w-4 h-4 text-white" />
+                    </div>
+                    <span className="text-sm font-medium text-emerald-700">Revenue Impact</span>
+                  </div>
+                  <div className="text-2xl font-bold text-emerald-800">
+                    {mockResults.performanceMetrics.revenueImpact}
+                  </div>
+                  <div className="text-xs text-emerald-600 mt-1">Projected annual increase</div>
+                </div>
+
+                <div className="p-4 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-lg border border-blue-200">
+                  <div className="flex items-center gap-3 mb-2">
+                    <div className="p-2 bg-blue-500 rounded-lg">
+                      <TrendingUp className="w-4 h-4 text-white" />
+                    </div>
+                    <span className="text-sm font-medium text-blue-700">Margin Improvement</span>
+                  </div>
+                  <div className="text-2xl font-bold text-blue-800">
+                    {mockResults.performanceMetrics.marginImprovement}
+                  </div>
+                  <div className="text-xs text-blue-600 mt-1">Gross margin increase</div>
+                </div>
+
+                <div className="p-4 bg-gradient-to-br from-purple-50 to-violet-50 rounded-lg border border-purple-200">
+                  <div className="flex items-center gap-3 mb-2">
+                    <div className="p-2 bg-purple-500 rounded-lg">
+                      <Target className="w-4 h-4 text-white" />
+                    </div>
+                    <span className="text-sm font-medium text-purple-700">Demand Response</span>
+                  </div>
+                  <div className="text-2xl font-bold text-purple-800">
+                    {mockResults.performanceMetrics.demandResponse}
+                  </div>
+                  <div className="text-xs text-purple-600 mt-1">Price elasticity coefficient</div>
+                </div>
+
+                <div className="p-4 bg-gradient-to-br from-orange-50 to-red-50 rounded-lg border border-orange-200">
+                  <div className="flex items-center gap-3 mb-2">
+                    <div className="p-2 bg-orange-500 rounded-lg">
+                      <Trophy className="w-4 h-4 text-white" />
+                    </div>
+                    <span className="text-sm font-medium text-orange-700">Competitive Edge</span>
+                  </div>
+                  <div className="text-2xl font-bold text-orange-800">
+                    {mockResults.performanceMetrics.competitiveAdvantage}
+                  </div>
+                  <div className="text-xs text-orange-600 mt-1">Market share advantage</div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Configuration Summary */}
+          <Card className="border border-slate-200 shadow-sm">
+            <CardHeader className="pb-4">
+              <CardTitle className="text-lg font-semibold text-slate-800 flex items-center gap-3">
+                <div className="p-2 bg-indigo-50 rounded-lg">
+                  <FileText className="w-5 h-5 text-indigo-600" />
+                </div>
+                Model Configuration Used
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-3 gap-4">
+                <div className="text-center p-4 bg-purple-50 rounded-lg border border-purple-200">
+                  <div className="flex items-center justify-center mb-2">
+                    <TrendingUp className="w-5 h-5 text-purple-600" />
+                  </div>
+                  <div className="text-sm text-purple-700 font-medium">Market Share</div>
+                  <div className="text-2xl font-bold text-purple-900">
+                    {getDisplayValue(formData.marketShare, '%')}
+                  </div>
+                </div>
+                <div className="text-center p-4 bg-green-50 rounded-lg border border-green-200">
+                  <div className="flex items-center justify-center mb-2">
+                    <DollarSign className="w-5 h-5 text-green-600" />
+                  </div>
+                  <div className="text-sm text-green-700 font-medium">Min Revenue</div>
+                  <div className="text-2xl font-bold text-green-900">
+                    {formatCurrency(formData.minRevenue)}
+                  </div>
+                </div>
+                <div className="text-center p-4 bg-orange-50 rounded-lg border border-orange-200">
+                  <div className="flex items-center justify-center mb-2">
+                    <Calendar className="w-5 h-5 text-orange-600" />
+                  </div>
+                  <div className="text-sm text-orange-700 font-medium">Weeks to Model</div>
+                  <div className="text-2xl font-bold text-orange-900">
+                    {getDisplayValue(formData.numWeeks)}
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Right Section - Actions & Summary */}
+        <div className="col-span-4">
+          <div className="sticky top-6 space-y-6">
+            
+            {/* Actions Card */}
+            <Card className="border border-slate-200 shadow-sm">
+              <CardHeader className="pb-4">
+                <CardTitle className="text-lg font-semibold text-slate-800 flex items-center gap-3">
+                  <div className="p-2 bg-green-50 rounded-lg">
+                    <CheckCircle2 className="w-5 h-5 text-green-600" />
+                  </div>
+                  Actions
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <Button className="w-full gap-2 bg-blue-600 hover:bg-blue-700">
+                  <Eye className="w-4 h-4" />
+                  View Detailed Report
                 </Button>
-              ))}
-            </div>
-          ) : (
-            <div className="text-center py-12">
-              <div className="w-20 h-20 bg-slate-50 border-2 border-dashed border-slate-200 rounded-full flex items-center justify-center mx-auto mb-4">
-                <LinkIcon className="w-8 h-8 text-slate-300" />
-              </div>
-              <p className="text-slate-500 font-medium">No tools are connected to this node.</p>
-            </div>
-          )}
-        </CardContent>
-      </Card>
+                
+                <Button variant="outline" className="w-full gap-2">
+                  <Download className="w-4 h-4" />
+                  Export Results
+                </Button>
+                
+                <Button variant="outline" className="w-full gap-2">
+                  <Share2 className="w-4 h-4" />
+                  Share Analysis
+                </Button>
+              </CardContent>
+            </Card>
 
-      {/* Final Summary Section */}
-      <Card className="border-slate-200 shadow-lg">
-        <CardHeader className="bg-gradient-to-r from-blue-50 to-indigo-50 border-b border-slate-200">
-          <CardTitle className="text-2xl text-slate-800 flex items-center gap-2">
-            <BarChart3 className="w-6 h-6 text-blue-600" />
-            Final Summary
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="p-6">
-          {/* Data & Scope Grid */}
-          <div className="mb-8">
-            <h3 className="text-xl font-bold text-slate-800 mb-4 flex items-center gap-2">
-              <Database className="w-5 h-5 text-emerald-600" />
-              Data & Scope
-            </h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl p-6 border border-blue-200">
-                <div className="flex items-center gap-3 mb-4">
-                  <Database className="w-6 h-6 text-blue-600" />
-                  <h4 className="font-semibold text-blue-800">Database</h4>
-                </div>
-                <div className="space-y-3">
-                  <div className="flex gap-2 items-center">
-                    <span className="text-blue-700 font-medium">Database:</span>
-                    <span className="text-blue-900 font-bold">Primary Database</span>
+            {/* Data Summary Card */}
+            <Card className="border border-slate-200 shadow-sm">
+              <CardHeader className="pb-4">
+                <CardTitle className="text-lg font-semibold text-slate-800 flex items-center gap-3">
+                  <div className="p-2 bg-blue-50 rounded-lg">
+                    <Database className="w-5 h-5 text-blue-600" />
                   </div>
-                  <div className="flex gap-2 items-center">
-                    <span className="text-blue-700 font-medium">Retailers:</span>
-                    <span className="text-blue-900 font-bold">ValuePlus</span>
+                  Data Summary
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                
+                <div className="flex items-center justify-between p-3 bg-blue-50 rounded-lg border border-blue-100">
+                  <div className="flex items-center gap-2">
+                    <Database className="w-4 h-4 text-blue-600" />
+                    <span className="text-sm font-medium text-blue-700">Database</span>
                   </div>
+                  <Badge variant="secondary" className="bg-blue-100 text-blue-700">
+                    {selectedDatabase?.name}
+                  </Badge>
                 </div>
-              </div>
-              
-              <div className="bg-gradient-to-br from-emerald-50 to-emerald-100 rounded-xl p-6 border border-emerald-200">
-                <div className="flex items-center gap-3 mb-4">
-                  <Store className="w-6 h-6 text-emerald-600" />
-                  <h4 className="font-semibold text-emerald-800">Products & Brands</h4>
-                </div>
-                <div className="space-y-3">
-                  <div className="flex gap-2 items-center">
-                    <span className="text-emerald-700 font-medium">Brands:</span>
-                    <span className="text-emerald-900 font-bold">Brand B</span>
-                  </div>
-                  <div className="flex gap-2 items-center">
-                    <span className="text-emerald-700 font-medium">Products:</span>
-                    <span className="text-emerald-900 font-bold">Product Y</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
 
-          {/* Model Parameters Grid */}
-          <div className="mb-8">
-            <h3 className="text-xl font-bold text-slate-800 mb-4 flex items-center gap-2">
-              <TrendingUp className="w-5 h-5 text-indigo-600" />
-              Model Parameters
-            </h3>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="bg-gradient-to-br from-purple-50 to-purple-100 rounded-xl p-6 border border-purple-200">
+                <div className="flex items-center justify-between p-3 bg-emerald-50 rounded-lg border border-emerald-100">
+                  <div className="flex items-center gap-2">
+                    <Store className="w-4 h-4 text-emerald-600" />
+                    <span className="text-sm font-medium text-emerald-700">Retailers</span>
+                  </div>
+                  <Badge variant="secondary" className="bg-emerald-100 text-emerald-700">
+                    {formData.selectedRetailers.length} Selected
+                  </Badge>
+                </div>
+
+                <div className="flex items-center justify-between p-3 bg-purple-50 rounded-lg border border-purple-100">
+                  <div className="flex items-center gap-2">
+                    <Target className="w-4 h-4 text-purple-600" />
+                    <span className="text-sm font-medium text-purple-700">Brands</span>
+                  </div>
+                  <Badge variant="secondary" className="bg-purple-100 text-purple-700">
+                    {formData.selectedBrands.length} Selected
+                  </Badge>
+                </div>
+
+                <div className="flex items-center justify-between p-3 bg-orange-50 rounded-lg border border-orange-100">
+                  <div className="flex items-center gap-2">
+                    <Package className="w-4 h-4 text-orange-600" />
+                    <span className="text-sm font-medium text-orange-700">Products</span>
+                  </div>
+                  <Badge variant="secondary" className="bg-orange-100 text-orange-700">
+                    {formData.selectedProducts.length} Selected
+                  </Badge>
+                </div>
+
+                <div className="flex items-center justify-between p-3 bg-cyan-50 rounded-lg border border-cyan-100">
+                  <div className="flex items-center gap-2">
+                    <Columns className="w-4 h-4 text-cyan-600" />
+                    <span className="text-sm font-medium text-cyan-700">Columns</span>
+                  </div>
+                  <Badge variant="secondary" className="bg-cyan-100 text-cyan-700">
+                    {formData.selectedColumns.length} Selected
+                  </Badge>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Success Status */}
+            <Card className="border border-emerald-200 shadow-sm bg-emerald-50">
+              <CardContent className="p-4">
                 <div className="flex items-center gap-3 mb-3">
-                  <div className="p-2 bg-purple-500 rounded-lg">
-                    <TrendingUp className="w-5 h-5 text-white" />
+                  <div className="p-2 bg-emerald-500 rounded-lg">
+                    <CheckCircle2 className="w-4 h-4 text-white" />
                   </div>
-                  <span className="text-purple-700 font-medium">Market Share</span>
-                </div>
-                <div className="text-3xl font-bold text-purple-900">32%</div>
-              </div>
-              
-              <div className="bg-gradient-to-br from-green-50 to-green-100 rounded-xl p-6 border border-green-200">
-                <div className="flex items-center gap-3 mb-3">
-                  <div className="p-2 bg-green-500 rounded-lg">
-                    <DollarSign className="w-5 h-5 text-white" />
+                  <div>
+                    <h3 className="font-semibold text-emerald-800">Analysis Complete</h3>
+                    <p className="text-xs text-emerald-600">All models executed successfully</p>
                   </div>
-                  <span className="text-green-700 font-medium">Minimum Revenue</span>
                 </div>
-                <div className="text-3xl font-bold text-green-900">$23</div>
-              </div>
-              
-              <div className="bg-gradient-to-br from-orange-50 to-orange-100 rounded-xl p-6 border border-orange-200">
-                <div className="flex items-center gap-3 mb-3">
-                  <div className="p-2 bg-orange-500 rounded-lg">
-                    <Calendar className="w-5 h-5 text-white" />
-                  </div>
-                  <span className="text-orange-700 font-medium">Weeks to Model</span>
+                <div className="text-sm text-emerald-700">
+                  <p className="font-medium mb-1">Ready for Implementation</p>
+                  <p className="text-xs opacity-75">Use the insights above to optimize your pricing strategy</p>
                 </div>
-                <div className="text-3xl font-bold text-orange-900">23</div>
-              </div>
-            </div>
+              </CardContent>
+            </Card>
           </div>
-
-          {/* Selected Columns */}
-          <div className="mb-8">
-            <h3 className="text-xl font-bold text-slate-800 mb-4 flex items-center gap-2">
-              <Columns className="w-5 h-5 text-cyan-600" />
-              Selected Columns
-            </h3>
-            <div className="bg-gradient-to-br from-cyan-50 to-cyan-100 rounded-xl p-6 border border-cyan-200">
-              <div className="flex items-center gap-3 mb-3">
-                <Columns className="w-6 h-6 text-cyan-600" />
-                <span className="text-cyan-700 font-medium">Data Columns Used</span>
-              </div>
-              <div className="text-2xl font-bold text-cyan-900">Marketing_Spend</div>
-              <p className="text-cyan-700 text-sm mt-2">Primary analysis column for model processing</p>
-            </div>
-          </div>
-
-          {/* Model Status */}
-          <div className="bg-gradient-to-r from-emerald-50 to-green-50 rounded-xl p-6 border border-emerald-200">
-            <h3 className="text-xl font-bold text-slate-800 mb-4 flex items-center gap-2">
-              <CheckCircle2 className="w-5 h-5 text-emerald-600" />
-              Model Status
-            </h3>
-            <div className="flex items-center gap-4">
-              <div className="p-3 bg-emerald-500 rounded-xl shadow-lg">
-                <CheckCircle2 className="w-8 h-8 text-white" />
-              </div>
-              <div>
-                <div className="text-3xl font-bold text-emerald-900">Completed</div>
-                <p className="text-emerald-700 font-medium">Your pricing model has been successfully executed and results are ready</p>
-              </div>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
     </div>
   )
 }

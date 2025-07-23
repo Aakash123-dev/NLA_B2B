@@ -4,9 +4,10 @@ import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { Filter, Play, X, Building, Package, ShoppingCart } from 'lucide-react';
+import { SearchableSelect } from './SearchableSelect';
+import { SearchableMultiSelect } from './SearchableMultiSelect';
 
 interface SimulatorFiltersProps {
   onRunAnalysis: () => void;
@@ -22,7 +23,13 @@ const retailers = [
   { id: 'safeway', name: 'Safeway' },
   { id: 'publix', name: 'Publix' },
   { id: 'jewel', name: 'Jewel' },
-  { id: 'alb-s', name: 'Alb S' }
+  { id: 'alb-s', name: 'Alb S' },
+  { id: 'wegmans', name: 'Wegmans' },
+  { id: 'harris-teeter', name: 'Harris Teeter' },
+  { id: 'food-lion', name: 'Food Lion' },
+  { id: 'giant', name: 'Giant' },
+  { id: 'stop-shop', name: 'Stop & Shop' },
+  { id: 'acme', name: 'Acme Markets' }
 ];
 
 const brands = [
@@ -32,7 +39,12 @@ const brands = [
   { id: 'dunkin', name: 'Dunkin Donuts' },
   { id: 'folgers', name: 'Folgers' },
   { id: 'maxwell-house', name: 'Maxwell House' },
-  { id: 'peets', name: 'Peets Coffee' }
+  { id: 'peets', name: 'Peets Coffee' },
+  { id: 'gevalia', name: 'Gevalia' },
+  { id: 'green-mountain', name: 'Green Mountain Coffee' },
+  { id: 'caribou', name: 'Caribou Coffee' },
+  { id: 'lavazza', name: 'Lavazza' },
+  { id: 'nescafe', name: 'Nescafé' }
 ];
 
 const products = [
@@ -41,25 +53,25 @@ const products = [
   { id: 'jd-honey-pork', name: 'Jack Daniels Honey Liqueur BBQ Pulled Pork' },
   { id: 'jd-whiskey-ribs', name: 'Jack Daniels Whiskey Glazed Ribs' },
   { id: 'jd-bourbon-beef', name: 'Jack Daniels Bourbon Beef Brisket' },
-  { id: 'jd-tennessee-wings', name: 'Jack Daniels Tennessee Hot Wings' }
+  { id: 'jd-tennessee-wings', name: 'Jack Daniels Tennessee Hot Wings' },
+  { id: 'br-coffee-dark', name: 'Black Rifle Dark Roast Coffee' },
+  { id: 'br-coffee-medium', name: 'Black Rifle Medium Roast Coffee' },
+  { id: 'br-coffee-light', name: 'Black Rifle Light Roast Coffee' },
+  { id: 'sb-pike-place', name: 'Starbucks Pike Place Roast' },
+  { id: 'sb-french-roast', name: 'Starbucks French Roast' },
+  { id: 'sb-breakfast-blend', name: 'Starbucks Breakfast Blend' },
+  { id: 'dd-original', name: 'Dunkin Original Blend' },
+  { id: 'dd-dark-roast', name: 'Dunkin Dark Roast' },
+  { id: 'folgers-classic', name: 'Folgers Classic Roast' },
+  { id: 'folgers-breakfast', name: 'Folgers Breakfast Blend' },
+  { id: 'maxwell-original', name: 'Maxwell House Original Roast' },
+  { id: 'peets-major', name: 'Peets Major Dickasons Blend' }
 ];
 
 export function SimulatorFilters({ onRunAnalysis, isRunning = false }: SimulatorFiltersProps) {
-  const [selectedRetailer, setSelectedRetailer] = useState<string>('');
-  const [selectedBrand, setSelectedBrand] = useState<string>('');
-  const [selectedProducts, setSelectedProducts] = useState<string[]>([]);
-
-  const handleProductSelection = (productId: string) => {
-    setSelectedProducts(prev => 
-      prev.includes(productId) 
-        ? prev.filter(id => id !== productId)
-        : [...prev, productId]
-    );
-  };
-
-  const removeProduct = (productId: string) => {
-    setSelectedProducts(prev => prev.filter(id => id !== productId));
-  };
+  const [selectedRetailer, setSelectedRetailer] = useState<string>('costco');
+  const [selectedBrand, setSelectedBrand] = useState<string>('black-rifle');
+  const [selectedProducts, setSelectedProducts] = useState<string[]>(['jd-bbq-chicken', 'jd-bbq-pork']);
 
   const clearAllFilters = () => {
     setSelectedRetailer('');
@@ -68,10 +80,6 @@ export function SimulatorFilters({ onRunAnalysis, isRunning = false }: Simulator
   };
 
   const isAnalysisReady = selectedRetailer && selectedBrand && selectedProducts.length > 0;
-
-  const getSelectedProductNames = () => {
-    return selectedProducts.map(id => products.find(p => p.id === id)?.name || '').filter(Boolean);
-  };
 
   return (
     <motion.div
@@ -95,24 +103,20 @@ export function SimulatorFilters({ onRunAnalysis, isRunning = false }: Simulator
             
             {/* Retailer Filter */}
             <div className="space-y-3">
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 ">
                 <Building className="w-4 h-4 text-gray-500" />
                 <label className="text-sm font-medium text-gray-700">
                   Retailer <span className="text-red-500">*</span>
                 </label>
               </div>
-              <Select value={selectedRetailer} onValueChange={setSelectedRetailer}>
-                <SelectTrigger className="h-11 border-gray-200 focus:border-blue-500 focus:ring-blue-500/20">
-                  <SelectValue placeholder="Select retailer" />
-                </SelectTrigger>
-                <SelectContent>
-                  {retailers.map((retailer) => (
-                    <SelectItem key={retailer.id} value={retailer.id}>
-                      {retailer.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <SearchableSelect
+                options={retailers}
+                value={selectedRetailer}
+                onValueChange={setSelectedRetailer}
+                placeholder="Select retailer"
+                searchPlaceholder="Search retailers..."
+                className="w-full"
+              />
             </div>
 
             {/* Brand Filter */}
@@ -123,18 +127,14 @@ export function SimulatorFilters({ onRunAnalysis, isRunning = false }: Simulator
                   Brand <span className="text-red-500">*</span>
                 </label>
               </div>
-              <Select value={selectedBrand} onValueChange={setSelectedBrand}>
-                <SelectTrigger className="h-11 border-gray-200 focus:border-blue-500 focus:ring-blue-500/20">
-                  <SelectValue placeholder="Select brand" />
-                </SelectTrigger>
-                <SelectContent>
-                  {brands.map((brand) => (
-                    <SelectItem key={brand.id} value={brand.id}>
-                      {brand.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <SearchableSelect
+                options={brands}
+                value={selectedBrand}
+                onValueChange={setSelectedBrand}
+                placeholder="Select brand"
+                searchPlaceholder="Search brands..."
+                className="w-full"
+              />
             </div>
 
             {/* Product Filter */}
@@ -145,50 +145,17 @@ export function SimulatorFilters({ onRunAnalysis, isRunning = false }: Simulator
                   Products <span className="text-red-500">*</span>
                 </label>
               </div>
-              <Select onValueChange={handleProductSelection}>
-                <SelectTrigger className="h-11 border-gray-200 focus:border-blue-500 focus:ring-blue-500/20">
-                  <SelectValue placeholder="Select products" />
-                </SelectTrigger>
-                <SelectContent>
-                  {products.map((product) => (
-                    <SelectItem 
-                      key={product.id} 
-                      value={product.id}
-                      disabled={selectedProducts.includes(product.id)}
-                    >
-                      {product.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <SearchableMultiSelect
+                options={products}
+                value={selectedProducts}
+                onValueChange={setSelectedProducts}
+                placeholder="Select products"
+                searchPlaceholder="Search products..."
+                className="w-full"
+                maxDisplayItems={2}
+              />
             </div>
           </div>
-
-          {/* Selected Products Display */}
-          {selectedProducts.length > 0 && (
-            <div className="mb-6">
-              <label className="text-sm font-medium text-gray-700 mb-3 block">
-                Selected Products ({selectedProducts.length})
-              </label>
-              <div className="flex flex-wrap gap-2">
-                {getSelectedProductNames().map((productName, index) => (
-                  <Badge 
-                    key={selectedProducts[index]} 
-                    variant="secondary" 
-                    className="bg-blue-50 text-blue-700 border-blue-200 px-3 py-1.5 text-xs font-medium"
-                  >
-                    {productName}
-                    <button
-                      onClick={() => removeProduct(selectedProducts[index])}
-                      className="ml-2 hover:text-blue-900 transition-colors"
-                    >
-                      <X className="w-3 h-3" />
-                    </button>
-                  </Badge>
-                ))}
-              </div>
-            </div>
-          )}
 
           {/* Action Buttons */}
           <div className="flex items-center justify-between pt-4 border-t border-gray-100">

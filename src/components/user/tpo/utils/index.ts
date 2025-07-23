@@ -27,20 +27,24 @@ export const formatPercentage = (value: string | number): string => {
 export const validateTradePlanForm = (formData: TradePlanFormData): { [key: string]: string } => {
   const newErrors: { [key: string]: string } = {}
   
-  if (!formData.retailer.trim()) {
-    newErrors.retailer = "Retailer is required"
+  if (!formData.trade_plan_name.trim()) {
+    newErrors.trade_plan_name = "Trade plan name is required"
   }
   
-  if (!formData.brand.trim()) {
-    newErrors.brand = "Brand is required"
+  if (!formData.selectedDatabase) {
+    newErrors.selectedDatabase = "Database selection is required"
+  }
+  
+  if (formData.selectedRetailers.length === 0) {
+    newErrors.selectedRetailers = "At least one retailer must be selected"
+  }
+  
+  if (formData.selectedBrands.length === 0) {
+    newErrors.selectedBrands = "At least one brand must be selected"
   }
   
   if (!formData.year) {
     newErrors.year = "Year is required"
-  }
-  
-  if (!formData.csvFile) {
-    newErrors.csvFile = "CSV file is required"
   }
   
   return newErrors
@@ -62,18 +66,24 @@ export const createPageUrl = (page: string): string => {
 export const generateMockTradePlan = (formData: TradePlanFormData) => {
   return {
     id: `tpo_${Date.now()}`,
-    ...formData,
-    total_volume: 61894,
-    total_revenue: 951262,
+    trade_plan_name: formData.trade_plan_name,
+    project: formData.project,
+    model: formData.model,
+    retailer: formData.selectedRetailers.join(', '),
+    brand: formData.selectedBrands.join(', '),
+    products: formData.selectedProducts,
+    year: formData.year,
+    total_volume: formData.targetVolume ? parseInt(formData.targetVolume) : 61894,
+    total_revenue: formData.targetRevenue ? parseInt(formData.targetRevenue) : 951262,
     total_contribution: 427229,
-    total_spend: 161564,
+    total_spend: formData.targetSpend ? parseInt(formData.targetSpend) : 161564,
     incremental_volume: 24415,
     incremental_revenue: 41152,
     plan_roi: 90.3,
     budget_remaining: 49240,
-    target_volume: 65000,
-    target_spend: 170000,
-    target_revenue: 1000000,
+    target_volume: formData.targetVolume ? parseInt(formData.targetVolume) : 65000,
+    target_spend: formData.targetSpend ? parseInt(formData.targetSpend) : 170000,
+    target_revenue: formData.targetRevenue ? parseInt(formData.targetRevenue) : 1000000,
     created_date: new Date().toISOString()
   }
 }

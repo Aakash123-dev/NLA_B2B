@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useCallback, useMemo } from 'react'
+import React, { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -63,82 +63,32 @@ export function TpoSetupPage() {
     router.push(`/user/tpo?${params.toString()}`);
   }
 
-  const handleSelectionChange = useCallback((field: keyof TradePlanFormData, value: string | string[] | number) => {
+  const handleSelectionChange = (field: keyof TradePlanFormData, value: string | string[] | number) => {
     setFormData(prev => ({
       ...prev,
       [field]: value
     }))
     
-    // Clear error for this field if it exists
-    setErrors(prev => {
-      if (prev[field]) {
-        const { [field]: _, ...newErrors } = prev
-        return newErrors
-      }
-      return prev
-    })
-  }, [])
-
-  const handleRemoveSelection = useCallback((field: keyof TradePlanFormData, itemId: string) => {
-    setFormData(prev => {
-      const currentSelection = prev[field] as string[]
-      const newSelection = currentSelection.filter(id => id !== itemId)
-      return {
+    if (errors[field]) {
+      setErrors(prev => ({
         ...prev,
-        [field]: newSelection
-      }
-    })
-  }, [])
+        [field]: ""
+      }))
+    }
+  }
 
-  const getItemName = useCallback((items: { id: string; name: string }[], id: string) => {
+  const handleRemoveSelection = (field: keyof TradePlanFormData, itemId: string) => {
+    const currentSelection = formData[field] as string[]
+    const newSelection = currentSelection.filter(id => id !== itemId)
+    setFormData(prev => ({
+      ...prev,
+      [field]: newSelection
+    }))
+  }
+
+  const getItemName = (items: { id: string; name: string }[], id: string) => {
     return items.find(item => item.id === id)?.name || id
-  }, [])
-
-  // Memoized selection change handlers
-  const handleRetailersChange = useCallback((selection: string[]) => {
-    setFormData(prev => ({
-      ...prev,
-      selectedRetailers: selection
-    }))
-    
-    if (errors.selectedRetailers) {
-      setErrors(prev => {
-        const newErrors = { ...prev }
-        delete newErrors.selectedRetailers
-        return newErrors
-      })
-    }
-  }, [errors.selectedRetailers])
-
-  const handleBrandsChange = useCallback((selection: string[]) => {
-    setFormData(prev => ({
-      ...prev,
-      selectedBrands: selection
-    }))
-    
-    if (errors.selectedBrands) {
-      setErrors(prev => {
-        const newErrors = { ...prev }
-        delete newErrors.selectedBrands
-        return newErrors
-      })
-    }
-  }, [errors.selectedBrands])
-
-  const handleProductsChange = useCallback((selection: string[]) => {
-    setFormData(prev => ({
-      ...prev,
-      selectedProducts: selection
-    }))
-    
-    if (errors.selectedProducts) {
-      setErrors(prev => {
-        const newErrors = { ...prev }
-        delete newErrors.selectedProducts
-        return newErrors
-      })
-    }
-  }, [errors.selectedProducts])
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -310,7 +260,7 @@ export function TpoSetupPage() {
                         title="Retailers"
                         items={retailerOptions}
                         selectedItems={formData.selectedRetailers}
-                        onSelectionChange={handleRetailersChange}
+                        onSelectionChange={(selection: string[]) => handleSelectionChange('selectedRetailers', selection)}
                         placeholder="Search retailers..."
                         maxHeight="200px"
                         colorScheme="blue"
@@ -321,7 +271,7 @@ export function TpoSetupPage() {
                         title="Brands"
                         items={brandOptions}
                         selectedItems={formData.selectedBrands}
-                        onSelectionChange={handleBrandsChange}
+                        onSelectionChange={(selection: string[]) => handleSelectionChange('selectedBrands', selection)}
                         placeholder="Search brands..."
                         maxHeight="200px"
                         colorScheme="emerald"
@@ -335,7 +285,7 @@ export function TpoSetupPage() {
                       title="Products"
                       items={productOptions}
                       selectedItems={formData.selectedProducts}
-                      onSelectionChange={handleProductsChange}
+                      onSelectionChange={(selection: string[]) => handleSelectionChange('selectedProducts', selection)}
                       placeholder="Search products..."
                       maxHeight="200px"
                       colorScheme="purple"
@@ -493,7 +443,7 @@ export function TpoSetupPage() {
                     <Label className="text-sm font-medium text-slate-700">
                       Retailers ({formData.selectedRetailers.length})
                     </Label>
-                    <div className="p-3 bg-slate-50 rounded-lg border min-h-[60px] max-h-[120px] overflow-y-auto">
+                    <div className="p-3 bg-slate-50 rounded-lg border min-h-[60px]">
                       {formData.selectedRetailers.length > 0 ? (
                         <div className="flex flex-wrap gap-1">
                           {formData.selectedRetailers.map(retailerId => (
@@ -519,7 +469,7 @@ export function TpoSetupPage() {
                     <Label className="text-sm font-medium text-slate-700">
                       Brands ({formData.selectedBrands.length})
                     </Label>
-                    <div className="p-3 bg-slate-50 rounded-lg border min-h-[60px] max-h-[120px] overflow-y-auto">
+                    <div className="p-3 bg-slate-50 rounded-lg border min-h-[60px]">
                       {formData.selectedBrands.length > 0 ? (
                         <div className="flex flex-wrap gap-1">
                           {formData.selectedBrands.map(brandId => (
@@ -545,7 +495,7 @@ export function TpoSetupPage() {
                     <Label className="text-sm font-medium text-slate-700">
                       Products ({formData.selectedProducts.length})
                     </Label>
-                    <div className="p-3 bg-slate-50 rounded-lg border min-h-[60px] max-h-[150px] overflow-y-auto">
+                    <div className="p-3 bg-slate-50 rounded-lg border min-h-[60px]">
                       {formData.selectedProducts.length > 0 ? (
                         <div className="flex flex-wrap gap-1">
                           {formData.selectedProducts.map(productId => (

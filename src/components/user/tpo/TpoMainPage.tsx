@@ -54,7 +54,7 @@ export function TpoMainPage() {
           </div>
           
           <h1 className="text-5xl sm:text-6xl font-bold bg-gradient-to-r from-gray-900 via-emerald-800 to-teal-800 bg-clip-text text-transparent mb-6">
-            Trade Plan Optimization
+            Trade Promotion Optimization
           </h1>
           
           <p className="text-xl text-gray-600 max-w-2xl mx-auto mb-8">

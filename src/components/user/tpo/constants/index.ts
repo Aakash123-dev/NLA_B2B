@@ -1,4 +1,11 @@
-import { RetailerOption, BrandOption } from '../types'
+import { RetailerOption, BrandOption, DatabaseOption, ProductOption } from '../types'
+
+export const databaseOptions: DatabaseOption[] = [
+  { id: 'db1', name: 'Primary Analytics Database' },
+  { id: 'db2', name: 'Real-time Data Warehouse' },
+  { id: 'db3', name: 'Historical Sales Database' },
+  { id: 'db4', name: 'Market Research Database' },
+]
 
 export const retailerOptions: RetailerOption[] = [
   { id: "walmart", name: "Walmart" },
@@ -19,6 +26,17 @@ export const brandOptions: BrandOption[] = [
   { id: "gardein", name: "Gardein" }
 ]
 
+export const productOptions: ProductOption[] = [
+  { id: "prod1", name: "APPLEGATE NATURALS Organic Turkey Slices" },
+  { id: "prod2", name: "APPLEGATE NATURALS Organic Ham" },
+  { id: "prod3", name: "APPLEGATE NATURALS Organic Chicken Breast" },
+  { id: "prod4", name: "APPLEGATE NATURALS Organic Roast Beef" },
+  { id: "prod5", name: "Real Good Foods Chicken Poppers" },
+  { id: "prod6", name: "Real Good Foods Breakfast Bowl" },
+  { id: "prod7", name: "Beyond Meat Plant-Based Burger" },
+  { id: "prod8", name: "Impossible Foods Ground Beef" }
+]
+
 export const yearOptions = [
   { value: 2024, label: "2024" },
   { value: 2025, label: "2025" },
@@ -36,13 +54,6 @@ export const channelOptions = [
   "TV", 
   "Outdoor", 
   "Direct Mail"
-]
-
-export const productOptions = [
-  "APPLEGATE NATURALS Organic Turkey Slices",
-  "APPLEGATE NATURALS Organic Ham",
-  "APPLEGATE NATURALS Organic Chicken Breast",
-  "APPLEGATE NATURALS Organic Roast Beef"
 ]
 
 export const colorOptions = [
