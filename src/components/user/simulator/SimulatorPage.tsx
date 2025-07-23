@@ -7,7 +7,7 @@ import {
   SimulatorPageHeader,
   SimulatorFilters,
   ProductSection,
-  RelevantCompetitorsSection
+  RelevantCompetitorsSection,
 } from './components';
 
 export default function SimulatorPage() {
@@ -146,32 +146,38 @@ export default function SimulatorPage() {
       />
 
       {/* Main Content */}
-      <div className="max-w-8xl mx-auto px-8 py-8">
+      <div className="w-full">
         <div className="space-y-8">
 
           {/* Filters Section */}
-          <SimulatorFilters
-            onRunAnalysis={runSimulation}
-            isRunning={isRunning}
-          />
+          <div className="px-8">
+            <SimulatorFilters
+              onRunAnalysis={runSimulation}
+              isRunning={isRunning}
+            />
+          </div>
 
           {/* Analysis Results - Only show after running analysis */}
           {hasRunAnalysis && (
             <>
               {/* Product Analysis Section */}
-              <ProductSection
-                products={simulationData.products}
-                onPriceChange={handlePriceChange}
-              />
+              <div className="px-8">
+                <ProductSection
+                  products={simulationData.products}
+                  onPriceChange={handlePriceChange}
+                />
+              </div>
 
               {/* Relevant Competitors Section */}
-              <RelevantCompetitorsSection />
+              <div className="px-8">
+                <RelevantCompetitorsSection />
+              </div>
             </>
           )}
 
           {/* Loading State */}
           {isRunning && (
-            <div className="text-center py-16">
+            <div className="text-center py-16 px-8">
               <div className="w-16 h-16 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-full flex items-center justify-center mx-auto mb-4">
                 <motion.div
                   animate={{ rotate: 360 }}
@@ -195,7 +201,7 @@ export default function SimulatorPage() {
 
           {/* Empty State */}
           {!hasRunAnalysis && !isRunning && (
-            <div className="text-center py-16">
+            <div className="text-center py-16 px-8">
               <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
                 <Play className="w-8 h-8 text-gray-400" />
               </div>

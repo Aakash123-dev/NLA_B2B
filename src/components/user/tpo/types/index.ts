@@ -24,10 +24,17 @@ export interface TradePlanFormData {
   trade_plan_name: string
   project: string
   model: string
-  retailer: string
-  brand: string
+  selectedDatabase: string
+  selectedRetailers: string[]
+  selectedBrands: string[]
+  selectedProducts: string[]
   year: number
-  csvFile: File | null
+  marketShare: string
+  minRevenue: string
+  numWeeks: string
+  targetVolume: string
+  targetSpend: string
+  targetRevenue: string
 }
 
 export interface TradePlan {
@@ -37,6 +44,7 @@ export interface TradePlan {
   model: string
   retailer: string
   brand: string
+  products: string[]
   year: number
   total_volume: number
   total_revenue: number

@@ -54,12 +54,6 @@ export function SimulatorPageHeader({
               </p>
             </div>
           </div>
-
-          {/* Right Section - Status */}
-          <div className="flex items-center gap-2">
-            <div className="w-2 h-2 bg-green-400 rounded-full"></div>
-            <span className="text-xs text-gray-500">Live Data</span>
-          </div>
         </div>
       </div>
     </motion.header>

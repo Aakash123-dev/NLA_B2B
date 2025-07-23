@@ -8,76 +8,68 @@ export function useProcessingSimulation(
 ) {
   const { isFetching, isModeling, fetchProgress, modelProgress } = processingState
 
-  // Fetch progress simulation
+  // Enhanced fetch progress simulation with realistic timing
   useEffect(() => {
     let timer: NodeJS.Timeout
     if (isFetching && fetchProgress < 100) {
+      // Variable speed - faster at the beginning, slower near the end
+      const increment = fetchProgress < 20 ? 8 : fetchProgress < 80 ? 4 : 2
+      const delay = fetchProgress < 20 ? 150 : fetchProgress < 80 ? 200 : 300
+      
       timer = setTimeout(() => {
+        const newProgress = Math.min(fetchProgress + increment, 100)
         setProcessingState({
-          fetchProgress: fetchProgress + 5,
+          fetchProgress: newProgress,
           modelProgress,
-          isFetching,
+          isFetching: newProgress < 100,
           isModeling,
-          isFetchComplete: false,
+          isFetchComplete: newProgress >= 100,
           isModelComplete: processingState.isModelComplete
         })
-      }, 100)
-    } else if (fetchProgress >= 100 && isFetching) {
-      setProcessingState({
-        fetchProgress: 100,
-        modelProgress,
-        isFetching: false,
-        isModeling,
-        isFetchComplete: true,
-        isModelComplete: processingState.isModelComplete
-      })
+      }, delay)
     }
     return () => clearTimeout(timer)
-  }, [isFetching, fetchProgress])
+  }, [isFetching, fetchProgress, modelProgress, isModeling, processingState.isModelComplete, setProcessingState])
 
-  // Model progress simulation
+  // Enhanced model progress simulation with realistic timing
   useEffect(() => {
     let timer: NodeJS.Timeout
     if (isModeling && modelProgress < 100) {
+      // Variable speed - slower processing to simulate complex model calculations
+      const increment = modelProgress < 10 ? 3 : modelProgress < 70 ? 2 : 1
+      const delay = modelProgress < 10 ? 200 : modelProgress < 70 ? 250 : 400
+      
       timer = setTimeout(() => {
+        const newProgress = Math.min(modelProgress + increment, 100)
         setProcessingState({
           fetchProgress,
-          modelProgress: modelProgress + 2,
+          modelProgress: newProgress,
           isFetching,
-          isModeling,
+          isModeling: newProgress < 100,
           isFetchComplete: processingState.isFetchComplete,
-          isModelComplete: false
+          isModelComplete: newProgress >= 100
         })
-      }, 100)
-    } else if (modelProgress >= 100 && isModeling) {
-      setProcessingState({
-        fetchProgress,
-        modelProgress: 100,
-        isFetching,
-        isModeling: false,
-        isFetchComplete: processingState.isFetchComplete,
-        isModelComplete: true
-      })
+      }, delay)
     }
     return () => clearTimeout(timer)
-  }, [isModeling, modelProgress])
+  }, [isModeling, modelProgress, fetchProgress, isFetching, processingState.isFetchComplete, setProcessingState])
 
   const startFetching = () => {
     setProcessingState({
       fetchProgress: 0,
-      modelProgress,
+      modelProgress: 0,
       isFetching: true,
-      isModeling,
+      isModeling: false,
       isFetchComplete: false,
-      isModelComplete: processingState.isModelComplete
+      isModelComplete: false
     })
   }
 
   const startModeling = () => {
     setProcessingState({
-      fetchProgress,
+      fetchProgress: processingState.fetchProgress,
       modelProgress: 0,
-      isFetching,
+      isFetching: false,
       isModeling: true,
       isFetchComplete: processingState.isFetchComplete,
       isModelComplete: false

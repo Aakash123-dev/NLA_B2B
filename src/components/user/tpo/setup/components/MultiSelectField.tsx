@@ -1,49 +1,65 @@
 'use client'
 
 import React, { useState } from 'react'
-import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Button } from '@/components/ui/button'
+import { Badge } from '@/components/ui/badge'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command'
-import { Check, ChevronDown, ChevronsUpDown } from 'lucide-react'
+import { Check, ChevronsUpDown, X } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { cn } from '@/lib/utils'
 
-interface FormFieldProps { 
+interface MultiSelectFieldProps { 
   label: string
-  value: string | number
-  onChange: (value: string) => void
+  values: string[]
+  onChange: (values: string[]) => void
   placeholder: string
   required?: boolean
   disabled?: boolean
-  type?: string
   error?: string
-  options?: { value: string | number; label: string }[]
+  options: { value: string; label: string }[]
+  maxSelectedDisplay?: number
 }
 
-export function FormField({ 
+export function MultiSelectField({ 
   label, 
-  value, 
+  values, 
   onChange, 
   placeholder, 
   required = false, 
   disabled = false, 
-  type = "text",
   error,
-  options = undefined
-}: FormFieldProps) {
+  options,
+  maxSelectedDisplay = 2
+}: MultiSelectFieldProps) {
   const [open, setOpen] = useState(false)
   const [searchValue, setSearchValue] = useState("")
 
   // Filter options based on search
-  const filteredOptions = options?.filter((option) =>
+  const filteredOptions = options.filter((option) =>
     option.label.toLowerCase().includes(searchValue.toLowerCase())
-  ) || []
+  )
 
-  // Find selected option for display
-  const selectedOption = options?.find((option) => option.value.toString() === value.toString())
+  const handleSelect = (selectedValue: string) => {
+    if (values.includes(selectedValue)) {
+      onChange(values.filter(value => value !== selectedValue))
+    } else {
+      onChange([...values, selectedValue])
+    }
+  }
+
+  const handleRemove = (valueToRemove: string) => {
+    onChange(values.filter(value => value !== valueToRemove))
+  }
+
+  const clearAll = () => {
+    onChange([])
+  }
+
+  const selectedOptions = options.filter(option => values.includes(option.value))
+  const displayedOptions = selectedOptions.slice(0, maxSelectedDisplay)
+  const remainingCount = selectedOptions.length - maxSelectedDisplay
 
   return (
     <motion.div
@@ -55,7 +71,44 @@ export function FormField({
         {required && <span className="text-red-500 ml-1">*</span>}
       </Label>
       
-      {options ? (
+      <div className="space-y-2">
+        {/* Selected items display */}
+        {selectedOptions.length > 0 && (
+          <div className="flex flex-wrap gap-1 p-2 bg-gray-50 rounded-lg border-2 border-slate-200">
+            {displayedOptions.map((option) => (
+              <Badge
+                key={option.value}
+                variant="secondary"
+                className="flex items-center gap-1 bg-blue-100 text-blue-800 hover:bg-blue-200 hover:scale-105 transition-transform"
+              >
+                {option.label}
+                <button
+                  type="button"
+                  onClick={() => handleRemove(option.value)}
+                  className="ml-1 hover:bg-blue-300 rounded-full p-0.5"
+                >
+                  <X className="h-3 w-3" />
+                </button>
+              </Badge>
+            ))}
+            {remainingCount > 0 && (
+              <Badge variant="outline" className="bg-gray-100">
+                +{remainingCount} more
+              </Badge>
+            )}
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              onClick={clearAll}
+              className="h-6 px-2 text-xs text-gray-500 hover:text-gray-700"
+            >
+              Clear All
+            </Button>
+          </div>
+        )}
+
+        {/* Multi-select dropdown */}
         <Popover open={open} onOpenChange={setOpen}>
           <PopoverTrigger asChild>
             <Button
@@ -73,9 +126,12 @@ export function FormField({
             >
               <span className={cn(
                 "truncate text-left",
-                !selectedOption && "text-muted-foreground"
+                selectedOptions.length === 0 && "text-muted-foreground"
               )}>
-                {selectedOption ? selectedOption.label : placeholder}
+                {selectedOptions.length > 0 
+                  ? `${selectedOptions.length} selected` 
+                  : placeholder
+                }
               </span>
               <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
             </Button>
@@ -95,17 +151,13 @@ export function FormField({
                     <CommandItem
                       key={option.value}
                       value={option.label}
-                      onSelect={() => {
-                        onChange(option.value.toString())
-                        setOpen(false)
-                        setSearchValue("")
-                      }}
+                      onSelect={() => handleSelect(option.value)}
                       className="cursor-pointer"
                     >
                       <Check
                         className={cn(
                           "mr-2 h-4 w-4",
-                          value.toString() === option.value.toString() ? "opacity-100" : "opacity-0"
+                          values.includes(option.value) ? "opacity-100" : "opacity-0"
                         )}
                       />
                       {option.label}
@@ -116,22 +168,7 @@ export function FormField({
             </Command>
           </PopoverContent>
         </Popover>
-      ) : (
-        <Input
-          type={type}
-          value={value}
-          onChange={(e) => onChange(e.target.value)}
-          placeholder={placeholder}
-          disabled={disabled}
-          className={`h-10 rounded-lg border-2 transition-all duration-200 shadow-sm ${
-            error 
-              ? 'border-red-300 focus:border-red-500 focus:ring-red-500/20' 
-              : disabled
-              ? 'bg-gray-50 border-gray-200 text-gray-500'
-              : 'border-slate-300 focus:border-slate-500 focus:ring-slate-500/20 hover:border-slate-400'
-          }`}
-        />
-      )}
+      </div>
       
       {error && (
         <motion.p

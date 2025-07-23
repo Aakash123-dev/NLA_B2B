@@ -77,16 +77,21 @@ export const InsightsHeader: React.FC<InsightsHeaderProps> = ({ onShowPasswordSh
           
           {/* Quick Actions */}
           <div className="flex items-center gap-3">
-            <Button 
-              variant="outline" 
-              size="sm" 
-              className="px-4 py-2 gap-2 rounded-full bg-gradient-to-r from-sky-50 to-blue-50 border-sky-200 text-sky-700 hover:from-sky-100 hover:to-blue-100 hover:border-sky-300 hover:text-sky-800 transition-all duration-300 shadow hover:shadow-md hover:-translate-y-0.5 transform"
+            <Link 
+              href={`/user/simulator${projectId && modelId ? `?project=${projectId}&model=${modelId}` : ''}`}
+              className="inline-block"
             >
-              <div className="h-5 w-5 rounded-full bg-gradient-to-br from-sky-500 to-blue-600 flex items-center justify-center">
-                <Eye className="w-3 h-3 text-white" />
-              </div>
-              <span className="hidden sm:inline font-medium">Simulator</span>
-            </Button>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="px-4 py-2 gap-2 rounded-full bg-gradient-to-r from-sky-50 to-blue-50 border-sky-200 text-sky-700 hover:from-sky-100 hover:to-blue-100 hover:border-sky-300 hover:text-sky-800 transition-all duration-300 shadow hover:shadow-md hover:-translate-y-0.5 transform"
+              >
+                <div className="h-5 w-5 rounded-full bg-gradient-to-br from-sky-500 to-blue-600 flex items-center justify-center">
+                  <Eye className="w-3 h-3 text-white" />
+                </div>
+                <span className="hidden sm:inline font-medium">Simulator</span>
+              </Button>
+            </Link>
             
             <Button 
               variant="outline" 
@@ -139,13 +144,13 @@ export const InsightsHeader: React.FC<InsightsHeaderProps> = ({ onShowPasswordSh
                     <SelectItem value="to-region-wise">
                       <div className="flex items-center gap-2 whitespace-nowrap">
                         <Target className="w-4 h-4 text-slate-500" />
-                        To Region wise
+                        Region wise
                       </div>
                     </SelectItem>
                     <SelectItem value="to-total-us">
                       <div className="flex items-center gap-2 whitespace-nowrap">
                         <Globe className="w-4 h-4 text-slate-500" />
-                        To Total US
+                        Total US
                       </div>
                     </SelectItem>
                   </SelectContent>

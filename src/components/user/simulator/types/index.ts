@@ -1,3 +1,5 @@
+export * from './product';
+
 export interface SimulationProduct {
   id: number;
   name: string;

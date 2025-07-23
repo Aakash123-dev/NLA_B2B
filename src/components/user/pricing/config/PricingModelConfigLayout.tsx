@@ -148,163 +148,133 @@ export function PricingModelConfigLayout() {
   }, [processingState.isModelComplete, currentStep, goToStep])
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-50">
-      {/* Header Section */}
-      <div className="w-full px-6 lg:px-12 py-6">
-        {/* Navigation & Title */}
-        <div className="flex items-center justify-between mb-8">
+    <div className="h-screen bg-slate-50 flex flex-col overflow-hidden">
+      {/* Header */}
+      <div className="flex-shrink-0 bg-white border-b border-slate-200 px-6 py-4">
+        <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
             <Link 
               href="/user/pricing"
               onClick={handleBack}
-              className="flex items-center justify-center w-10 h-10 text-slate-700 bg-white hover:bg-blue-50 hover:text-blue-700 transition-all duration-300 rounded-xl border border-slate-200 shadow-sm hover:shadow-md hover:-translate-y-0.5 transform"
+              className="flex items-center justify-center w-9 h-9 text-slate-600 hover:bg-slate-100 hover:text-slate-800 transition-colors rounded-lg"
             >
-              <ArrowLeft className="w-5 h-5" />
+              <ArrowLeft className="w-4 h-4" />
             </Link>
-            <div className="h-6 w-px bg-slate-300"></div>
             <div className="flex items-center gap-3">
-              <div className="w-8 h-8 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-lg flex items-center justify-center shadow-sm">
+              <div className="w-7 h-7 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-lg flex items-center justify-center">
                 <DollarSign className="w-4 h-4 text-white" />
               </div>
-              <h1 className="text-2xl font-bold text-slate-800 tracking-tight">Pricing Model Configuration</h1>
-              <Badge variant="secondary" className="bg-blue-100 text-blue-700 border-blue-200">
-                Step {currentStep} of {TOTAL_STEPS}
-              </Badge>
+              <h1 className="text-xl font-semibold text-slate-800">Pricing Model Configuration</h1>
             </div>
           </div>
+          <Badge variant="secondary" className="bg-blue-50 text-blue-700 border-blue-200 text-sm">
+            Step {currentStep} of {TOTAL_STEPS}
+          </Badge>
         </div>
 
-   {/* Progress Section */}
-<div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6 mb-6">
-  <div className="flex items-center justify-between mb-4">
-    <h2 className="text-lg font-semibold text-slate-800">Configuration Progress</h2>
-    <span className="text-sm text-slate-600">{Math.round((currentStep / TOTAL_STEPS) * 100)}% Complete</span>
-  </div>
+        {/* Compact Progress */}
+        <div className="flex items-center gap-2 mt-4">
+          {[1, 2, 3, 4, 5].map((step) => {
+            const StepIcon = getStepIcon(step);
+            const isCompleted = step < currentStep;
+            const isCurrent = step === currentStep;
 
-  {/* Step Icons with Labels */}
-  <div className="flex justify-between items-end mb-4">
-    {[1, 2, 3, 4, 5].map((step, index) => {
-      const StepIcon = getStepIcon(step);
-      const isCompleted = step < currentStep;
-      const isCurrent = step === currentStep;
+            return (
+              <React.Fragment key={step}>
+                <div className="flex items-center gap-2">
+                  <div className={`
+                    flex items-center justify-center w-8 h-8 rounded-full text-xs
+                    ${isCompleted ? 'bg-emerald-500 text-white' : 
+                      isCurrent ? 'bg-blue-500 text-white' : 
+                      'bg-slate-200 text-slate-400'}
+                  `}>
+                    <StepIcon className="w-4 h-4" />
+                  </div>
+                  <span className={`
+                    text-sm
+                    ${step === currentStep ? 'text-blue-600 font-medium' : 
+                      step < currentStep ? 'text-emerald-600' : 'text-slate-500'}
+                  `}>
+                    {STEP_TITLES[step - 1]}
+                  </span>
+                </div>
+                {step < 5 && (
+                  <div className={`flex-1 h-0 border-t-2 ${step < currentStep ? 'border-emerald-500' : 'border-slate-200'}`} />
+                )}
+              </React.Fragment>
+            );
+          })}
+        </div>
+      </div>
 
-      return (
-        <div key={step} className="flex-1 flex flex-col items-center relative">
-          {/* Connecting Line - Left */}
-          {step > 1 && (
-            <div className="absolute left-0 top-5 w-1/2 h-1 bg-slate-200 -z-10">
-              <div className={`h-full ${step <= currentStep ? 'bg-emerald-500' : 'bg-slate-200'}`} />
-            </div>
-          )}
-          {/* Connecting Line - Right */}
-          {step < 5 && (
-            <div className="absolute right-0 top-5 w-1/2 h-1 bg-slate-200 -z-10">
-              <div className={`h-full ${step < currentStep ? 'bg-emerald-500' : 'bg-slate-200'}`} />
-            </div>
-          )}
+      {/* Main Content */}
+      <div className="flex-1 flex overflow-hidden">
+        {/* Step Content */}
+        <div className="flex-1 p-6 overflow-auto">
+          {renderStep()}
+        </div>
+      </div>
 
-          {/* Step Icon */}
-          <div className={`
-            flex items-center justify-center w-10 h-10 rounded-full mb-2 z-10
-            ${isCompleted ? 'bg-emerald-500 text-white' : 
-              isCurrent ? 'bg-blue-500 text-white' : 
-              'bg-slate-200 text-slate-400'}
-          `}>
-            <StepIcon className="w-5 h-5" />
+      {/* Footer */}
+      <div className="flex-shrink-0 bg-white border-t border-slate-200 px-6 py-4">
+        <div className="flex items-center justify-between">
+          <div>
+            {currentStep > 1 && currentStep < 5 && (
+              <Button
+                variant="outline"
+                onClick={prevStep}
+                size="sm"
+                className="gap-2"
+              >
+                <ArrowLeft className="w-4 h-4" />
+                Back
+              </Button>
+            )}
+            {currentStep === 5 && (
+              <Button
+                variant="outline"
+                onClick={() => goToStep(3)}
+                size="sm"
+                className="gap-2"
+              >
+                <ArrowLeft className="w-4 h-4" />
+                Back to Summary
+              </Button>
+            )}
           </div>
-
-          {/* Step Title */}
-          <span className={`
-            text-sm text-center
-            ${step === currentStep ? 'text-blue-600 font-medium' : 
-              step < currentStep ? 'text-emerald-600 font-medium' : 'text-slate-500'}
-          `}>
-            {STEP_TITLES[step - 1]}
-          </span>
-        </div>
-      );
-    })}
-  </div>
-
-  {/* Overall Progress Bar */}
-  <Progress value={(currentStep / TOTAL_STEPS) * 100} className="h-2" />
-</div>
-
-
-        {/* Main Configuration Section */}
-        <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-          <div className="p-8">
-            <div className="flex items-center gap-3 mb-6">
-              <div className="p-3 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl shadow-lg">
-                <Settings className="w-6 h-6 text-white" />
-              </div>
-              <div>
-                <h2 className="text-xl font-bold text-slate-800">{STEP_TITLES[currentStep - 1]}</h2>
-                <p className="text-slate-600">Configure your pricing model parameters</p>
-              </div>
-            </div>
-
-            {/* Step Content */}
-            <div className="mb-8">
-              {renderStep()}
-            </div>
-
-            {/* Navigation Footer */}
-            <div className="flex items-center justify-between pt-6 border-t border-slate-200">
-              <div>
-                {currentStep > 1 && currentStep < 5 && (
-                  <Button
-                    variant="outline"
-                    onClick={prevStep}
-                    className="px-6 py-2 gap-2 bg-slate-50 border-slate-300 text-slate-700 hover:bg-white hover:border-slate-400 transition-all duration-200"
-                  >
-                    <ArrowLeft className="w-4 h-4" />
-                    Back
-                  </Button>
-                )}
-                {currentStep === 5 && (
-                  <Button
-                    variant="outline"
-                    onClick={() => goToStep(3)}
-                    className="px-6 py-2 gap-2 bg-slate-50 border-slate-300 text-slate-700 hover:bg-white hover:border-slate-400 transition-all duration-200"
-                  >
-                    <ArrowLeft className="w-4 h-4" />
-                    Back to Summary
-                  </Button>
-                )}
-              </div>
-              
-              <div className="flex items-center gap-3">
-                {currentStep < 3 && (
-                  <Button
-                    onClick={handleNext}
-                    disabled={!canProceed}
-                    className="px-8 py-2 gap-2 rounded-full bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white font-medium shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-0.5 transform disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none disabled:shadow-sm"
-                  >
-                    Next Step
-                    <ArrowLeft className="w-4 h-4 rotate-180" />
-                  </Button>
-                )}
-                {currentStep === 3 && (
-                  <Button
-                    onClick={handleRun}
-                    className="px-8 py-2 gap-2 rounded-full bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white font-medium shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-0.5 transform"
-                  >
-                    <BarChart3 className="w-4 h-4" />
-                    Run Analysis
-                  </Button>
-                )}
-                {currentStep === 5 && (
-                  <Button
-                    onClick={handleRestart}
-                    className="px-8 py-2 gap-2 rounded-full bg-gradient-to-r from-purple-500 to-violet-600 hover:from-purple-600 hover:to-violet-700 text-white font-medium shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-0.5 transform"
-                  >
-                    <Settings className="w-4 h-4" />
-                    Start Over
-                  </Button>
-                )}
-              </div>
-            </div>
+          
+          <div className="flex items-center gap-3">
+            {currentStep < 3 && (
+              <Button
+                onClick={handleNext}
+                disabled={!canProceed}
+                size="sm"
+                className="px-6 gap-2 bg-blue-600 hover:bg-blue-700"
+              >
+                Next Step
+                <ArrowLeft className="w-4 h-4 rotate-180" />
+              </Button>
+            )}
+            {currentStep === 3 && (
+              <Button
+                onClick={handleRun}
+                size="sm"
+                className="px-6 gap-2 bg-emerald-600 hover:bg-emerald-700"
+              >
+                <BarChart3 className="w-4 h-4" />
+                Run Analysis
+              </Button>
+            )}
+            {currentStep === 5 && (
+              <Button
+                onClick={handleRestart}
+                size="sm"
+                className="px-6 gap-2 bg-purple-600 hover:bg-purple-700"
+              >
+                <Settings className="w-4 h-4" />
+                Start Over
+              </Button>
+            )}
           </div>
         </div>
       </div>
