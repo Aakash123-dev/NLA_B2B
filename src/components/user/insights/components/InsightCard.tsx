@@ -33,9 +33,6 @@ import PromotionalLiftChart from './PromotionalLiftCharts';
 import LiftChart from './LiftChart';
 import ElasticityStratagyChart from './ElasticityStratagyChart';
 import ProfitCurvesChart from './ProfitCurvesCharts';
-import { AppDispatch } from '@/store';
-import { useDispatch } from 'react-redux';
-import { fetchChartData } from '@/store/slices/chartsSlices';
 import dynamic from 'next/dynamic';
 
 const ChartOnly = dynamic(() => import('./chart1'), {

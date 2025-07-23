@@ -30,4 +30,8 @@ export const API_ENDPOINTS = {
     CHART9: (projectId: number, modelId: number) =>
       `/insights/chart9?project_id=${projectId}&model_id=${modelId}`,
   },
+  FILTERS: {
+    FILTER_DATA: (projectId: number, modelId: number) =>
+      `/insights/retailer_brands_products?project_id=${projectId}&model_id=${modelId}`,
+  },
 };
