@@ -1,11 +1,5 @@
 import UserSubscriptionPage from '@/components/user/subscription';
 
-function page() {
-  return (
-    <div>
-      <UserSubscriptionPage />
-    </div>
-  );
+export default function SubscriptionPage() {
+  return <UserSubscriptionPage />;
 }
-
-export default page;

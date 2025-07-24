@@ -215,6 +215,21 @@ function DesignStudioInner({ selectedProject }: DesignStudioProps) {
       return;
     }
     
+    // For promo-optimization nodes, navigate to promo optimization page
+    if (nodeType === 'promo-optimization') {
+      // Get URL parameters and preserve them when navigating to promo optimization
+      const urlParams = new URLSearchParams(window.location.search);
+      const projectId = urlParams.get('project');
+      const modelId = urlParams.get('model');
+      
+      const params = new URLSearchParams();
+      if (projectId) params.set('project', projectId);
+      if (modelId) params.set('model', modelId);
+      
+      window.location.href = `/user/promo-optimization?${params.toString()}`;
+      return;
+    }
+    
     // For other nodes, open configuration panel
     setConfiguration({
       isOpen: true,

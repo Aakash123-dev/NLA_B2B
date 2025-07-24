@@ -5,7 +5,33 @@ import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { ArrowRight, BarChart3, Target, TrendingUp, Zap, ArrowLeft } from 'lucide-react'
 import { motion } from 'framer-motion'
-import { configurationSteps } from './constants'
+
+const configurationSteps = [
+  {
+    number: 1,
+    title: "Data Setup",
+    description: "Configure your data sources and connections",
+    features: ["Database selection", "Data validation", "Connection setup"]
+  },
+  {
+    number: 2,
+    title: "Trade Configuration",
+    description: "Set up trade plan parameters and targets",
+    features: ["Target setting", "Parameter configuration", "Optimization goals"]
+  },
+  {
+    number: 3,
+    title: "Optimization",
+    description: "Run optimization algorithms and analysis",
+    features: ["Algorithm selection", "Performance analysis", "Results optimization"]
+  },
+  {
+    number: 4,
+    title: "Results & Reports",
+    description: "View results and generate comprehensive reports",
+    features: ["Dashboard view", "Report generation", "Performance metrics"]
+  }
+]
 
 export function TpoMainPage() {
   const router = useRouter()
