@@ -22,6 +22,7 @@ interface SearchableDropdownListProps {
   onSelectionChange: (selectedIds: string[]) => void
   placeholder?: string
   maxHeight?: string
+  maxDisplayHeight?: string
   colorScheme?: 'blue' | 'emerald' | 'purple' | 'default'
 }
 
@@ -31,7 +32,8 @@ export const SearchableDropdownList = React.memo(function SearchableDropdownList
   selectedItems, 
   onSelectionChange, 
   placeholder = "Search items...",
-  maxHeight = "300px"
+  maxHeight = "300px",
+  maxDisplayHeight = "150px"
 }: SearchableDropdownListProps) {
   const [searchQuery, setSearchQuery] = useState('')
   const [isOpen, setIsOpen] = useState(false)
@@ -71,24 +73,44 @@ export const SearchableDropdownList = React.memo(function SearchableDropdownList
 
       {/* Selected Items Display */}
       {selectedItems.length > 0 && (
-        <div className="flex flex-wrap gap-1.5 p-3 bg-slate-50/50 rounded-lg border border-slate-200">
-          {selectedItemsData.map(item => (
-            <Badge 
-              key={item.id} 
-              variant="secondary"
-              className="bg-white text-slate-700 hover:bg-slate-100 border border-slate-200 shadow-sm pr-1 pl-2 py-1 text-xs font-medium"
-            >
-              <span className="max-w-[120px] truncate">{item.name}</span>
+        <div className="border border-slate-200 rounded-lg bg-slate-50/50 overflow-hidden">
+          <div className="px-3 py-2 bg-slate-100/70 border-b border-slate-200">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-medium text-slate-600">
+                {selectedItems.length} selected
+              </span>
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={() => handleRemoveSelection(item.id)}
-                className="ml-1 h-3 w-3 p-0 hover:bg-red-100 rounded-full"
+                onClick={() => onSelectionChange([])}
+                className="text-xs text-red-600 hover:text-red-700 hover:bg-red-50 px-2 py-1 h-5"
               >
-                <X className="w-2.5 h-2.5 text-red-500" />
+                Clear all
               </Button>
-            </Badge>
-          ))}
+            </div>
+          </div>
+          <ScrollArea style={{ maxHeight: maxDisplayHeight }} className="px-3 py-2">
+            <div className="flex flex-wrap gap-1.5">
+              {selectedItemsData.map(item => (
+                <Badge 
+                  key={item.id} 
+                  variant="secondary"
+                  className="bg-white text-slate-700 hover:bg-slate-100 border border-slate-200 shadow-sm pr-1 pl-2 py-1 text-xs font-medium max-w-[200px]"
+                  title={item.name}
+                >
+                  <span className="truncate">{item.name}</span>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => handleRemoveSelection(item.id)}
+                    className="ml-1 h-3 w-3 p-0 hover:bg-red-100 rounded-full flex-shrink-0"
+                  >
+                    <X className="w-2.5 h-2.5 text-red-500" />
+                  </Button>
+                </Badge>
+              ))}
+            </div>
+          </ScrollArea>
         </div>
       )}
 
@@ -105,14 +127,23 @@ export const SearchableDropdownList = React.memo(function SearchableDropdownList
           >
             <div className="flex items-center gap-2">
               <Plus className="w-4 h-4 text-slate-500" />
-              <span className="text-slate-600 text-sm font-medium">
+              <span className="text-slate-600 text-sm font-medium truncate">
                 {selectedItems.length > 0 
-                  ? `Add more ${title.toLowerCase()}`
+                  ? selectedItems.length > 5 
+                    ? `${selectedItems.length} ${title.toLowerCase()} selected`
+                    : `Add more ${title.toLowerCase()}`
                   : `Select ${title.toLowerCase()}`
                 }
               </span>
             </div>
-            <ChevronDown className="w-4 h-4 text-slate-500" />
+            <div className="flex items-center gap-2">
+              {selectedItems.length > 0 && (
+                <Badge variant="secondary" className="bg-emerald-100 text-emerald-700 text-xs font-medium px-2 py-0.5">
+                  {selectedItems.length}
+                </Badge>
+              )}
+              <ChevronDown className="w-4 h-4 text-slate-500" />
+            </div>
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent 
@@ -189,6 +220,11 @@ export const SearchableDropdownList = React.memo(function SearchableDropdownList
               {/* Footer Actions */}
               <div className="flex justify-between items-center p-3 border-t border-slate-100 bg-slate-50/50">
                 <div className="flex items-center gap-2">
+                  <span className="text-xs text-slate-500">
+                    {selectedItems.length} of {items.length} selected
+                  </span>
+                </div>
+                <div className="flex items-center gap-2">
                   <Button
                     variant="ghost"
                     size="sm"
@@ -212,14 +248,14 @@ export const SearchableDropdownList = React.memo(function SearchableDropdownList
                       Select all
                     </Button>
                   )}
+                  <Button
+                    size="sm"
+                    onClick={() => setIsOpen(false)}
+                    className="text-xs bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 h-6 rounded-md"
+                  >
+                    Done
+                  </Button>
                 </div>
-                <Button
-                  size="sm"
-                  onClick={() => setIsOpen(false)}
-                  className="text-xs bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 h-6 rounded-md"
-                >
-                  Done
-                </Button>
               </div>
             </CardContent>
           </Card>

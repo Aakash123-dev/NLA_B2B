@@ -1,8 +1,4 @@
-// Main TPO Module
-export { TpoMainPage } from './TpoMainPage'
 
-// Setup Module
-export * from './setup'
 
 // Dashboard Module
 export * from './dashboard'

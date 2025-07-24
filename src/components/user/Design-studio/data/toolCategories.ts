@@ -16,7 +16,8 @@ import {
   CalendarDays,
   Filter,
   FileText,
-  DollarSign
+  DollarSign,
+  Megaphone
 } from 'lucide-react';
 import { ToolCategory, InsightTemplate } from '../types';
 
@@ -52,6 +53,7 @@ export const getToolCategories = (): ToolCategory[] => [
     tools: [
       { id: 'trade-calendar', name: 'Trade Calendar', icon: CalendarDays, color: 'from-green-100 to-green-200' },
       { id: 'trade-plan-optimization', name: 'Trade Plan Optimization', icon: Target, color: 'from-lime-100 to-lime-200' },
+      { id: 'promo-optimization', name: 'Promo Optimization', icon: Megaphone, color: 'from-orange-100 to-orange-200' },
     ]
   },
   {

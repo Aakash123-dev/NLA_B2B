@@ -53,6 +53,19 @@ export function ToolContent({
     // Navigate to TPO main page first, then user can proceed to setup
     router.push(`/user/tpo?${params.toString()}`);
   };
+
+  const handlePromoConfigure = () => {
+    // Get URL parameters and preserve them when navigating to promo optimization
+    const urlParams = new URLSearchParams(window.location.search);
+    const projectId = urlParams.get('project');
+    const modelId = urlParams.get('model');
+    
+    const params = new URLSearchParams();
+    if (projectId) params.set('project', projectId);
+    if (modelId) params.set('model', modelId);
+    
+    router.push(`/user/promo-optimization?${params.toString()}`);
+  };
   const toolHeader = (
     <div className="mb-8">
       <div className="flex items-center justify-between">
@@ -63,6 +76,7 @@ export function ToolContent({
             {nodeType === 'forecasting' && 'Build predictive models for future trends'}
             {nodeType === 'insights-template' && 'Pre-built insight visualization templates'}
             {nodeType === 'trade-plan-optimization' && 'Optimize trading strategies and execution plans'}
+            {nodeType === 'promo-optimization' && 'Optimize promotional campaigns and marketing strategies'}
             {nodeType.startsWith('template-') && 'Visualization dashboard and analytics'}
           </p>
         </div>
@@ -258,6 +272,64 @@ export function ToolContent({
                 <div className="flex justify-between items-center">
                   <span className="text-sm text-slate-600 dark:text-slate-400">Alternatives</span>
                   <span className="font-medium text-slate-900 dark:text-white">10%</span>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+      );
+      
+    case 'promo-optimization':
+      return (
+        <div className="p-8 space-y-6">
+          {toolHeader}
+          <div className="mb-6">
+            <Button
+              onClick={handlePromoConfigure}
+              className="bg-gradient-to-r from-emerald-500 to-cyan-500 hover:from-emerald-600 hover:to-cyan-600 text-white px-6 py-2 rounded-lg flex items-center gap-2 font-medium"
+            >
+              <Settings className="w-4 h-4" />
+              Configure Promo Optimization
+            </Button>
+          </div>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <Card className="bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm border border-slate-200 dark:border-slate-700/50">
+              <CardHeader>
+                <CardTitle>Campaign Settings</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Campaign Type</label>
+                  <select className="w-full px-3 py-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-lg">
+                    <option>Discount Promotion</option>
+                    <option>BOGO (Buy One Get One)</option>
+                    <option>Bundle Deals</option>
+                    <option>Volume Discounts</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Target Discount (%)</label>
+                  <input type="number" className="w-full px-3 py-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-lg" placeholder="15" />
+                </div>
+              </CardContent>
+            </Card>
+            
+            <Card className="bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm border border-slate-200 dark:border-slate-700/50">
+              <CardHeader>
+                <CardTitle>Performance Metrics</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <div className="flex justify-between items-center">
+                  <span className="text-sm text-slate-600 dark:text-slate-400">Conversion Rate</span>
+                  <span className="font-medium text-slate-900 dark:text-white">3.2%</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-sm text-slate-600 dark:text-slate-400">ROI</span>
+                  <span className="font-medium text-slate-900 dark:text-white">225%</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-sm text-slate-600 dark:text-slate-400">Customer Acquisition</span>
+                  <span className="font-medium text-slate-900 dark:text-white">1,247</span>
                 </div>
               </CardContent>
             </Card>

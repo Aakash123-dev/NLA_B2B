@@ -5,8 +5,8 @@ import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { ArrowLeft, FileText, Upload, Plus, Building } from 'lucide-react'
 import { motion } from 'framer-motion'
-import { CreateEventModal } from '@/components/user/tpo/dashboard/components/CreateEventModal'
-import { SetupImportModal } from '@/components/user/tpo/setup/components/SetupImportModal'
+import { CreateEventModal } from './CreateEventModal'
+import { SetupImportModal } from '../../setup/components/SetupImportModal'
 import { TradePlan } from '../../types'
 
 interface DashboardHeaderProps {
