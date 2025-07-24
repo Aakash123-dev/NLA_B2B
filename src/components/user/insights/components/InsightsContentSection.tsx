@@ -1,10 +1,10 @@
-'use client'
-import React, { useEffect, useState, useMemo } from 'react';
-import { useInsightsContext } from '../contexts'; // Assuming you have a context for state
+'use client';
+import React, { useEffect, useState } from 'react';
+import { useInsightsContext } from '../contexts';
 import { useInsightsListProps } from '../hooks';
 import { InsightsTabs, InsightsList, InsightsFilters } from '../components';
 import { useDispatch, useSelector } from 'react-redux';
-import { AppDispatch, RootState } from '@/store';
+import { AppDispatch, RootState, useAppSelector } from '@/store';
 import {
   fetchChart2Data,
   fetchChart3DataThunk,
@@ -18,77 +18,141 @@ import {
 } from '@/store/slices/chartsSlices';
 import { useSearchParams } from 'next/navigation';
 import { fetchChartFilterData } from '@/store/slices/chartFilterSlices';
+import {
+  postInsightsFilterData,
+  fetchGlobalFilters,
+} from '@/services/filterServices/chartFilters';
+import { fetchGlobalFiltersThunk } from '@/store/slices/globalFilterSlice';
+import { useFilters } from '@/hooks/useFilters';
 
 export const InsightsContentSection: React.FC = () => {
   const searchParams = useSearchParams();
   const projectId = Number(searchParams.get('project'));
   const modelId = Number(searchParams.get('model'));
 
-  // You can manage the selection states here or use context
-  // In this example, local state for clarity
+  const selectedRetailerId = useAppSelector(
+    (state: RootState) => state.filters.selectedRetailerId
+  );
+  const selectedBrandId = useAppSelector(
+    (state: RootState) => state.filters.selectedBrandId
+  );
+  const selectedProductId = useAppSelector(
+    (state: RootState) => state.filters.selectedProductId
+  );
+  const dispatch = useDispatch<AppDispatch>();
+
   const [selectedRetailers, setSelectedRetailers] = useState<string[]>([]);
   const [selectedBrands, setSelectedBrands] = useState<string[]>([]);
   const [selectedProducts, setSelectedProducts] = useState<string[]>([]);
 
   const insightsListProps = useInsightsListProps();
-
   const { state, actions } = useInsightsContext();
 
-  const {
-    data: chartFilterData,
-    loading,
-    error,
-  } = useSelector((state: RootState) => state.chartFilter);
-
-  const dispatch = useDispatch<AppDispatch>();
-  const { hasLoaded } = useSelector((state: RootState) => state.chart);
-
-  // Load the filter data
-  useEffect(() => {
-    dispatch(fetchChartFilterData({ projectId, modelId }));
-  }, [dispatch, projectId, modelId]);
-
-  // Load charts data
-  useEffect(() => {
-    if (!hasLoaded) {
-      dispatch(fetchChartData({ projectId, modelId }));
-      dispatch(fetchChart2Data({ projectId, modelId }));
-      dispatch(fetchChart3DataThunk({ projectId, modelId }));
-      dispatch(fetchChart4DataThunk({ projectId, modelId }));
-      dispatch(fetchChart5DataThunk({ projectId, modelId }));
-      dispatch(fetchChart6DataThunk({ projectId, modelId }));
-      dispatch(fetchChart7DataThunk({ projectId, modelId }));
-      dispatch(fetchChart8DataThunk({ projectId, modelId }));
-      dispatch(fetchChart9DataThunk({ projectId, modelId }));
-    }
-  }, [dispatch, hasLoaded, projectId, modelId]);
-
-  // Optional memoized lists of all options for UI or debugging (not selected by default)
-  const allRetailers = useMemo(
-    () => chartFilterData?.map((r) => r.name) ?? [],
-    [chartFilterData]
+  const { data: chartFilterData } = useSelector(
+    (state: RootState) => state.chartFilter
   );
 
-  const allBrands = useMemo(() => {
-    if (!chartFilterData) return [];
-    const brands = chartFilterData.flatMap((r) => r.brands.map((b) => b.name));
-    return Array.from(new Set(brands)).sort();
-  }, [chartFilterData]);
+  console.log(selectedBrandId, 'allChahrtFilters');
+  console.log(selectedProductId, 'allproducr');
+  console.log(selectedRetailerId, 'allReatiler');
+  // Fetch chart filters initially
+  useEffect(() => {
+    if (projectId && modelId) {
+      dispatch(fetchChartFilterData({ projectId, modelId }));
+    }
+  }, [dispatch, projectId, modelId]);
 
-  const allProducts = useMemo(() => {
-    if (!chartFilterData) return [];
-    const products = chartFilterData.flatMap((r) =>
-      r.brands.flatMap((b) => b.products.map((p) => p.name))
-    );
-    return Array.from(new Set(products)).sort();
-  }, [chartFilterData]);
+  const filterPayload = {
+    projectId,
+    modelId,
+    Product: selectedProducts.length ? selectedProducts.join(',') : undefined,
+    Brand: selectedBrands.length ? selectedBrands.join(',') : undefined,
+    Retailer: selectedRetailers.length
+      ? selectedRetailers.join(',')
+      : undefined,
+  };
 
-  // Optional: clear filters when chartFilterData changes (meaning data reloaded)
+  // Fetch all chart data based on filters
+  useEffect(() => {
+    dispatch(fetchChartData(filterPayload));
+    dispatch(fetchChart2Data(filterPayload));
+    dispatch(fetchChart3DataThunk(filterPayload));
+    dispatch(fetchChart4DataThunk(filterPayload));
+    dispatch(fetchChart5DataThunk(filterPayload));
+    dispatch(fetchChart6DataThunk(filterPayload));
+    dispatch(fetchChart7DataThunk(filterPayload));
+    dispatch(fetchChart8DataThunk(filterPayload));
+    dispatch(fetchChart9DataThunk(filterPayload));
+  }, [
+    dispatch,
+    projectId,
+    modelId,
+    selectedRetailers,
+    selectedBrands,
+    selectedProducts,
+  ]);
+
+  // Clear filters when new filter data arrives
   useEffect(() => {
     setSelectedRetailers([]);
     setSelectedBrands([]);
     setSelectedProducts([]);
   }, [chartFilterData]);
+
+  // POST filters + FETCH global filters on change
+  useEffect(() => {
+    const updateFilters = async () => {
+      try {
+        if (!modelId) return;
+        if (!chartFilterData) return;
+
+        let brandsToPost = selectedBrands;
+        let productsToPost = selectedProducts;
+
+        // If retailers are selected, generate full brands/products for them to post instead of current selection
+        if (selectedRetailers.length > 0) {
+          const relatedBrandsSet = new Set<string>();
+          const relatedProductsSet = new Set<string>();
+
+          chartFilterData.forEach((retailer) => {
+            if (selectedRetailers.includes(retailer.name)) {
+              retailer.brands.forEach((brand) => {
+                relatedBrandsSet.add(brand.name);
+                brand.products.forEach((product) => {
+                  relatedProductsSet.add(product.name);
+                });
+              });
+            }
+          });
+
+          brandsToPost = Array.from(relatedBrandsSet);
+          productsToPost = Array.from(relatedProductsSet);
+        }
+
+        await postInsightsFilterData(
+          modelId,
+          selectedRetailers,
+          brandsToPost,
+          productsToPost,
+          null,
+          null
+        );
+
+        dispatch(fetchGlobalFiltersThunk(modelId));
+      } catch (error) {
+        console.error('Error updating filters:', error);
+      }
+    };
+
+    updateFilters();
+  }, [
+    selectedRetailers,
+    selectedBrands,
+    selectedProducts,
+    modelId,
+    chartFilterData,
+    dispatch,
+  ]);
 
   return (
     <>
@@ -112,6 +176,7 @@ export const InsightsContentSection: React.FC = () => {
         setSelectedTab={actions.setSelectedTab}
         setIsSmartInsightsOpen={actions.setIsSmartInsightsOpen}
       />
+
       <InsightsList {...insightsListProps} />
     </>
   );

@@ -43,15 +43,23 @@ export const InsightsFilters: React.FC<InsightsFiltersProps> = ({
     (state: RootState) => state.chartFilter
   );
 
-
+  // Retailers list from data
   const retailers = useMemo(
     () => (chartFilterData ? chartFilterData.map((r) => r.name) : []),
     [chartFilterData]
   );
 
-  // Filter brands only belonging to selected retailers
+  // Brands filtered by selected retailers
   const brands = useMemo(() => {
-    if (!chartFilterData || selectedRetailers.length === 0) return [];
+    if (!chartFilterData) return [];
+    if (selectedRetailers.length === 0) {
+      // If no retailer selected, show all brands
+      const allBrandsSet = new Set<string>();
+      chartFilterData.forEach((r) =>
+        r.brands.forEach((b) => allBrandsSet.add(b.name))
+      );
+      return Array.from(allBrandsSet).sort();
+    }
     const selectedRetailerData = chartFilterData.filter((r) =>
       selectedRetailers.includes(r.name)
     );
@@ -62,57 +70,84 @@ export const InsightsFilters: React.FC<InsightsFiltersProps> = ({
     return Array.from(brandsSet).sort();
   }, [chartFilterData, selectedRetailers]);
 
-  // Filter products only belonging to selected brands (and their selected retailers)
+  // Products show all products belonging to brands (if brands selected),
+  // otherwise all products of all brands related to selected retailers
   const products = useMemo(() => {
-    if (!chartFilterData || selectedBrands?.length === 0) return [];
-    let result: string[] = [];
-    chartFilterData.forEach((r) => {
-      if (
-        selectedRetailers.length === 0 ||
-        selectedRetailers.includes(r.name)
-      ) {
+    if (!chartFilterData) return [];
+
+    let productSet = new Set<string>();
+
+    if (selectedRetailers.length === 0) {
+      // no retailers filter: get all products
+      chartFilterData.forEach((r) => {
         r.brands.forEach((b) => {
-          if (selectedBrands.includes(b.name)) {
-            result.push(...b.products.map((p) => p.name));
-          }
+          b.products.forEach((p) => productSet.add(p.name));
         });
-      }
-    });
-    return Array.from(new Set(result)).sort();
+      });
+    } else if (selectedBrands.length === 0) {
+      // retailers selected, no brands: products from all brands of selected retailers
+      chartFilterData.forEach((r) => {
+        if (selectedRetailers.includes(r.name)) {
+          r.brands.forEach((b) => {
+            b.products.forEach((p) => productSet.add(p.name));
+          });
+        }
+      });
+    } else {
+      // retailers and brands selected: products only from those brands within those retailers
+      chartFilterData.forEach((r) => {
+        if (selectedRetailers.includes(r.name)) {
+          r.brands.forEach((b) => {
+            if (selectedBrands.includes(b.name)) {
+              b.products.forEach((p) => productSet.add(p.name));
+            }
+          });
+        }
+      });
+    }
+    return Array.from(productSet).sort();
   }, [chartFilterData, selectedRetailers, selectedBrands]);
 
-  // === Helpers for updating selected Brands/Products ===
+  // Helper: get brands for retailers
   const getBrandsForRetailers = (retailers: string[]): string[] => {
     if (!chartFilterData) return [];
-    const brandsSet = new Set<string>();
+    const set = new Set<string>();
     chartFilterData.forEach((r) => {
       if (retailers.includes(r.name)) {
-        r.brands.forEach((b) => brandsSet.add(b.name));
+        r.brands.forEach((b) => set.add(b.name));
       }
     });
-    return Array.from(brandsSet);
+    return Array.from(set);
   };
 
+  // Helper: get products for brands + retailers
   const getProductsForBrandsAndRetailers = (
     brands: string[],
     retailers: string[]
   ): string[] => {
     if (!chartFilterData) return [];
-    const productsSet = new Set<string>();
+    const set = new Set<string>();
     chartFilterData.forEach((r) => {
       if (retailers.length === 0 || retailers.includes(r.name)) {
         r.brands.forEach((b) => {
           if (brands.includes(b.name)) {
-            b.products.forEach((p) => productsSet.add(p.name));
+            b.products.forEach((p) => set.add(p.name));
           }
         });
       }
     });
-    return Array.from(productsSet);
+    return Array.from(set);
   };
 
-  // === 3. Select/deselect logic ===
+  //=========== CHANGES BEGIN ==============
 
+  // If no retailer is selected, brands and products controls should be disabled
+  const brandsDisabled = selectedRetailers.length === 0;
+  const productsDisabled = selectedRetailers.length === 0;
+
+  //=========== CHANGES END ==============
+
+  // Handle retailer select/deselect
   const handleRetailerSelect = (retailer: string) => {
     let updated: string[];
     if (selectedRetailers.includes(retailer)) {
@@ -121,6 +156,11 @@ export const InsightsFilters: React.FC<InsightsFiltersProps> = ({
       updated = [...selectedRetailers, retailer];
     }
     setSelectedRetailers(updated);
+
+
+    // Reset brands and products selections – no defaults
+    setSelectedBrands([]);
+    setSelectedProducts([]);
 
     // Only keep brands still possible for these retailers
     const possibleBrands = getBrandsForRetailers(updated);
@@ -135,8 +175,10 @@ export const InsightsFilters: React.FC<InsightsFiltersProps> = ({
       updated
     );
     setSelectedProducts(selectedProducts.filter((p) => possibleProducts.includes(p)));
+
   };
 
+  // Handle brand select/deselect
   const handleBrandSelect = (brand: string) => {
     let updated: string[];
     if (selectedBrands.includes(brand)) {
@@ -146,6 +188,7 @@ export const InsightsFilters: React.FC<InsightsFiltersProps> = ({
     }
     setSelectedBrands(updated);
 
+    // Filter products by selected brands and current retailers
     const possibleProducts = getProductsForBrandsAndRetailers(
       updated,
       selectedRetailers
@@ -153,6 +196,7 @@ export const InsightsFilters: React.FC<InsightsFiltersProps> = ({
     setSelectedProducts(selectedProducts.filter((p) => possibleProducts.includes(p)));
   };
 
+  // Handle product select/deselect
   const handleProductSelect = (product: string) => {
     let updated: string[];
     if (selectedProducts.includes(product)) {
@@ -197,14 +241,12 @@ export const InsightsFilters: React.FC<InsightsFiltersProps> = ({
   };
 
   const hasActiveFilters =
-    selectedRetailers?.length > 0 ||
-    selectedBrands?.length > 0 ||
-    selectedProducts?.length > 0;
+    selectedRetailers.length > 0 ||
+    selectedBrands.length > 0 ||
+    selectedProducts.length > 0;
 
   const getTotalFilters = () =>
-    selectedRetailers?.length + selectedBrands?.length + selectedProducts?.length;
-
-  // --- 4. UI (UI stays as in your base version) ---
+    selectedRetailers.length + selectedBrands.length + selectedProducts.length;
 
   return (
     <div className="w-full border-b border-gray-100 bg-white">
@@ -241,7 +283,7 @@ export const InsightsFilters: React.FC<InsightsFiltersProps> = ({
                 <Button
                   variant="outline"
                   role="combobox"
-                  aria-expanded="false"
+                  aria-expanded={false}
                   className="h-10 w-full justify-between border-gray-200 bg-gray-50 text-sm font-normal hover:bg-gray-100"
                   disabled={retailers.length === 0}
                 >
@@ -250,11 +292,11 @@ export const InsightsFilters: React.FC<InsightsFiltersProps> = ({
                       Retailer:
                     </span>
                     <span className="truncate text-gray-700">
-                      {selectedRetailers?.length === 0
+                      {selectedRetailers.length === 0
                         ? 'All retailers'
-                        : selectedRetailers?.length === 1
+                        : selectedRetailers.length === 1
                           ? selectedRetailers[0]
-                          : `${selectedRetailers?.length} selected`}
+                          : `${selectedRetailers.length} selected`}
                     </span>
                   </div>
                   <ChevronDown className="h-3 w-3 shrink-0 text-gray-400" />
@@ -268,6 +310,9 @@ export const InsightsFilters: React.FC<InsightsFiltersProps> = ({
                       No retailers found.
                     </CommandEmpty>
                     <CommandGroup>
+
+                      {retailers.map((retailer) => (
+
                       {/* Select All Option */}
                       <CommandItem
                         onSelect={handleSelectAllRetailers}
@@ -285,6 +330,7 @@ export const InsightsFilters: React.FC<InsightsFiltersProps> = ({
                         </span>
                       </CommandItem>
                       {retailers?.map((retailer) => (
+
                         <CommandItem
                           key={retailer}
                           value={retailer}
@@ -292,9 +338,13 @@ export const InsightsFilters: React.FC<InsightsFiltersProps> = ({
                           className="flex cursor-pointer items-center gap-2 px-3 py-2 text-sm hover:bg-gray-50"
                         >
                           <div
-                            className={`flex h-4 w-4 items-center justify-center rounded border ${selectedRetailers.includes(retailer) ? 'border-blue-500 bg-blue-500' : 'border-gray-300'}`}
+                            className={`flex h-4 w-4 items-center justify-center rounded border ${
+                              selectedRetailers.includes(retailer)
+                                ? 'border-blue-500 bg-blue-500'
+                                : 'border-gray-300'
+                            }`}
                           >
-                            {selectedRetailers?.includes(retailer) && (
+                            {selectedRetailers.includes(retailer) && (
                               <Check className="h-3 w-3 text-white" />
                             )}
                           </div>
@@ -306,7 +356,32 @@ export const InsightsFilters: React.FC<InsightsFiltersProps> = ({
                 </Command>
               </PopoverContent>
             </Popover>
+
+            {/* Selected retailers chips */}
+            {selectedRetailers.length > 0 && (
+              <div className="flex flex-wrap gap-1">
+                {selectedRetailers.slice(0, 3).map((r) => (
+                  <Badge
+                    key={r}
+                    variant="secondary"
+                    className="cursor-pointer border-blue-200 bg-blue-50 text-xs text-blue-700 hover:bg-blue-100"
+                    onClick={() => handleRetailerSelect(r)}
+                  >
+                    {r} <X className="ml-1 h-3 w-3" />
+                  </Badge>
+                ))}
+                {selectedRetailers.length > 3 && (
+                  <Badge
+                    variant="secondary"
+                    className="bg-gray-100 text-xs text-gray-600"
+                  >
+                    +{selectedRetailers.length - 3} more
+                  </Badge>
+                )}
+              </div>
+            )}
           </div>
+
           {/* Brand Filter */}
           <div className="space-y-2">
             <Popover>
@@ -314,20 +389,21 @@ export const InsightsFilters: React.FC<InsightsFiltersProps> = ({
                 <Button
                   variant="outline"
                   role="combobox"
-                  aria-expanded="false"
+                  aria-expanded={false}
                   className="h-10 w-full justify-between border-gray-200 bg-gray-50 text-sm font-normal hover:bg-gray-100"
-                  disabled={brands?.length === 0}
+                  //================ EDIT HERE ================
+                  disabled={brandsDisabled || brands.length === 0}
                 >
                   <div className="flex min-w-0 flex-1 items-center gap-2">
                     <span className="shrink-0 text-xs text-gray-500">
                       Brand:
                     </span>
                     <span className="truncate text-gray-700">
-                      {selectedBrands?.length === 0
+                      {selectedBrands.length === 0
                         ? 'All brands'
-                        : selectedBrands?.length === 1
+                        : selectedBrands.length === 1
                           ? selectedBrands[0]
-                          : `${selectedBrands?.length} selected`}
+                          : `${selectedBrands.length} selected`}
                     </span>
                   </div>
                   <ChevronDown className="h-3 w-3 shrink-0 text-gray-400" />
@@ -341,6 +417,9 @@ export const InsightsFilters: React.FC<InsightsFiltersProps> = ({
                       No brands found.
                     </CommandEmpty>
                     <CommandGroup>
+
+                      {brands.map((brand) => (
+
                       {/* Select All Option */}
                       {brands.length > 0 && (
                         <CommandItem
@@ -360,16 +439,26 @@ export const InsightsFilters: React.FC<InsightsFiltersProps> = ({
                         </CommandItem>
                       )}
                       {brands?.map((brand) => (
+
                         <CommandItem
                           key={brand}
                           value={brand}
                           onSelect={() => handleBrandSelect(brand)}
-                          className="flex cursor-pointer items-center gap-2 px-3 py-2 text-sm hover:bg-gray-50"
+                          className={`flex cursor-pointer items-center gap-2 px-3 py-2 text-sm hover:bg-gray-50 ${
+                            brandsDisabled
+                              ? 'pointer-events-none opacity-50'
+                              : ''
+                          }`}
+                          disabled={brandsDisabled}
                         >
                           <div
-                            className={`flex h-4 w-4 items-center justify-center rounded border ${selectedBrands.includes(brand) ? 'border-green-500 bg-green-500' : 'border-gray-300'}`}
+                            className={`flex h-4 w-4 items-center justify-center rounded border ${
+                              selectedBrands.includes(brand)
+                                ? 'border-green-500 bg-green-500'
+                                : 'border-gray-300'
+                            }`}
                           >
-                            {selectedBrands?.includes(brand) && (
+                            {selectedBrands.includes(brand) && (
                               <Check className="h-3 w-3 text-white" />
                             )}
                           </div>
@@ -381,6 +470,36 @@ export const InsightsFilters: React.FC<InsightsFiltersProps> = ({
                 </Command>
               </PopoverContent>
             </Popover>
+
+            {/* Helper text when no retailer selected */}
+            {brandsDisabled && (
+              <span className="mt-1 block text-xs text-gray-400">
+                Select retailer(s) first
+              </span>
+            )}
+            {selectedBrands.length > 0 && (
+              <div className="flex flex-wrap gap-1">
+                {selectedBrands.slice(0, 3).map((b) => (
+                  <Badge
+                    key={b}
+                    variant="secondary"
+                    className="cursor-pointer border-green-200 bg-green-50 text-xs text-green-700 hover:bg-green-100"
+                    onClick={() => handleBrandSelect(b)}
+                  >
+                    {b} <X className="ml-1 h-3 w-3" />
+                  </Badge>
+                ))}
+                {selectedBrands.length > 3 && (
+                  <Badge
+                    variant="secondary"
+                    className="bg-gray-100 text-xs text-gray-600"
+                  >
+                    +{selectedBrands.length - 3} more
+                  </Badge>
+                )}
+              </div>
+            )}
+
           </div>
           {/* Product Filter */}
           <div className="space-y-2">
@@ -389,20 +508,21 @@ export const InsightsFilters: React.FC<InsightsFiltersProps> = ({
                 <Button
                   variant="outline"
                   role="combobox"
-                  aria-expanded="false"
+                  aria-expanded={false}
                   className="h-10 w-full justify-between border-gray-200 bg-gray-50 text-sm font-normal hover:bg-gray-100"
-                  disabled={products.length === 0}
+                  
+                  disabled={productsDisabled || products.length === 0}
                 >
                   <div className="flex min-w-0 flex-1 items-center gap-2">
                     <span className="shrink-0 text-xs text-gray-500">
                       Product:
                     </span>
                     <span className="truncate text-gray-700">
-                      {selectedProducts?.length === 0
+                      {selectedProducts.length === 0
                         ? 'All products'
-                        : selectedProducts?.length === 1
+                        : selectedProducts.length === 1
                           ? selectedProducts[0]
-                          : `${selectedProducts?.length} selected`}
+                          : `${selectedProducts.length} selected`}
                     </span>
                   </div>
                   <ChevronDown className="h-3 w-3 shrink-0 text-gray-400" />
@@ -416,6 +536,9 @@ export const InsightsFilters: React.FC<InsightsFiltersProps> = ({
                       No products found.
                     </CommandEmpty>
                     <CommandGroup>
+
+                      {products.map((product) => (
+
                       {/* Select All Option */}
                       {products.length > 0 && (
                         <CommandItem
@@ -435,16 +558,26 @@ export const InsightsFilters: React.FC<InsightsFiltersProps> = ({
                         </CommandItem>
                       )}
                       {products?.map((product) => (
+
                         <CommandItem
                           key={product}
                           value={product}
                           onSelect={() => handleProductSelect(product)}
-                          className="flex cursor-pointer items-center gap-2 px-3 py-2 text-sm hover:bg-gray-50"
+                          className={`flex cursor-pointer items-center gap-2 px-3 py-2 text-sm hover:bg-gray-50 ${
+                            productsDisabled
+                              ? 'pointer-events-none opacity-50'
+                              : ''
+                          }`}
+                          disabled={productsDisabled}
                         >
                           <div
-                            className={`flex h-4 w-4 items-center justify-center rounded border ${selectedProducts?.includes(product) ? 'border-purple-500 bg-purple-500' : 'border-gray-300'}`}
+                            className={`flex h-4 w-4 items-center justify-center rounded border ${
+                              selectedProducts.includes(product)
+                                ? 'border-purple-500 bg-purple-500'
+                                : 'border-gray-300'
+                            }`}
                           >
-                            {selectedProducts?.includes(product) && (
+                            {selectedProducts.includes(product) && (
                               <Check className="h-3 w-3 text-white" />
                             )}
                           </div>
@@ -456,6 +589,36 @@ export const InsightsFilters: React.FC<InsightsFiltersProps> = ({
                 </Command>
               </PopoverContent>
             </Popover>
+
+            {/* Helper text when no retailer selected */}
+            {productsDisabled && (
+              <span className="mt-1 block text-xs text-gray-400">
+                Select retailer(s) first
+              </span>
+            )}
+            {selectedProducts.length > 0 && (
+              <div className="flex flex-wrap gap-1">
+                {selectedProducts.slice(0, 3).map((p) => (
+                  <Badge
+                    key={p}
+                    variant="secondary"
+                    className="cursor-pointer border-purple-200 bg-purple-50 text-xs text-purple-700 hover:bg-purple-100"
+                    onClick={() => handleProductSelect(p)}
+                  >
+                    {p} <X className="ml-1 h-3 w-3" />
+                  </Badge>
+                ))}
+                {selectedProducts.length > 3 && (
+                  <Badge
+                    variant="secondary"
+                    className="bg-gray-100 text-xs text-gray-600"
+                  >
+                    +{selectedProducts.length - 3} more
+                  </Badge>
+                )}
+              </div>
+            )}
+
           </div>
         </div>
       </div>
