@@ -1,6 +1,6 @@
 'use client';
 import React, { useMemo } from 'react';
-import { Check, ChevronDown, Filter, X, Search } from 'lucide-react';
+import { Check, ChevronDown, Filter, X, Search, CheckSquare, Square } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -124,7 +124,7 @@ export const InsightsFilters: React.FC<InsightsFiltersProps> = ({
 
     // Only keep brands still possible for these retailers
     const possibleBrands = getBrandsForRetailers(updated);
-    setSelectedBrands((prev) => prev.filter((b) => possibleBrands.includes(b)));
+    setSelectedBrands(selectedBrands.filter((b) => possibleBrands.includes(b)));
 
     // Only keep products that are still possible for those brands+retailers
     const updatedBrands = selectedBrands.filter((b) =>
@@ -134,9 +134,7 @@ export const InsightsFilters: React.FC<InsightsFiltersProps> = ({
       updatedBrands,
       updated
     );
-    setSelectedProducts((prev) =>
-      prev.filter((p) => possibleProducts.includes(p))
-    );
+    setSelectedProducts(selectedProducts.filter((p) => possibleProducts.includes(p)));
   };
 
   const handleBrandSelect = (brand: string) => {
@@ -152,9 +150,7 @@ export const InsightsFilters: React.FC<InsightsFiltersProps> = ({
       updated,
       selectedRetailers
     );
-    setSelectedProducts((prev) =>
-      prev.filter((p) => possibleProducts.includes(p))
-    );
+    setSelectedProducts(selectedProducts.filter((p) => possibleProducts.includes(p)));
   };
 
   const handleProductSelect = (product: string) => {
@@ -165,6 +161,39 @@ export const InsightsFilters: React.FC<InsightsFiltersProps> = ({
       updated = [...selectedProducts, product];
     }
     setSelectedProducts(updated);
+  };
+
+  // Select All functionality
+  const handleSelectAllRetailers = () => {
+    if (selectedRetailers.length === retailers.length) {
+      setSelectedRetailers([]);
+      setSelectedBrands([]);
+      setSelectedProducts([]);
+    } else {
+      setSelectedRetailers(retailers);
+      // When all retailers are selected, reset other filters
+      setSelectedBrands([]);
+      setSelectedProducts([]);
+    }
+  };
+
+  const handleSelectAllBrands = () => {
+    if (selectedBrands.length === brands.length) {
+      setSelectedBrands([]);
+      setSelectedProducts([]);
+    } else {
+      setSelectedBrands(brands);
+      // Reset products when all brands are selected
+      setSelectedProducts([]);
+    }
+  };
+
+  const handleSelectAllProducts = () => {
+    if (selectedProducts.length === products.length) {
+      setSelectedProducts([]);
+    } else {
+      setSelectedProducts(products);
+    }
   };
 
   const hasActiveFilters =
@@ -233,15 +262,28 @@ export const InsightsFilters: React.FC<InsightsFiltersProps> = ({
               </PopoverTrigger>
               <PopoverContent className="w-[280px] p-0" align="start">
                 <Command>
-                  <div className="flex items-center border-b px-3">
-                    <Search className="mr-2 h-4 w-4 shrink-0 text-gray-400" />
-                    <CommandInput placeholder="Search retailers..." />
-                  </div>
+                  <CommandInput placeholder="Search retailers..." className="border-0 focus:ring-0" />
                   <CommandList className="max-h-[300px]">
                     <CommandEmpty className="py-6 text-center text-sm text-gray-500">
                       No retailers found.
                     </CommandEmpty>
                     <CommandGroup>
+                      {/* Select All Option */}
+                      <CommandItem
+                        onSelect={handleSelectAllRetailers}
+                        className="flex cursor-pointer items-center gap-2 px-3 py-2 text-sm hover:bg-blue-50 border-b border-gray-100"
+                      >
+                        <div className="flex h-4 w-4 items-center justify-center">
+                          {selectedRetailers.length === retailers.length ? (
+                            <CheckSquare className="h-4 w-4 text-blue-500" />
+                          ) : (
+                            <Square className="h-4 w-4 text-gray-400" />
+                          )}
+                        </div>
+                        <span className="flex-1 font-medium text-blue-600">
+                          {selectedRetailers.length === retailers.length ? 'Deselect All' : 'Select All'}
+                        </span>
+                      </CommandItem>
                       {retailers?.map((retailer) => (
                         <CommandItem
                           key={retailer}
@@ -264,29 +306,6 @@ export const InsightsFilters: React.FC<InsightsFiltersProps> = ({
                 </Command>
               </PopoverContent>
             </Popover>
-            {/* Selected retailers chips */}
-            {selectedRetailers?.length > 0 && (
-              <div className="flex flex-wrap gap-1">
-                {selectedRetailers?.slice(0, 3).map((r) => (
-                  <Badge
-                    key={r}
-                    variant="secondary"
-                    className="cursor-pointer border-blue-200 bg-blue-50 text-xs text-blue-700 hover:bg-blue-100"
-                    onClick={() => handleRetailerSelect(r)}
-                  >
-                    {r} <X className="ml-1 h-3 w-3" />
-                  </Badge>
-                ))}
-                {selectedRetailers?.length > 3 && (
-                  <Badge
-                    variant="secondary"
-                    className="bg-gray-100 text-xs text-gray-600"
-                  >
-                    +{selectedRetailers?.length - 3} more
-                  </Badge>
-                )}
-              </div>
-            )}
           </div>
           {/* Brand Filter */}
           <div className="space-y-2">
@@ -316,15 +335,30 @@ export const InsightsFilters: React.FC<InsightsFiltersProps> = ({
               </PopoverTrigger>
               <PopoverContent className="w-[280px] p-0" align="start">
                 <Command>
-                  <div className="flex items-center border-b px-3">
-                    <Search className="mr-2 h-4 w-4 shrink-0 text-gray-400" />
-                    <CommandInput placeholder="Search brands..." />
-                  </div>
+                  <CommandInput placeholder="Search brands..." className="border-0 focus:ring-0" />
                   <CommandList className="max-h-[300px]">
                     <CommandEmpty className="py-6 text-center text-sm text-gray-500">
                       No brands found.
                     </CommandEmpty>
                     <CommandGroup>
+                      {/* Select All Option */}
+                      {brands.length > 0 && (
+                        <CommandItem
+                          onSelect={handleSelectAllBrands}
+                          className="flex cursor-pointer items-center gap-2 px-3 py-2 text-sm hover:bg-green-50 border-b border-gray-100"
+                        >
+                          <div className="flex h-4 w-4 items-center justify-center">
+                            {selectedBrands.length === brands.length ? (
+                              <CheckSquare className="h-4 w-4 text-green-500" />
+                            ) : (
+                              <Square className="h-4 w-4 text-gray-400" />
+                            )}
+                          </div>
+                          <span className="flex-1 font-medium text-green-600">
+                            {selectedBrands.length === brands.length ? 'Deselect All' : 'Select All'}
+                          </span>
+                        </CommandItem>
+                      )}
                       {brands?.map((brand) => (
                         <CommandItem
                           key={brand}
@@ -347,28 +381,6 @@ export const InsightsFilters: React.FC<InsightsFiltersProps> = ({
                 </Command>
               </PopoverContent>
             </Popover>
-            {selectedBrands?.length > 0 && (
-              <div className="flex flex-wrap gap-1">
-                {selectedBrands?.slice(0, 3).map((b) => (
-                  <Badge
-                    key={b}
-                    variant="secondary"
-                    className="cursor-pointer border-green-200 bg-green-50 text-xs text-green-700 hover:bg-green-100"
-                    onClick={() => handleBrandSelect(b)}
-                  >
-                    {b} <X className="ml-1 h-3 w-3" />
-                  </Badge>
-                ))}
-                {selectedBrands?.length > 3 && (
-                  <Badge
-                    variant="secondary"
-                    className="bg-gray-100 text-xs text-gray-600"
-                  >
-                    +{selectedBrands?.length - 3} more
-                  </Badge>
-                )}
-              </div>
-            )}
           </div>
           {/* Product Filter */}
           <div className="space-y-2">
@@ -398,15 +410,30 @@ export const InsightsFilters: React.FC<InsightsFiltersProps> = ({
               </PopoverTrigger>
               <PopoverContent className="w-[280px] p-0" align="start">
                 <Command>
-                  <div className="flex items-center border-b px-3">
-                    <Search className="mr-2 h-4 w-4 shrink-0 text-gray-400" />
-                    <CommandInput placeholder="Search products..." />
-                  </div>
+                  <CommandInput placeholder="Search products..." className="border-0 focus:ring-0" />
                   <CommandList className="max-h-[300px]">
                     <CommandEmpty className="py-6 text-center text-sm text-gray-500">
                       No products found.
                     </CommandEmpty>
                     <CommandGroup>
+                      {/* Select All Option */}
+                      {products.length > 0 && (
+                        <CommandItem
+                          onSelect={handleSelectAllProducts}
+                          className="flex cursor-pointer items-center gap-2 px-3 py-2 text-sm hover:bg-purple-50 border-b border-gray-100"
+                        >
+                          <div className="flex h-4 w-4 items-center justify-center">
+                            {selectedProducts.length === products.length ? (
+                              <CheckSquare className="h-4 w-4 text-purple-500" />
+                            ) : (
+                              <Square className="h-4 w-4 text-gray-400" />
+                            )}
+                          </div>
+                          <span className="flex-1 font-medium text-purple-600">
+                            {selectedProducts.length === products.length ? 'Deselect All' : 'Select All'}
+                          </span>
+                        </CommandItem>
+                      )}
                       {products?.map((product) => (
                         <CommandItem
                           key={product}
@@ -429,28 +456,6 @@ export const InsightsFilters: React.FC<InsightsFiltersProps> = ({
                 </Command>
               </PopoverContent>
             </Popover>
-            {selectedProducts?.length > 0 && (
-              <div className="flex flex-wrap gap-1">
-                {selectedProducts?.slice(0, 3).map((p) => (
-                  <Badge
-                    key={p}
-                    variant="secondary"
-                    className="cursor-pointer border-purple-200 bg-purple-50 text-xs text-purple-700 hover:bg-purple-100"
-                    onClick={() => handleProductSelect(p)}
-                  >
-                    {p} <X className="ml-1 h-3 w-3" />
-                  </Badge>
-                ))}
-                {selectedProducts?.length > 3 && (
-                  <Badge
-                    variant="secondary"
-                    className="bg-gray-100 text-xs text-gray-600"
-                  >
-                    +{selectedProducts?.length - 3} more
-                  </Badge>
-                )}
-              </div>
-            )}
           </div>
         </div>
       </div>
