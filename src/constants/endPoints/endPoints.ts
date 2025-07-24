@@ -33,5 +33,7 @@ export const API_ENDPOINTS = {
   FILTERS: {
     FILTER_DATA: (projectId: number, modelId: number) =>
       `/insights/retailer_brands_products?project_id=${projectId}&model_id=${modelId}`,
+    ADD_FILTERS: '/insights/global/filters/add',
+    FETCH_FILTERS: (modelId:number) => `/insights/global/filters/get/${modelId}`
   },
 };

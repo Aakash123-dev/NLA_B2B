@@ -1,10 +1,13 @@
 'use client';
 
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import dynamic from 'next/dynamic';
 import { ApexOptions } from 'apexcharts';
 import { useSelector } from 'react-redux';
-import { RootState } from '@/store';
+import { AppDispatch, RootState, useAppSelector } from '@/store';
+import { useDispatch } from 'react-redux';
+import { fetchChartData } from '@/store/slices/chartsSlices';
+import { useSearchParams } from 'next/navigation';
 
 const ReactApexCharts = dynamic(() => import('react-apexcharts'), {
   ssr: false,
@@ -52,6 +55,42 @@ const ChartOnly: React.FC = () => {
       retailers: Object.values(retailers),
     }));
   }, [chartItems]);
+
+  const selectedRetailerId = useAppSelector(
+    (state: RootState) => state.filters.selectedRetailerId
+  );
+  const selectedBrandId = useAppSelector(
+    (state: RootState) => state.filters.selectedBrandId
+  );
+  const selectedProductId = useAppSelector(
+    (state: RootState) => state.filters.selectedProductId
+  );
+  const dispatch = useDispatch<AppDispatch>();
+
+  const searchParams = useSearchParams();
+  const projectId = Number(searchParams.get('project'));
+  const modelId = Number(searchParams.get('model'));
+
+  const filterPayload = {
+    projectId,
+    modelId,
+    Product: selectedProductId,
+    Brand: selectedBrandId,
+    Retailer: selectedRetailerId,
+  };
+
+  useEffect(() => {
+    if (selectedRetailerId) {
+      dispatch(fetchChartData(filterPayload));
+    }
+  }, [
+    dispatch,
+    projectId,
+    modelId,
+    selectedProductId,
+    selectedProductId,
+    selectedRetailerId,
+  ]);
 
   if (loading) {
     return (

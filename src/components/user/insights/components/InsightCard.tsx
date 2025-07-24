@@ -34,6 +34,15 @@ import LiftChart from './LiftChart';
 import ElasticityStratagyChart from './ElasticityStratagyChart';
 import ProfitCurvesChart from './ProfitCurvesCharts';
 import dynamic from 'next/dynamic';
+import { useSelector } from 'react-redux';
+import { RootState, useAppSelector } from '@/store';
+import { useFilters } from '@/hooks/useFilters';
+import {
+  setSelectedBrandId,
+  setSelectedProductId,
+  setSelectedRetailerId,
+} from '@/store/slices/filterSlices';
+import { useDispatch } from 'react-redux';
 
 const ChartOnly = dynamic(() => import('./chart1'), {
   ssr: false,
@@ -70,10 +79,6 @@ export const InsightCard: React.FC<InsightCardProps> = ({
   chartData,
   showLegend,
   getCurrentColors,
-  selectedRetailer,
-  setSelectedRetailer,
-  selectedBrand,
-  setSelectedBrand,
   selectedPPG,
   setSelectedPPG,
   viewBy,
@@ -86,11 +91,26 @@ export const InsightCard: React.FC<InsightCardProps> = ({
   index,
 }) => {
   const [isVisible, setIsVisible] = useState(false);
+  const dispatch = useDispatch();
 
   useEffect(() => {
     const timeout = setTimeout(() => setIsVisible(true), 4); // delay mount
     return () => clearTimeout(timeout);
   }, []);
+
+  const selectedRetailerId = useAppSelector(
+    (state: RootState) => state.filters.selectedRetailerId
+  );
+  const selectedBrandId = useAppSelector(
+    (state: RootState) => state.filters.selectedBrandId
+  );
+  const selectedProductId = useAppSelector(
+    (state: RootState) => state.filters.selectedProductId
+  );
+
+  const { products, retailers, brands } = useAppSelector(
+    (state: RootState) => state.globalFilters
+  );
 
   return (
     <div className="border-t border-gray-200 p-6">
@@ -187,8 +207,10 @@ export const InsightCard: React.FC<InsightCardProps> = ({
               <div>
                 <Label>Retailer</Label>
                 <Select
-                  value={selectedRetailer}
-                  onValueChange={setSelectedRetailer}
+                  value={selectedRetailerId}
+                  onValueChange={(value) => {
+                    dispatch(setSelectedRetailerId(value));
+                  }}
                 >
                   <SelectTrigger>
                     <SelectValue />
@@ -196,8 +218,8 @@ export const InsightCard: React.FC<InsightCardProps> = ({
                   <SelectContent>
                     <SelectItem value="all">All Retailers</SelectItem>
                     {retailers.map((retailer) => (
-                      <SelectItem key={retailer.id} value={retailer.id}>
-                        {retailer.name}
+                      <SelectItem key={retailer} value={retailer}>
+                        {retailer}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -206,14 +228,19 @@ export const InsightCard: React.FC<InsightCardProps> = ({
 
               <div>
                 <Label>Brand</Label>
-                <Select value={selectedBrand} onValueChange={setSelectedBrand}>
+                <Select
+                  value={selectedBrandId}
+                  onValueChange={(value) => {
+                    dispatch(setSelectedBrandId(value));
+                  }}
+                >
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
                     {brands.map((brand) => (
-                      <SelectItem key={brand.id} value={brand.id}>
-                        {brand.name}
+                      <SelectItem key={brand} value={brand}>
+                        {brand}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -222,14 +249,19 @@ export const InsightCard: React.FC<InsightCardProps> = ({
 
               <div>
                 <Label>PPG</Label>
-                <Select value={selectedPPG} onValueChange={setSelectedPPG}>
+                <Select
+                  value={selectedProductId}
+                  onValueChange={(value) => {
+                    dispatch(setSelectedProductId(value));
+                  }}
+                >
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    {ppgCategories.map((ppg) => (
-                      <SelectItem key={ppg.id} value={ppg.id}>
-                        {ppg.name}
+                    {products.map((ppg) => (
+                      <SelectItem key={ppg} value={ppg}>
+                        {ppg}
                       </SelectItem>
                     ))}
                   </SelectContent>

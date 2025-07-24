@@ -5,10 +5,6 @@ import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { InsightCard } from './InsightCard';
 import type { InsightType } from '../types';
-import { useDispatch } from 'react-redux';
-import { AppDispatch, RootState } from '@/store';
-import { useSelector } from 'react-redux';
-import { fetchChartData } from '@/store/slices/chartsSlices';
 
 interface InsightsListProps {
   filteredInsights: InsightType[];

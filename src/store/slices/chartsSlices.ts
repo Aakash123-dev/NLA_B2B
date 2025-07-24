@@ -93,11 +93,27 @@ const initialState: ChartState = {
 export const fetchChartData = createAsyncThunk(
   'chart/fetchChartData',
   async (
-    { projectId, modelId }: { projectId: number; modelId: number },
+    {
+      projectId,
+      modelId,
+      Product,
+      Brand,
+      Retailer,
+    }: {
+      projectId: number;
+      modelId: number;
+      Product?: string;
+      Brand?: string;
+      Retailer?: string;
+    },
     thunkAPI
   ) => {
     try {
-      const data = await getChart1RawData(projectId, modelId);
+      const data = await getChart1RawData(projectId, modelId, {
+        Product,
+        Brand,
+        Retailer,
+      });
       return data;
     } catch (error: any) {
       return thunkAPI.rejectWithValue('Failed to fetch chart 1 data');
@@ -109,11 +125,27 @@ export const fetchChartData = createAsyncThunk(
 export const fetchChart2Data = createAsyncThunk(
   'chart/fetchChart2Data',
   async (
-    { projectId, modelId }: { projectId: number; modelId: number },
+    {
+      projectId,
+      modelId,
+      Product,
+      Brand,
+      Retailer,
+    }: {
+      projectId: number;
+      modelId: number;
+      Product?: string;
+      Brand?: string;
+      Retailer?: string;
+    },
     thunkAPI
   ) => {
     try {
-      const data = await getChart2RawData(projectId, modelId);
+      const data = await getChart2RawData(projectId, modelId, {
+        Product,
+        Brand,
+        Retailer,
+      });
       return data;
     } catch (error: any) {
       return thunkAPI.rejectWithValue('Failed to fetch chart 2 data');
@@ -125,11 +157,27 @@ export const fetchChart2Data = createAsyncThunk(
 export const fetchChart3DataThunk = createAsyncThunk(
   'chart/fetchChart3Data',
   async (
-    { projectId, modelId }: { projectId: number; modelId: number },
+    {
+      projectId,
+      modelId,
+      Product,
+      Brand,
+      Retailer,
+    }: {
+      projectId: number;
+      modelId: number;
+      Product?: string;
+      Brand?: string;
+      Retailer?: string;
+    },
     thunkAPI
   ) => {
     try {
-      const data = await fetchChart3Data(projectId, modelId);
+      const data = await fetchChart3Data(projectId, modelId, {
+        Product,
+        Brand,
+        Retailer,
+      });
       return data;
     } catch (error: any) {
       return thunkAPI.rejectWithValue('Failed to fetch chart 3 data');
@@ -141,11 +189,27 @@ export const fetchChart3DataThunk = createAsyncThunk(
 export const fetchChart4DataThunk = createAsyncThunk(
   'chart/fetchChart4Data',
   async (
-    { projectId, modelId }: { projectId: number; modelId: number },
+    {
+      projectId,
+      modelId,
+      Product,
+      Brand,
+      Retailer,
+    }: {
+      projectId: number;
+      modelId: number;
+      Product?: string;
+      Brand?: string;
+      Retailer?: string;
+    },
     thunkAPI
   ) => {
     try {
-      const data = await fetchChart4Data(projectId, modelId);
+      const data = await fetchChart4Data(projectId, modelId, {
+        Product,
+        Brand,
+        Retailer,
+      });
       return data;
     } catch (error: any) {
       return thunkAPI.rejectWithValue('Failed to fetch chart 4 data');
@@ -157,11 +221,27 @@ export const fetchChart4DataThunk = createAsyncThunk(
 export const fetchChart5DataThunk = createAsyncThunk(
   'chart/fetchChart5Data',
   async (
-    { projectId, modelId }: { projectId: number; modelId: number },
+    {
+      projectId,
+      modelId,
+      Product,
+      Brand,
+      Retailer,
+    }: {
+      projectId: number;
+      modelId: number;
+      Product?: string;
+      Brand?: string;
+      Retailer?: string;
+    },
     thunkAPI
   ) => {
     try {
-      const data = await fetchChart5Data(projectId, modelId);
+      const data = await fetchChart5Data(projectId, modelId, {
+        Product,
+        Brand,
+        Retailer,
+      });
       return data;
     } catch (error: any) {
       return thunkAPI.rejectWithValue('Failed to fetch chart 5 data');
@@ -173,11 +253,27 @@ export const fetchChart5DataThunk = createAsyncThunk(
 export const fetchChart6DataThunk = createAsyncThunk(
   'chart/fetchChart6Data',
   async (
-    { projectId, modelId }: { projectId: number; modelId: number },
+    {
+      projectId,
+      modelId,
+      Product,
+      Brand,
+      Retailer,
+    }: {
+      projectId: number;
+      modelId: number;
+      Product?: string;
+      Brand?: string;
+      Retailer?: string;
+    },
     thunkAPI
   ) => {
     try {
-      const data = await fetchChart6Data(projectId, modelId);
+      const data = await fetchChart6Data(projectId, modelId, {
+        Product,
+        Brand,
+        Retailer,
+      });
       return data;
     } catch (error: any) {
       return thunkAPI.rejectWithValue('Failed to fetch chart 6 data');
@@ -189,11 +285,27 @@ export const fetchChart6DataThunk = createAsyncThunk(
 export const fetchChart7DataThunk = createAsyncThunk(
   'chart/fetchChart7Data',
   async (
-    { projectId, modelId }: { projectId: number; modelId: number },
+    {
+      projectId,
+      modelId,
+      Product,
+      Brand,
+      Retailer,
+    }: {
+      projectId: number;
+      modelId: number;
+      Product?: string;
+      Brand?: string;
+      Retailer?: string;
+    },
     thunkAPI
   ) => {
     try {
-      const data = await fetchChart7Data(projectId, modelId);
+      const data = await fetchChart7Data(projectId, modelId, {
+        Product,
+        Brand,
+        Retailer,
+      });
       return data;
     } catch (error: any) {
       return thunkAPI.rejectWithValue('Failed to fetch chart 7 data');
@@ -204,11 +316,27 @@ export const fetchChart7DataThunk = createAsyncThunk(
 export const fetchChart8DataThunk = createAsyncThunk(
   'chart/fetchChart8Data',
   async (
-    { projectId, modelId }: { projectId: number; modelId: number },
+    {
+      projectId,
+      modelId,
+      Product,
+      Brand,
+      Retailer,
+    }: {
+      projectId: number;
+      modelId: number;
+      Product?: string;
+      Brand?: string;
+      Retailer?: string;
+    },
     thunkAPI
   ) => {
     try {
-      const data = await fetchChart8Data(projectId, modelId);
+      const data = await fetchChart8Data(projectId, modelId, {
+        Product,
+        Brand,
+        Retailer,
+      });
       return data;
     } catch (error: any) {
       return thunkAPI.rejectWithValue('Failed to fetch chart 8 data');
@@ -219,11 +347,27 @@ export const fetchChart8DataThunk = createAsyncThunk(
 export const fetchChart9DataThunk = createAsyncThunk(
   'chart/fetchChart9Data',
   async (
-    { projectId, modelId }: { projectId: number; modelId: number },
+    {
+      projectId,
+      modelId,
+      Product,
+      Brand,
+      Retailer,
+    }: {
+      projectId: number;
+      modelId: number;
+      Product?: string;
+      Brand?: string;
+      Retailer?: string;
+    },
     thunkAPI
   ) => {
     try {
-      const data = await fetchChart9Data(projectId, modelId);
+      const data = await fetchChart9Data(projectId, modelId, {
+        Product,
+        Brand,
+        Retailer,
+      });
       return data;
     } catch (error: any) {
       return thunkAPI.rejectWithValue('Failed to fetch chart 9 data');
