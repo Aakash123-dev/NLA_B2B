@@ -120,6 +120,7 @@ const UserNavbar = () => {
   const navItems = [
     { name: 'Dashboard', href: '/user/dashboard', icon: Gauge },
     { name: 'Projects', href: '/user/projects', icon: FolderOpen },
+    { name: 'Comparison', href: '/user/comparison', icon: BarChart3 },
     { name: 'Gazelle AI', href: '/user/chat-with-ai', icon: Brain },
     { name: 'Help & Support', href: '/user/help', icon: HelpCircle },
   ];
