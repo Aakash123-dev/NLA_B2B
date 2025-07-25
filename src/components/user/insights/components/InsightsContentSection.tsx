@@ -52,9 +52,6 @@ export const InsightsContentSection: React.FC = () => {
     (state: RootState) => state.chartFilter
   );
 
-  console.log(selectedBrandId, 'allChahrtFilters');
-  console.log(selectedProductId, 'allproducr');
-  console.log(selectedRetailerId, 'allReatiler');
   // Fetch chart filters initially
   useEffect(() => {
     if (projectId && modelId) {

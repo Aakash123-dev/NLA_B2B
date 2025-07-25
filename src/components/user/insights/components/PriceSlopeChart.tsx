@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import ReactECharts from 'echarts-for-react';
 import * as echarts from 'echarts/core';
 import { BarChart } from 'echarts/charts';
@@ -11,7 +11,10 @@ import {
 } from 'echarts/components';
 import { CanvasRenderer } from 'echarts/renderers';
 import { useSelector } from 'react-redux';
-import { RootState } from '@/store';
+import { AppDispatch, RootState, useAppSelector } from '@/store';
+import { fetchChart2Data } from '@/store/slices/chartsSlices';
+import { useSearchParams } from 'next/navigation';
+import { useDispatch } from 'react-redux';
 
 echarts.use([
   TitleComponent,
@@ -78,6 +81,42 @@ interface ChartItem {
 const PriceSlopeChart: React.FC = () => {
   const data2 = useSelector((state: RootState) => state.chart.data2);
   const isLoading = useSelector((state: RootState) => state.chart.loading);
+
+  const selectedRetailerId1 = useAppSelector(
+    (state: RootState) => state.filters.selectedRetailer1
+  );
+  const selectedBrandId1 = useAppSelector(
+    (state: RootState) => state.filters.selectedBrand1
+  );
+  const selectedProductId1 = useAppSelector(
+    (state: RootState) => state.filters.selectedProduct1
+  );
+  const dispatch = useDispatch<AppDispatch>();
+
+  const searchParams = useSearchParams();
+  const projectId = Number(searchParams.get('project'));
+  const modelId = Number(searchParams.get('model'));
+
+  const filterPayload = {
+    projectId,
+    modelId,
+    Product: selectedProductId1,
+    Brand: selectedBrandId1,
+    Retailer: selectedRetailerId1,
+  };
+
+  useEffect(() => {
+    if (selectedRetailerId1) {
+      dispatch(fetchChart2Data(filterPayload));
+    }
+  }, [
+    dispatch,
+    projectId,
+    modelId,
+    selectedProductId1,
+    selectedBrandId1,
+    selectedRetailerId1,
+  ]);
 
   const [currentPage, setCurrentPage] = useState<number>(1);
   const itemsPerPage = 1;

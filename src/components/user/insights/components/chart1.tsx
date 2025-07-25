@@ -88,7 +88,7 @@ const ChartOnly: React.FC = () => {
     projectId,
     modelId,
     selectedProductId,
-    selectedProductId,
+    selectedBrandId,
     selectedRetailerId,
   ]);
 
