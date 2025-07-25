@@ -44,6 +44,7 @@ export function FlowNode({ data, selected }: NodeProps<FlowNodeData>) {
       'template-3': 'from-amber-400 to-amber-600',
       'trade-calendar': 'from-green-400 to-green-600',
       'trade-plan-optimization': 'from-lime-400 to-lime-600',
+      'promo-optimization': 'from-fuchsia-400 to-fuchsia-600',
       'data-filter': 'from-purple-400 to-purple-600',
       'import-file': 'from-indigo-400 to-indigo-600',
       'export-file': 'from-cyan-400 to-cyan-600',

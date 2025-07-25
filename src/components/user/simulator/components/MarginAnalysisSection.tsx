@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { 
   Calculator, 
   Target, 
@@ -339,6 +340,105 @@ export function MarginAnalysisSection({
                 </div>
 
               </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Data Tables Section */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mt-8">
+          {/* First Table - Manufacturer Data */}
+          <Card className="bg-white border border-gray-200 shadow-sm rounded-2xl">
+            <CardHeader className="pb-4 border-b border-gray-100">
+              <CardTitle className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+                <BarChart3 className="w-5 h-5 text-blue-500" />
+                Manufacturer Analysis
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-6">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="text-left font-semibold text-gray-700">Product Name</TableHead>
+                    <TableHead className="text-center font-semibold text-gray-700">Net Unit Price ($)</TableHead>
+                    <TableHead className="text-center font-semibold text-gray-700">Total EDLP Spend ($)</TableHead>
+                    <TableHead className="text-center font-semibold text-gray-700">Manufacturer Margin %</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  <TableRow className="hover:bg-gray-50">
+                    <TableCell className="font-medium text-gray-900">{product.name}</TableCell>
+                    <TableCell className="text-center">
+                      <div className="inline-flex items-center px-2 py-1 bg-blue-50 border border-blue-200 rounded-lg">
+                        <span className="text-sm font-medium text-blue-700">
+                          ${parseFloat(formData.netUnitPrice || '0').toFixed(2)}
+                        </span>
+                      </div>
+                    </TableCell>
+                    <TableCell className="text-center">
+                      <div className="inline-flex items-center px-2 py-1 bg-green-50 border border-green-200 rounded-lg">
+                        <span className="text-sm font-medium text-green-700">
+                          ${parseFloat(formData.edlpSpend || '0').toFixed(2)}
+                        </span>
+                      </div>
+                    </TableCell>
+                    <TableCell className="text-center">
+                      <div className="inline-flex items-center px-2 py-1 bg-purple-50 border border-purple-200 rounded-lg">
+                        <span className="text-sm font-medium text-purple-700">
+                          {marginData.currentMargin.toFixed(1)}%
+                        </span>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
+
+          {/* Second Table - Retailer Data */}
+          <Card className="bg-white border border-gray-200 shadow-sm rounded-2xl">
+            <CardHeader className="pb-4 border-b border-gray-100">
+              <CardTitle className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+                <Target className="w-5 h-5 text-green-500" />
+                Retailer Analysis
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-6">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="text-left font-semibold text-gray-700">Product Name</TableHead>
+                    <TableHead className="text-center font-semibold text-gray-700">Net Unit Price ($)</TableHead>
+                    <TableHead className="text-center font-semibold text-gray-700">Base Price ($)</TableHead>
+                    <TableHead className="text-center font-semibold text-gray-700">Retailer Margin %</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  <TableRow className="hover:bg-gray-50">
+                    <TableCell className="font-medium text-gray-900">{product.name}</TableCell>
+                    <TableCell className="text-center">
+                      <div className="inline-flex items-center px-2 py-1 bg-blue-50 border border-blue-200 rounded-lg">
+                        <span className="text-sm font-medium text-blue-700">
+                          ${parseFloat(formData.netUnitPrice || '0').toFixed(2)}
+                        </span>
+                      </div>
+                    </TableCell>
+                    <TableCell className="text-center">
+                      <div className="inline-flex items-center px-2 py-1 bg-orange-50 border border-orange-200 rounded-lg">
+                        <span className="text-sm font-medium text-orange-700">
+                          ${parseFloat(formData.basePrice || '0').toFixed(2)}
+                        </span>
+                      </div>
+                    </TableCell>
+                    <TableCell className="text-center">
+                      <div className="inline-flex items-center px-2 py-1 bg-emerald-50 border border-emerald-200 rounded-lg">
+                        <span className="text-sm font-medium text-emerald-700">
+                          {((parseFloat(formData.basePrice || '0') - parseFloat(formData.netUnitPrice || '0')) / parseFloat(formData.basePrice || '1') * 100).toFixed(1)}%
+                        </span>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                </TableBody>
+              </Table>
             </CardContent>
           </Card>
         </div>
