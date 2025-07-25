@@ -3,8 +3,12 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import ReactECharts from 'echarts-for-react';
 import { useDispatch, useSelector } from 'react-redux';
-import { RootState, AppDispatch } from '@/store';
-import { fetchChart9DataThunk } from '@/store/slices/chartsSlices';
+import { RootState, AppDispatch, useAppSelector } from '@/store';
+import {
+  fetchChart8DataThunk,
+  fetchChart9DataThunk,
+} from '@/store/slices/chartsSlices';
+import { useSearchParams } from 'next/navigation';
 
 type ChartPoint = { x: number; y: number };
 
@@ -211,6 +215,41 @@ const ElasticityStratagyChart: React.FC<{ isLoading: boolean }> = ({
       ],
     };
   };
+
+  const selectedRetailerId8 = useAppSelector(
+    (state: RootState) => state.filters.selectedRetailer8
+  );
+  const selectedBrandId8 = useAppSelector(
+    (state: RootState) => state.filters.selectedBrand8
+  );
+  const selectedProductId8 = useAppSelector(
+    (state: RootState) => state.filters.selectedProduct8
+  );
+
+  const searchParams = useSearchParams();
+  const projectId = Number(searchParams.get('project'));
+  const modelId = Number(searchParams.get('model'));
+
+  const filterPayload = {
+    projectId,
+    modelId,
+    Product: selectedProductId8,
+    Brand: selectedBrandId8,
+    Retailer: selectedRetailerId8,
+  };
+
+  useEffect(() => {
+    if (selectedRetailerId8) {
+      dispatch(fetchChart8DataThunk(filterPayload));
+    }
+  }, [
+    dispatch,
+    projectId,
+    modelId,
+    selectedProductId8,
+    selectedBrandId8,
+    selectedRetailerId8,
+  ]);
 
   const paginatedData = useMemo(() => {
     const start = (currentPage - 1) * itemsPerPage;

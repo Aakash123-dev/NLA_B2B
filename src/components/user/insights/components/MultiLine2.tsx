@@ -1,12 +1,15 @@
 'use client';
 
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import dynamic from 'next/dynamic';
 import { ApexOptions } from 'apexcharts';
 import dayjs from 'dayjs';
 import isoWeek from 'dayjs/plugin/isoWeek';
 import { useSelector } from 'react-redux';
-import { RootState } from '@/store';
+import { AppDispatch, RootState, useAppSelector } from '@/store';
+import { useDispatch } from 'react-redux';
+import { useSearchParams } from 'next/navigation';
+import { fetchChart4DataThunk } from '@/store/slices/chartsSlices';
 
 const ApexCharts = dynamic(() => import('react-apexcharts'), { ssr: false });
 
@@ -238,6 +241,42 @@ const MultiLine2: React.FC<{ isLoading?: boolean }> = ({ isLoading }) => {
   const handleNext = () => {
     if (currentPage < totalPages) setCurrentPage((prev) => prev + 1);
   };
+
+  const selectedRetailerId4 = useAppSelector(
+    (state: RootState) => state.filters.selectedRetailer4
+  );
+  const selectedBrandId4 = useAppSelector(
+    (state: RootState) => state.filters.selectedBrand4
+  );
+  const selectedProductId4 = useAppSelector(
+    (state: RootState) => state.filters.selectedProduct4
+  );
+  const dispatch = useDispatch<AppDispatch>();
+
+  const searchParams = useSearchParams();
+  const projectId = Number(searchParams.get('project'));
+  const modelId = Number(searchParams.get('model'));
+
+  const filterPayload = {
+    projectId,
+    modelId,
+    Product: selectedProductId4,
+    Brand: selectedBrandId4,
+    Retailer: selectedRetailerId4,
+  };
+
+  useEffect(() => {
+    if (selectedRetailerId4) {
+      dispatch(fetchChart4DataThunk(filterPayload));
+    }
+  }, [
+    dispatch,
+    projectId,
+    modelId,
+    selectedProductId4,
+    selectedBrandId4,
+    selectedRetailerId4,
+  ]);
 
   if (!chart5Data || chart5Data.length === 0) {
     return <div>Loading chart data...</div>;

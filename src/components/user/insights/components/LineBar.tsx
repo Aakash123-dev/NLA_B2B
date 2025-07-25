@@ -1,10 +1,14 @@
 'use client';
 
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import dynamic from 'next/dynamic';
 import { useSelector } from 'react-redux';
-import { RootState } from '@/store';
+import { AppDispatch, RootState, useAppSelector } from '@/store';
 import { ApexOptions } from 'apexcharts';
+
+import { useSearchParams } from 'next/navigation';
+import { useDispatch } from 'react-redux';
+import { fetchChart3DataThunk } from '@/store/slices/chartsSlices';
 
 const ApexCharts = dynamic(() => import('react-apexcharts'), { ssr: false });
 
@@ -216,6 +220,42 @@ const MyChart: React.FC = () => {
     const totalPages = Math.ceil(chartData.length / itemsPerPage);
     if (currentPage < totalPages) setCurrentPage(currentPage + 1);
   };
+
+  const selectedRetailerId2 = useAppSelector(
+    (state: RootState) => state.filters.selectedRetailer2
+  );
+  const selectedBrandId2 = useAppSelector(
+    (state: RootState) => state.filters.selectedBrand2
+  );
+  const selectedProductId2 = useAppSelector(
+    (state: RootState) => state.filters.selectedProduct2
+  );
+  const dispatch = useDispatch<AppDispatch>();
+
+  const searchParams = useSearchParams();
+  const projectId = Number(searchParams.get('project'));
+  const modelId = Number(searchParams.get('model'));
+
+  const filterPayload = {
+    projectId,
+    modelId,
+    Product: selectedProductId2,
+    Brand: selectedBrandId2,
+    Retailer: selectedRetailerId2,
+  };
+
+  useEffect(() => {
+    if (selectedRetailerId2) {
+      dispatch(fetchChart3DataThunk(filterPayload));
+    }
+  }, [
+    dispatch,
+    projectId,
+    modelId,
+    selectedProductId2,
+    selectedBrandId2,
+    selectedRetailerId2,
+  ]);
 
   if (loading) return <p>Loading...</p>;
   if (error) return <p>Error: {error}</p>;

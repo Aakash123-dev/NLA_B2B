@@ -1,8 +1,11 @@
 'use client';
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import ApexCharts from 'react-apexcharts';
 import { useSelector } from 'react-redux';
-import { RootState } from '@/store';
+import { AppDispatch, RootState, useAppSelector } from '@/store';
+import { useDispatch } from 'react-redux';
+import { useSearchParams } from 'next/navigation';
+import { fetchChart5DataThunk } from '@/store/slices/chartsSlices';
 
 type SeriesItem = {
   name: string;
@@ -171,6 +174,42 @@ const PromotedDepthChart: React.FC = () => {
   };
 
   const paginatedData = paginate(restructuredData, currentPage, itemsPerPage);
+
+  const selectedRetailerId5 = useAppSelector(
+    (state: RootState) => state.filters.selectedRetailer5
+  );
+  const selectedBrandId5 = useAppSelector(
+    (state: RootState) => state.filters.selectedBrand5
+  );
+  const selectedProductId5 = useAppSelector(
+    (state: RootState) => state.filters.selectedProduct5
+  );
+  const dispatch = useDispatch<AppDispatch>();
+
+  const searchParams = useSearchParams();
+  const projectId = Number(searchParams.get('project'));
+  const modelId = Number(searchParams.get('model'));
+
+  const filterPayload = {
+    projectId,
+    modelId,
+    Product: selectedProductId5,
+    Brand: selectedBrandId5,
+    Retailer: selectedRetailerId5,
+  };
+
+  useEffect(() => {
+    if (selectedRetailerId5) {
+      dispatch(fetchChart5DataThunk(filterPayload));
+    }
+  }, [
+    dispatch,
+    projectId,
+    modelId,
+    selectedProductId5,
+    selectedBrandId5,
+    selectedRetailerId5,
+  ]);
 
   return (
     <div>

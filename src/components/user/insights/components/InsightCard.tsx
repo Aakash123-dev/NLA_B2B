@@ -1,53 +1,348 @@
 'use client';
-import React, { useEffect, useState } from 'react';
-import { FileText, Save, Download } from 'lucide-react';
+
+import React, {
+  useEffect,
+  useState,
+  useRef,
+  useMemo,
+  useCallback,
+} from 'react';
+import {
+  FileText,
+  Save,
+  Download,
+  ChevronDown,
+  X,
+  Loader2,
+} from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import {
-  BarChart as BarChartComponent,
-  Bar,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  Legend,
-  ResponsiveContainer,
-} from 'recharts';
+import { ResponsiveContainer } from 'recharts';
 import type { InsightType } from '../types';
 import { retailers, brands, ppgCategories } from '../data';
+import dynamic from 'next/dynamic';
+import { useDispatch } from 'react-redux';
+import { RootState, useAppSelector } from '@/store';
+
+import {
+  setSelectedRetailerId,
+  setSelectedRetailer1,
+  setSelectedRetailer2,
+  setSelectedRetailer3,
+  setSelectedRetailer4,
+  setSelectedRetailer5,
+  setSelectedRetailer6,
+  setSelectedRetailer7,
+  setSelectedRetailer8,
+  setSelectedBrandId,
+  setSelectedBrand1,
+  setSelectedBrand2,
+  setSelectedBrand3,
+  setSelectedBrand4,
+  setSelectedBrand5,
+  setSelectedBrand6,
+  setSelectedBrand7,
+  setSelectedBrand8,
+  setSelectedProductId,
+  setSelectedProduct1,
+  setSelectedProduct2,
+  setSelectedProduct3,
+  setSelectedProduct4,
+  setSelectedProduct5,
+  setSelectedProduct6,
+  setSelectedProduct7,
+  setSelectedProduct8,
+} from '@/store/slices/filterSlices';
+
+import pptxgen from 'pptxgenjs';
+import * as htmlToImage from 'html-to-image';
 import PriceSlopeChart from './PriceSlopeChart';
+import MyChart from './LineBar';
 import StackedLineChart from './MultiLine';
 import MultiLine2 from './MultiLine2';
-import MyChart from './LineBar';
 import PromotedDepthChart from './PromotedDepthChart';
 import PromotionalLiftChart from './PromotionalLiftCharts';
 import LiftChart from './LiftChart';
 import ElasticityStratagyChart from './ElasticityStratagyChart';
 import ProfitCurvesChart from './ProfitCurvesCharts';
-import dynamic from 'next/dynamic';
-import { useSelector } from 'react-redux';
-import { RootState, useAppSelector } from '@/store';
-import { useFilters } from '@/hooks/useFilters';
-import {
-  setSelectedBrandId,
-  setSelectedProductId,
-  setSelectedRetailerId,
-} from '@/store/slices/filterSlices';
-import { useDispatch } from 'react-redux';
 
 const ChartOnly = dynamic(() => import('./chart1'), {
   ssr: false,
-  loading: () => <div style={{ textAlign: 'center' }}>Loading chart...</div>,
+  loading: () => (
+    <div className="flex h-full items-center justify-center">
+      <Loader2 className="h-8 w-8 animate-spin text-indigo-600" />
+      <span className="ml-2 text-sm text-gray-600">Loading chart...</span>
+    </div>
+  ),
 });
+
+// Actions map for dispatching multi-value arrays as strings (comma-separated)
+const filterActionMaps = {
+  retailer: [
+    setSelectedRetailerId,
+    setSelectedRetailer1,
+    setSelectedRetailer2,
+    setSelectedRetailer3,
+    setSelectedRetailer4,
+    setSelectedRetailer5,
+    setSelectedRetailer6,
+    setSelectedRetailer7,
+    setSelectedRetailer8,
+  ],
+  brand: [
+    setSelectedBrandId,
+    setSelectedBrand1,
+    setSelectedBrand2,
+    setSelectedBrand3,
+    setSelectedBrand4,
+    setSelectedBrand5,
+    setSelectedBrand6,
+    setSelectedBrand7,
+    setSelectedBrand8,
+  ],
+  product: [
+    setSelectedProductId,
+    setSelectedProduct1,
+    setSelectedProduct2,
+    setSelectedProduct3,
+    setSelectedProduct4,
+    setSelectedProduct5,
+    setSelectedProduct6,
+    setSelectedProduct7,
+    setSelectedProduct8,
+  ],
+};
+
+// Selector hook that returns comma-separated string for each filter type & index
+const useSelectedFilter = (
+  type: 'retailer' | 'brand' | 'product',
+  index: number
+) => {
+  const filterKeys = {
+    retailer: [
+      'selectedRetailerId',
+      'selectedRetailer1',
+      'selectedRetailer2',
+      'selectedRetailer3',
+      'selectedRetailer4',
+      'selectedRetailer5',
+      'selectedRetailer6',
+      'selectedRetailer7',
+      'selectedRetailer8',
+    ],
+    brand: [
+      'selectedBrandId',
+      'selectedBrand1',
+      'selectedBrand2',
+      'selectedBrand3',
+      'selectedBrand4',
+      'selectedBrand5',
+      'selectedBrand6',
+      'selectedBrand7',
+      'selectedBrand8',
+    ],
+    product: [
+      'selectedProductId',
+      'selectedProduct1',
+      'selectedProduct2',
+      'selectedProduct3',
+      'selectedProduct4',
+      'selectedProduct5',
+      'selectedProduct6',
+      'selectedProduct7',
+      'selectedProduct8',
+    ],
+  };
+
+  const val = useAppSelector(
+    (state: RootState) => state.filters[filterKeys[type][index]] ?? ''
+  );
+  return val as string;
+};
+
+interface FilterSelectProps {
+  label: string;
+  value: string;
+  options: string[];
+  onChangeValue: (val: string) => void;
+  isMultiple?: boolean;
+  isLoading?: boolean;
+  placeholder?: string;
+}
+
+// Custom styled multi-select component
+const FilterSelect: React.FC<FilterSelectProps> = ({
+  label,
+  value,
+  options,
+  onChangeValue,
+  isMultiple = true,
+  isLoading = false,
+  placeholder,
+}) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const selectedArray = value ? value.split(',').filter(Boolean) : [];
+
+  const displayValue = useMemo(() => {
+    if (selectedArray.length === 0) {
+      return placeholder || `Select ${label}`;
+    }
+    if (!isMultiple) {
+      return selectedArray[0];
+    }
+    if (selectedArray.length === 1) {
+      return selectedArray[0];
+    }
+    return `${selectedArray[0]} +${selectedArray.length - 1} more`;
+  }, [selectedArray, label, isMultiple, placeholder]);
+
+  const handleOptionClick = useCallback(
+    (option: string) => {
+      if (option === 'all') {
+        if (selectedArray.length === options.length) {
+          onChangeValue(''); // Deselect all if all are selected
+        } else {
+          onChangeValue(options.join(',')); // Select all
+        }
+        setIsOpen(false);
+        return;
+      }
+
+      if (!isMultiple) {
+        onChangeValue(option);
+        setIsOpen(false);
+        return;
+      }
+
+      const newSelection = selectedArray.includes(option)
+        ? selectedArray.filter((item) => item !== option)
+        : [...selectedArray, option];
+
+      onChangeValue(newSelection.join(','));
+    },
+    [selectedArray, isMultiple, onChangeValue, options]
+  );
+
+  const handleRemoveTag = useCallback(
+    (option: string, e: React.MouseEvent) => {
+      e.stopPropagation();
+      const newSelection = selectedArray.filter((item) => item !== option);
+      onChangeValue(newSelection.join(','));
+    },
+    [selectedArray, onChangeValue]
+  );
+
+  const handleClearAll = useCallback(
+    (e: React.MouseEvent) => {
+      e.stopPropagation();
+      onChangeValue('');
+    },
+    [onChangeValue]
+  );
+
+  // Ensure 'All' is not duplicated
+  const updatedOptions = useMemo(() => {
+    const uniqueOptions = Array.from(new Set(options));
+    return ['all', ...uniqueOptions.filter(option => option.toLowerCase() !== 'all')];
+  }, [options]);
+
+  return (
+    <div className="space-y-2">
+      <Label className="text-sm font-medium text-gray-700">{label}</Label>
+      <div className="relative">
+        <button
+          type="button"
+          onClick={() => setIsOpen(!isOpen)}
+          disabled={isLoading}
+          className="flex h-10 w-full items-center justify-between rounded-md border border-gray-300 bg-white px-3 py-2 text-left text-sm shadow-sm transition-colors hover:border-gray-400 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+        >
+          <span
+            className={`truncate ${selectedArray.length === 0 ? 'text-gray-500' : 'text-gray-900'}`}
+          >
+            {isLoading ? 'Loading...' : displayValue}
+          </span>
+          <div className="flex items-center space-x-1">
+            {selectedArray.length > 0 && (
+              <button
+                type="button"
+                onClick={handleClearAll}
+                className="rounded-full p-1 hover:bg-gray-100"
+              >
+                <X className="h-3 w-3 text-gray-400" />
+              </button>
+            )}
+            {isLoading ? (
+              <Loader2 className="h-4 w-4 animate-spin text-gray-400" />
+            ) : (
+              <ChevronDown
+                className={`h-4 w-4 text-gray-400 transition-transform ${isOpen ? 'rotate-180' : ''}`}
+              />
+            )}
+          </div>
+        </button>
+
+        {/* Dropdown */}
+        {isOpen && !isLoading && (
+          <div className="absolute z-50 mt-1 max-h-60 w-full overflow-auto rounded-md border border-gray-200 bg-white py-1 shadow-lg">
+            {updatedOptions.length === 0 ? (
+              <div className="px-3 py-2 text-sm text-gray-500">
+                No options available
+              </div>
+            ) : (
+              updatedOptions.map((option) => {
+                const isSelected = selectedArray.includes(option) || (option === 'all' && selectedArray.length === options.length);
+                return (
+                  <button
+                    key={option}
+                    type="button"
+                    onClick={() => handleOptionClick(option)}
+                    className={`flex w-full items-center px-3 py-2 text-left text-sm transition-colors hover:bg-gray-50 ${
+                      isSelected
+                        ? 'bg-indigo-50 text-indigo-700'
+                        : 'text-gray-900'
+                    }`}
+                  >
+                    {isMultiple && (
+                      <div
+                        className={`mr-2 h-4 w-4 rounded border-2 ${
+                          isSelected
+                            ? 'border-indigo-500 bg-indigo-500'
+                            : 'border-gray-300'
+                        }`}
+                      >
+                        {isSelected && (
+                          <svg
+                            className="h-full w-full text-white"
+                            fill="currentColor"
+                            viewBox="0 0 20 20"
+                          >
+                            <path
+                              fillRule="evenodd"
+                              d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                              clipRule="evenodd"
+                            />
+                          </svg>
+                        )}
+                      </div>
+                    )}
+                    <span className="truncate">{option === 'all' ? 'All' : option}</span>
+                  </button>
+                );
+              })
+            )}
+          </div>
+        )}
+      </div>
+
+      {/* Click outside to close */}
+      {isOpen && (
+        <div className="fixed inset-0 z-40" onClick={() => setIsOpen(false)} />
+      )}
+    </div>
+  );
+};
 
 interface InsightCardProps {
   insight: InsightType;
@@ -55,17 +350,17 @@ interface InsightCardProps {
   showLegend: boolean;
   getCurrentColors: () => string[];
   selectedRetailer: string;
-  setSelectedRetailer: (value: string) => void;
+  setSelectedRetailer: (val: string) => void;
   selectedBrand: string;
-  setSelectedBrand: (value: string) => void;
+  setSelectedBrand: (val: string) => void;
   selectedPPG: string;
-  setSelectedPPG: (value: string) => void;
+  setSelectedPPG: (val: string) => void;
   viewBy: string;
-  setViewBy: (value: string) => void;
+  setViewBy: (val: string) => void;
   downloadType: string;
-  setDownloadType: (value: string) => void;
+  setDownloadType: (val: string) => void;
   notes: string;
-  setNotes: (value: string) => void;
+  setNotes: (val: string) => void;
   toast: (options: {
     title: string;
     description: string;
@@ -76,11 +371,6 @@ interface InsightCardProps {
 
 export const InsightCard: React.FC<InsightCardProps> = ({
   insight,
-  chartData,
-  showLegend,
-  getCurrentColors,
-  selectedPPG,
-  setSelectedPPG,
   viewBy,
   setViewBy,
   downloadType,
@@ -91,232 +381,325 @@ export const InsightCard: React.FC<InsightCardProps> = ({
   index,
 }) => {
   const [isVisible, setIsVisible] = useState(false);
+  const [isDownloading, setIsDownloading] = useState(false);
+  const [isDataLoading, setIsDataLoading] = useState(true);
   const dispatch = useDispatch();
+  const chartRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const timeout = setTimeout(() => setIsVisible(true), 4); // delay mount
+    const timeout = setTimeout(() => {
+      setIsVisible(true);
+      setIsDataLoading(false);
+    }, 100);
     return () => clearTimeout(timeout);
   }, []);
 
-  const selectedRetailerId = useAppSelector(
-    (state: RootState) => state.filters.selectedRetailerId
-  );
-  const selectedBrandId = useAppSelector(
-    (state: RootState) => state.filters.selectedBrandId
-  );
-  const selectedProductId = useAppSelector(
-    (state: RootState) => state.filters.selectedProductId
+  // Selected values as comma-separated strings
+  const selectedRetailer = useSelectedFilter('retailer', index);
+  const selectedBrand = useSelectedFilter('brand', index);
+  const selectedProduct = useSelectedFilter('product', index);
+
+  const setSelectedFilter = useCallback(
+    (type: 'retailer' | 'brand' | 'product', values: string) => {
+      dispatch(filterActionMaps[type][index](values));
+    },
+    [dispatch, index]
   );
 
-  const { products, retailers, brands } = useAppSelector(
-    (state: RootState) => state.globalFilters
+  const {
+    products,
+    retailers: retailerList,
+    brands: brandList,
+  } = useAppSelector((state: RootState) => state.globalFilters);
+
+  // Adjust filtering logic to handle products as strings
+  const filteredProducts = useMemo(() => {
+    if (selectedBrand === 'all' || !selectedBrand) {
+      return products || ppgCategories;
+    }
+    // If products are strings, filter based on inclusion
+    return (products || ppgCategories).filter(product => product.includes(selectedBrand));
+  }, [selectedBrand, products, ppgCategories]);
+
+  const chartMap: { [k: number]: React.ReactElement | null } = useMemo(
+    () => ({
+      0: <ChartOnly />,
+      1: <PriceSlopeChart />,
+      2: <MyChart />,
+      3: <StackedLineChart />,
+      4: <MultiLine2 />,
+      5: <PromotedDepthChart />,
+      6: <PromotionalLiftChart />,
+      7: <LiftChart />,
+      8: <ElasticityStratagyChart isLoading={false} />,
+      9: <ProfitCurvesChart />,
+    }),
+    []
   );
+
+  const handleDownloadChart = async () => {
+    if (isDownloading) return;
+
+    setIsDownloading(true);
+    try {
+      let chartImageDataUrl;
+      if (chartRef.current) {
+        chartImageDataUrl = await htmlToImage.toPng(chartRef.current, {
+          backgroundColor: 'white',
+          quality: 1.0,
+          pixelRatio: 2,
+        });
+      }
+
+      const pptx = new pptxgen();
+      pptx.layout = 'LAYOUT_WIDE';
+      const slide = pptx.addSlide();
+      slide.background = { color: 'FFFFFF' };
+
+      slide.addText(insight.name ?? 'Chart Insight', {
+        x: 0.5,
+        y: 0.2,
+        w: '90%',
+        h: 0.7,
+        fontSize: 20,
+        bold: true,
+        color: '174F73',
+      });
+
+      if (insight.question) {
+        slide.addText(`Question: ${insight.question}`, {
+          x: 0.5,
+          y: 1.0,
+          fontSize: 14,
+          color: '444444',
+          w: '90%',
+          wrap: true,
+        });
+      }
+
+      if (notes && notes.length > 0) {
+        slide.addText('Note:', {
+          x: 0.5,
+          y: 1.5,
+          fontSize: 12,
+          bold: true,
+          color: '000000',
+        });
+        slide.addText(notes, {
+          x: 1.3,
+          y: 1.5,
+          fontSize: 12,
+          color: '000000',
+          w: '75%',
+          h: 1,
+          wrap: true,
+        });
+      }
+
+      if (chartImageDataUrl) {
+        slide.addImage({
+          data: chartImageDataUrl,
+          x: 0.5,
+          y: 2,
+          w: 9,
+          h: 4,
+        });
+      } else {
+        slide.addText('No chart data available', {
+          x: 0.5,
+          y: 2,
+          fontSize: 16,
+          color: 'FF0000',
+        });
+      }
+
+      await pptx.writeFile({
+        fileName: `${insight.name || 'insight'}-chart.pptx`,
+      });
+
+      toast({
+        title: 'Download successful',
+        description: 'Chart has been downloaded as PPTX.',
+        duration: 3000,
+      });
+    } catch (error) {
+      console.error('Download error:', error);
+      toast({
+        title: 'Download failed',
+        description: 'An error occurred while downloading the PPTX.',
+        duration: 2000,
+      });
+    } finally {
+      setIsDownloading(false);
+    }
+  };
 
   return (
-    <div className="border-t border-gray-200 p-6">
-      {/* Chart and Filters Section */}
+    <div className="border-t border-gray-200 bg-gray-50 p-6">
       <div className="mb-6 grid grid-cols-1 gap-6 lg:grid-cols-4">
-        {/* Chart Area */}
         <div className="lg:col-span-3">
-          <Card>
-            <CardHeader>
+          <Card className="shadow-sm">
+            <CardHeader className="pb-4">
               <div className="flex items-center justify-between">
-                <CardTitle className="text-lg">{insight.name}</CardTitle>
+                <CardTitle className="text-lg font-semibold text-gray-900">
+                  {insight.name}
+                </CardTitle>
+                {insight.question && (
+                  <span className="rounded-full bg-gray-100 px-2 py-1 text-xs text-gray-500">
+                    Q&A
+                  </span>
+                )}
               </div>
+              {insight.question && (
+                <p className="mt-2 text-sm text-gray-600">{insight.question}</p>
+              )}
             </CardHeader>
             <CardContent>
-              <div className="mb-4 h-80 w-full">
-                {isVisible && (
+              <div
+                className="mb-4 h-80 w-full rounded-lg border bg-white"
+                ref={chartRef}
+              >
+                {isVisible ? (
                   <ResponsiveContainer width="100%" height="100%">
-                    {index === 0 ? (
-                      <ChartOnly />
-                    ) : index === 1 ? (
-                      <PriceSlopeChart />
-                    ) : index === 2 ? (
-                      <MyChart />
-                    ) : index === 3 ? (
-                      <StackedLineChart />
-                    ) : index === 4 ? (
-                      <MultiLine2 />
-                    ) : index === 5 ? (
-                      <PromotedDepthChart />
-                    ) : index === 6 ? (
-                      <PromotionalLiftChart />
-                    ) : index === 7 ? (
-                      <LiftChart />
-                    ) : index === 8 ? (
-                      <ElasticityStratagyChart isLoading={false} />
-                    ) : index === 9 ? (
-                      <ProfitCurvesChart />
-                    ) : (
+                    {chartMap[index] || (
                       <div className="flex h-full items-center justify-center text-sm text-slate-500">
-                        No chart data available
+                        <div className="text-center">
+                          <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-gray-100">
+                            <FileText className="h-8 w-8 text-gray-400" />
+                          </div>
+                          <p>No chart data available</p>
+                        </div>
                       </div>
                     )}
                   </ResponsiveContainer>
+                ) : (
+                  <div className="flex h-full items-center justify-center">
+                    <Loader2 className="h-8 w-8 animate-spin text-indigo-600" />
+                  </div>
                 )}
               </div>
             </CardContent>
           </Card>
 
-          {/* Notes Section - Minimalist Design */}
-          <div className="mx-auto mt-3 w-full lg:col-span-3">
-            <div className="mb-2 flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <FileText className="h-3.5 w-3.5 text-slate-500" />
-                <span className="text-sm font-medium text-slate-600">
-                  Quick Notes
-                </span>
-              </div>
-            </div>
-            <div className="overflow-hidden rounded-md border border-slate-200 bg-slate-50 shadow-sm transition-shadow duration-200 hover:shadow">
-              <Textarea
-                placeholder="Add your notes here..."
-                value={notes}
-                onChange={(e) => setNotes(e.target.value)}
-                className="max-h-[50px] min-h-[80px] resize-none border-0 bg-transparent px-3 py-2 text-sm focus:ring-0 focus:ring-offset-0"
-              />
-              <div className="flex justify-end border-t border-slate-200 bg-white px-3 py-1.5">
-                <Button
-                  size="sm"
-                  variant="outline"
-                  className="h-7 rounded-full border-indigo-200 bg-gradient-to-r from-indigo-50 to-violet-50 px-3 text-xs font-medium text-indigo-700 transition-all duration-200 hover:border-indigo-300 hover:from-indigo-100 hover:to-violet-100 hover:text-indigo-800"
-                  onClick={() => {
-                    toast({
-                      title: 'Notes saved',
-                      description: 'Your notes have been saved successfully.',
-                      duration: 3000,
-                    });
-                  }}
-                >
-                  <Save className="mr-1.5 h-3 w-3" />
-                  Save Notes
-                </Button>
-              </div>
-            </div>
+          {/* Notes Section */}
+          <div className="mt-4">
+            <Card className="shadow-sm">
+              <CardHeader className="pb-3">
+                <div className="flex items-center gap-2">
+                  <FileText className="h-4 w-4 text-indigo-600" />
+                  <CardTitle className="text-sm font-medium text-gray-700">
+                    Quick Notes
+                  </CardTitle>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  <Textarea
+                    placeholder="Add your insights, observations, or notes here..."
+                    value={notes}
+                    onChange={(e) => setNotes(e.target.value)}
+                    className="max-h-[120px] min-h-[80px] resize-none border-gray-200 focus:border-indigo-500 focus:ring-indigo-500"
+                  />
+                  <div className="flex justify-end">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="border-indigo-200 bg-indigo-50 text-indigo-700 hover:border-indigo-300 hover:bg-indigo-100"
+                      onClick={() =>
+                        toast({
+                          title: 'Notes saved',
+                          description:
+                            'Your notes have been saved successfully.',
+                          duration: 3000,
+                        })
+                      }
+                    >
+                      <Save className="mr-1.5 h-3 w-3" />
+                      Save Notes
+                    </Button>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
           </div>
         </div>
 
         {/* Filters Panel */}
         <div className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-base">Chart Filters</CardTitle>
+          <Card className="shadow-sm">
+            <CardHeader className="pb-4">
+              <CardTitle className="flex items-center gap-2 text-base font-semibold text-gray-900">
+                <div className="h-2 w-2 rounded-full bg-indigo-600"></div>
+                Chart Filters
+              </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <div>
-                <Label>Retailer</Label>
-                <Select
-                  value={selectedRetailerId}
-                  onValueChange={(value) => {
-                    dispatch(setSelectedRetailerId(value));
-                  }}
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Retailers</SelectItem>
-                    {retailers.map((retailer) => (
-                      <SelectItem key={retailer} value={retailer}>
-                        {retailer}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
+            <CardContent className="space-y-6">
+              <FilterSelect
+                label="Retailer"
+                options={['all', ...(retailerList || retailers)]}
+                value={selectedRetailer}
+                onChangeValue={(str) => setSelectedFilter('retailer', str)}
+                isLoading={isDataLoading}
+                placeholder="Select retailers..."
+              />
 
-              <div>
-                <Label>Brand</Label>
-                <Select
-                  value={selectedBrandId}
-                  onValueChange={(value) => {
-                    dispatch(setSelectedBrandId(value));
-                  }}
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {brands.map((brand) => (
-                      <SelectItem key={brand} value={brand}>
-                        {brand}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
+              <FilterSelect
+                label="Brand"
+                options={brandList || brands}
+                value={selectedBrand}
+                onChangeValue={(str) => setSelectedFilter('brand', str)}
+                isLoading={isDataLoading}
+                placeholder="Select brands..."
+              />
 
-              <div>
-                <Label>PPG</Label>
-                <Select
-                  value={selectedProductId}
-                  onValueChange={(value) => {
-                    dispatch(setSelectedProductId(value));
-                  }}
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {products.map((ppg) => (
-                      <SelectItem key={ppg} value={ppg}>
-                        {ppg}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
+              <FilterSelect
+                label="PPG Categories"
+                options={filteredProducts}
+                value={selectedProduct}
+                onChangeValue={(str) => setSelectedFilter('product', str)}
+                isLoading={isDataLoading}
+                placeholder="Select categories..."
+              />
 
-              <div>
-                <Label>View By</Label>
-                <Select value={viewBy} onValueChange={setViewBy}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="retailer">Retailer</SelectItem>
-                    <SelectItem value="brand">Brand</SelectItem>
-                    <SelectItem value="ppg">PPG</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+              <FilterSelect
+                label="View By"
+                options={['retailer', 'brand', 'ppg']}
+                value={viewBy}
+                onChangeValue={setViewBy}
+                isMultiple={false}
+                placeholder="Select view..."
+              />
 
-              <div>
-                <Label>Download Chart Type By</Label>
-                <Select value={downloadType} onValueChange={setDownloadType}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="category">Category</SelectItem>
-                    <SelectItem value="retailer">Retailer</SelectItem>
-                    <SelectItem value="brand">Brand</SelectItem>
-                    <SelectItem value="ppg">PPG</SelectItem>
-                    <SelectItem value="upc">UPC</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+              <FilterSelect
+                label="Download Chart Type"
+                options={['category', 'retailer', 'brand', 'ppg', 'upc']}
+                value={downloadType}
+                onChangeValue={setDownloadType}
+                isMultiple={false}
+                placeholder="Select download type..."
+              />
 
-              <div className="mt-4">
+              <div className="border-t border-gray-200 pt-4">
                 <Button
-                  variant="outline"
-                  className="flex h-9 w-full items-center justify-center gap-2 rounded-md border-indigo-200 bg-gradient-to-r from-indigo-50 to-violet-50 text-indigo-700 transition-all duration-200 hover:border-indigo-300 hover:from-indigo-100 hover:to-violet-100 hover:text-indigo-800"
-                  onClick={() => {
-                    toast({
-                      title: 'Chart downloaded',
-                      description: `Your ${downloadType} chart has been downloaded successfully.`,
-                      duration: 3000,
-                    });
-                  }}
+                  variant="default"
+                  className="w-full bg-indigo-600 text-white hover:bg-indigo-700"
+                  onClick={handleDownloadChart}
+                  disabled={isDownloading}
                 >
-                  <Download className="h-4 w-4" />
-                  <span className="font-medium">
-                    Download{' '}
-                    {downloadType.charAt(0).toUpperCase() +
-                      downloadType.slice(1)}{' '}
-                    Chart
-                  </span>
+                  {isDownloading ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Downloading...
+                    </>
+                  ) : (
+                    <>
+                      <Download className="mr-2 h-4 w-4" />
+                      Download{' '}
+                      {downloadType.charAt(0).toUpperCase() +
+                        downloadType.slice(1)}{' '}
+                      Chart
+                    </>
+                  )}
                 </Button>
               </div>
             </CardContent>
@@ -326,3 +709,5 @@ export const InsightCard: React.FC<InsightCardProps> = ({
     </div>
   );
 };
+
+export default InsightCard;

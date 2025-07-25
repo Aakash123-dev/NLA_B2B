@@ -1,9 +1,12 @@
 'use client';
 
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useSelector } from 'react-redux';
-import { RootState } from '@/store';
+import { AppDispatch, RootState, useAppSelector } from '@/store';
 import ApexCharts from 'react-apexcharts';
+import { fetchChart6DataThunk } from '@/store/slices/chartsSlices';
+import { useSearchParams } from 'next/navigation';
+import { useDispatch } from 'react-redux';
 
 // Types
 type SeriesItem = {
@@ -60,6 +63,42 @@ const PromotionalLiftChart: React.FC = () => {
     const start = (currentPage - 1) * itemsPerPage;
     return chartData.slice(start, start + itemsPerPage);
   }, [chartData, currentPage]);
+
+  const selectedRetailerId6 = useAppSelector(
+    (state: RootState) => state.filters.selectedRetailer6
+  );
+  const selectedBrandId6 = useAppSelector(
+    (state: RootState) => state.filters.selectedBrand6
+  );
+  const selectedProductId6 = useAppSelector(
+    (state: RootState) => state.filters.selectedProduct6
+  );
+  const dispatch = useDispatch<AppDispatch>();
+
+  const searchParams = useSearchParams();
+  const projectId = Number(searchParams.get('project'));
+  const modelId = Number(searchParams.get('model'));
+
+  const filterPayload = {
+    projectId,
+    modelId,
+    Product: selectedProductId6,
+    Brand: selectedBrandId6,
+    Retailer: selectedRetailerId6,
+  };
+
+  useEffect(() => {
+    if (selectedRetailerId6) {
+      dispatch(fetchChart6DataThunk(filterPayload));
+    }
+  }, [
+    dispatch,
+    projectId,
+    modelId,
+    selectedProductId6,
+    selectedBrandId6,
+    selectedRetailerId6,
+  ]);
 
   const getChartOptions = (data: RetailerChart): ApexCharts.ApexOptions => ({
     chart: {

@@ -1,10 +1,13 @@
 'use client';
 
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import dynamic from 'next/dynamic';
 import { ApexOptions } from 'apexcharts';
 import { useSelector } from 'react-redux';
-import { RootState } from '@/store'; // make sure this path is correct for your project
+import { AppDispatch, RootState, useAppSelector } from '@/store'; // make sure this path is correct for your project
+import { fetchChart4DataThunk } from '@/store/slices/chartsSlices';
+import { useSearchParams } from 'next/navigation';
+import { useDispatch } from 'react-redux';
 
 // Dynamically load ApexCharts
 const ApexCharts = dynamic(() => import('react-apexcharts'), { ssr: false });
@@ -34,9 +37,7 @@ interface ChartData {
 }
 
 const StackedLineChart: React.FC = () => {
-  const rawChartData = useSelector(
-    (state: RootState) => state.chart.data4
-  ); // from your Redux slice
+  const rawChartData = useSelector((state: RootState) => state.chart.data4); // from your Redux slice
 
   const [chartType, setChartType] = useState<'line' | 'bar'>('line');
   const [isStacked, setIsStacked] = useState(false);
@@ -173,6 +174,42 @@ const StackedLineChart: React.FC = () => {
   };
 
   const currentChart = chartData[currentPage - 1];
+
+  const selectedRetailerId3 = useAppSelector(
+    (state: RootState) => state.filters.selectedRetailer3
+  );
+  const selectedBrandId3 = useAppSelector(
+    (state: RootState) => state.filters.selectedBrand3
+  );
+  const selectedProductId3 = useAppSelector(
+    (state: RootState) => state.filters.selectedProduct3
+  );
+  const dispatch = useDispatch<AppDispatch>();
+
+  const searchParams = useSearchParams();
+  const projectId = Number(searchParams.get('project'));
+  const modelId = Number(searchParams.get('model'));
+
+  const filterPayload = {
+    projectId,
+    modelId,
+    Product: selectedProductId3,
+    Brand: selectedBrandId3,
+    Retailer: selectedRetailerId3,
+  };
+
+  useEffect(() => {
+    if (selectedRetailerId3) {
+      dispatch(fetchChart4DataThunk(filterPayload));
+    }
+  }, [
+    dispatch,
+    projectId,
+    modelId,
+    selectedProductId3,
+    selectedBrandId3,
+    selectedRetailerId3,
+  ]);
 
   return (
     <div>
