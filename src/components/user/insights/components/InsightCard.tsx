@@ -59,7 +59,7 @@ import {
 } from '@/store/slices/filterSlices';
 
 // Dynamic imports for client-side only packages
-const pptxgen = typeof window !== 'undefined' ? require('pptxgenjs') : null;
+import pptxgen from 'pptxgenjs';
 const htmlToImage = typeof window !== 'undefined' ? require('html-to-image') : null;
 import PriceSlopeChart from './PriceSlopeChart';
 import MyChart from './LineBar';
@@ -420,8 +420,11 @@ export const InsightCard: React.FC<InsightCardProps> = ({
     if (selectedBrand === 'all' || !selectedBrand) {
       return products || ppgCategories;
     }
+    const selectedBrandsArray = selectedBrand.split(',').filter(Boolean);
     // If products are strings, filter based on inclusion
-    return (products || ppgCategories).filter(product => product.includes(selectedBrand));
+    return (products || ppgCategories).filter(product =>
+      selectedBrandsArray.some(brand => product.includes(brand))
+    );
   }, [selectedBrand, products, ppgCategories]);
 
   const chartMap: { [k: number]: React.ReactElement | null } = useMemo(
