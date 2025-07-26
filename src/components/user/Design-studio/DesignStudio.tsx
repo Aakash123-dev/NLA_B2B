@@ -12,7 +12,8 @@ import {
   ToolPalette, 
   Canvas,
   ToastContainer,
-  ForecastingNodeConfig
+  ForecastingNodeConfig,
+  SimulatorNodeConfig
 } from './components';
 import { getToolCategories } from './data';
 import { DesignStudioProps, FlowNodeData, ConfigurationState } from './types';
@@ -227,6 +228,21 @@ function DesignStudioInner({ selectedProject }: DesignStudioProps) {
       if (modelId) params.set('model', modelId);
       
       window.location.href = `/user/promo-optimization?${params.toString()}`;
+      return;
+    }
+    
+    // For simulator nodes, navigate to simulator page
+    if (nodeType === 'simulator') {
+      // Get URL parameters and preserve them when navigating to simulator
+      const urlParams = new URLSearchParams(window.location.search);
+      const projectId = urlParams.get('project');
+      const modelId = urlParams.get('model');
+      
+      const params = new URLSearchParams();
+      if (projectId) params.set('project', projectId);
+      if (modelId) params.set('model', modelId);
+      
+      window.location.href = `/user/simulator?${params.toString()}`;
       return;
     }
     
@@ -611,6 +627,15 @@ function DesignStudioInner({ selectedProject }: DesignStudioProps) {
         <div className="design-studio-config-panel">
           {configuration.nodeType === 'forecasting' && (
             <ForecastingNodeConfig 
+              nodeId={configuration.nodeId!}
+              nodeType={configuration.nodeType!}
+              nodeName={configuration.nodeName!}
+              onClose={handleConfigurationClose}
+              connectedNodes={getConnectedNodes(configuration.nodeId!)}
+            />
+          )}
+          {configuration.nodeType === 'simulator' && (
+            <SimulatorNodeConfig 
               nodeId={configuration.nodeId!}
               nodeType={configuration.nodeType!}
               nodeName={configuration.nodeName!}

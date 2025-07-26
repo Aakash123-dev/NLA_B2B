@@ -51,6 +51,7 @@ export function FlowNode({ data, selected }: NodeProps<FlowNodeData>) {
       'design-canvas': 'from-pink-400 to-pink-600',
       'shape-builder': 'from-slate-400 to-slate-600',
       'insights-generator': 'from-teal-400 to-teal-600',
+      'simulator': 'from-red-400 to-red-600',
       'default': 'from-gray-400 to-gray-600'
     };
     return colors[type as keyof typeof colors] || colors.default;

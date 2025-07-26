@@ -66,6 +66,19 @@ export function ToolContent({
     
     router.push(`/user/promo-optimization?${params.toString()}`);
   };
+
+  const handleSimulatorConfigure = () => {
+    // Get URL parameters and preserve them when navigating to simulator
+    const urlParams = new URLSearchParams(window.location.search);
+    const projectId = urlParams.get('project');
+    const modelId = urlParams.get('model');
+    
+    const params = new URLSearchParams();
+    if (projectId) params.set('project', projectId);
+    if (modelId) params.set('model', modelId);
+    
+    router.push(`/user/simulator?${params.toString()}`);
+  };
   const toolHeader = (
     <div className="mb-8">
       <div className="flex items-center justify-between">
@@ -77,6 +90,7 @@ export function ToolContent({
             {nodeType === 'insights-template' && 'Pre-built insight visualization templates'}
             {nodeType === 'trade-plan-optimization' && 'Optimize trading strategies and execution plans'}
             {nodeType === 'promo-optimization' && 'Optimize promotional campaigns and marketing strategies'}
+            {nodeType === 'simulator' && 'Run pricing and scenario simulations with margin analysis'}
             {nodeType.startsWith('template-') && 'Visualization dashboard and analytics'}
           </p>
         </div>
@@ -272,6 +286,77 @@ export function ToolContent({
                 <div className="flex justify-between items-center">
                   <span className="text-sm text-slate-600 dark:text-slate-400">Alternatives</span>
                   <span className="font-medium text-slate-900 dark:text-white">10%</span>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+      );
+      
+    case 'simulator':
+      return (
+        <div className="p-8 space-y-6">
+          {toolHeader}
+          <div className="mb-6">
+            <Button
+              onClick={handleSimulatorConfigure}
+              className="bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white px-6 py-2 rounded-lg flex items-center gap-2 font-medium"
+            >
+              <Settings className="w-4 h-4" />
+              Configure Simulator
+            </Button>
+          </div>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <Card className="bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm border border-slate-200 dark:border-slate-700/50">
+              <CardHeader>
+                <CardTitle>Simulation Settings</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Scenario Type</label>
+                  <select className="w-full px-3 py-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-lg">
+                    <option>Price Optimization</option>
+                    <option>Volume Analysis</option>
+                    <option>Margin Analysis</option>
+                    <option>Competitive Response</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Time Horizon</label>
+                  <select className="w-full px-3 py-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-lg">
+                    <option>1 Month</option>
+                    <option>3 Months</option>
+                    <option>6 Months</option>
+                    <option>1 Year</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Confidence Level (%)</label>
+                  <input type="number" className="w-full px-3 py-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-lg" placeholder="95" />
+                </div>
+              </CardContent>
+            </Card>
+            
+            <Card className="bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm border border-slate-200 dark:border-slate-700/50">
+              <CardHeader>
+                <CardTitle>Simulation Results</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <div className="flex justify-between items-center">
+                  <span className="text-sm text-slate-600 dark:text-slate-400">Expected Revenue Impact</span>
+                  <span className="font-medium text-green-600">+12.4%</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-sm text-slate-600 dark:text-slate-400">Margin Improvement</span>
+                  <span className="font-medium text-green-600">+8.2%</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-sm text-slate-600 dark:text-slate-400">Volume Change</span>
+                  <span className="font-medium text-red-600">-3.1%</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-sm text-slate-600 dark:text-slate-400">Risk Score</span>
+                  <span className="font-medium text-orange-600">Medium</span>
                 </div>
               </CardContent>
             </Card>
