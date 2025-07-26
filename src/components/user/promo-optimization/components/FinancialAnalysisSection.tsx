@@ -3,7 +3,8 @@
 import React from 'react'
 import { motion } from 'framer-motion'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { DollarSign, TrendingUp, PieChart } from 'lucide-react'
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
+import { DollarSign, TrendingUp, PieChart, Target, ShoppingCart, Factory } from 'lucide-react'
 import { FinancialAnalysis } from '../types'
 
 interface FinancialAnalysisSectionProps {
@@ -28,94 +29,160 @@ export function FinancialAnalysisSection({ results }: FinancialAnalysisSectionPr
     return value.toFixed(2)
   }
 
+  // Calculate unpromoted values based on promoted values (mock calculation)
+  const unpromotedData = {
+    grossRevenue: results.mfrGrossRevenue * 0.85, // Assume 15% lower without promo
+    incrementalRevenue: 0, // No incremental for baseline
+    netRevenue: results.mfrNetRevenue * 0.9,
+    grossMarginPercent: results.mfrGrossMarginUnpromotedPercent,
+    grossMarginDollar: results.mfrGrossMarginUnpromoted
+  }
+
+  const promotedData = {
+    grossRevenue: results.mfrGrossRevenue,
+    incrementalRevenue: results.incrementalRevenue,
+    netRevenue: results.mfrNetRevenue,
+    grossMarginPercent: results.mfrGrossMarginPercent,
+    grossMarginDollar: results.mfrGrossMargin
+  }
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: 1.0, duration: 0.6 }}
-      className="space-y-6"
+      className="w-full"
     >
-      {/* Financial Analysis */}
-      <Card className="border-gray-200 shadow-xl shadow-gray-100/50 bg-white/80 backdrop-blur-sm">
-        <CardHeader className="pb-6">
-          <CardTitle className="text-xl font-bold text-gray-900 flex items-center gap-3">
-            <div className="w-8 h-8 bg-gradient-to-r from-emerald-600 to-green-600 rounded-lg flex items-center justify-center">
-              <DollarSign className="w-4 h-4 text-white" />
+      {/* Financial Analysis Table */}
+      <Card className="border-slate-200 shadow-sm bg-white">
+        <CardHeader className="pb-4 border-b border-slate-100">
+          <CardTitle className="text-lg font-semibold text-slate-800 flex items-center gap-2">
+            <div className="w-6 h-6 bg-emerald-600 rounded-md flex items-center justify-center">
+              <DollarSign className="w-3 h-3 text-white" />
             </div>
             Financial Analysis
           </CardTitle>
         </CardHeader>
-        <CardContent>
-          <div className="space-y-6">
-            {/* Event Results Section */}
-            <div>
-              <h4 className="text-lg font-semibold text-gray-900 mb-4">Event Results</h4>
-              <div className="grid grid-cols-1 gap-4">
-                {[
-                  { label: 'Mfr Gross Revenue', value: formatCurrency(results.mfrGrossRevenue) },
-                  { label: 'Incremental Revenue', value: formatCurrency(results.incrementalRevenue) },
-                  { label: 'Spoils', value: formatCurrency(results.spoils) },
-                  { label: 'Trade Spend', value: formatCurrency(results.tradeSpend) },
-                  { label: 'Mfr Net Revenue', value: formatCurrency(results.mfrNetRevenue) },
-                  { label: 'COGS', value: formatCurrency(results.cogs) },
-                  { label: 'Mfr Gross Margin (Unpromoted)', value: formatCurrency(results.mfrGrossMarginUnpromoted) },
-                  { label: 'Mfr Gross Margin % (Unpromoted)', value: formatPercentage(results.mfrGrossMarginUnpromotedPercent) },
-                  { label: 'Mfr Gross Margin', value: formatCurrency(results.mfrGrossMargin) },
-                  { label: 'Mfr Gross Margin %', value: formatPercentage(results.mfrGrossMarginPercent) },
-                  { label: 'Sales ROI', value: formatDecimal(results.salesROI) },
-                  { label: 'Retail Gross Revenue', value: formatCurrency(results.retailGrossRevenue) },
-                  { label: 'Retail Incremental Revenue', value: formatCurrency(results.retailIncrementalRevenue) },
-                  { label: 'Retail Promo Margin %', value: formatPercentage(results.retailPromoMarginPercent) },
-                  { label: 'Retail Everyday Margin %', value: formatPercentage(results.retailEverydayMarginPercent) },
-                  { label: 'Retail Profit', value: formatCurrency(results.retailProfit) }
-                ].map((item, index) => (
-                  <motion.div
-                    key={item.label}
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: 1.2 + index * 0.05, duration: 0.4 }}
-                    className="flex justify-between items-center p-3 bg-gradient-to-r from-gray-50 to-gray-100/50 rounded-lg border border-gray-200 hover:shadow-md transition-all duration-200"
-                  >
-                    <span className="text-sm font-medium text-gray-700">{item.label}</span>
-                    <span className="text-sm font-bold text-gray-900 bg-white px-3 py-1 rounded-full shadow-sm">
-                      {item.value}
-                    </span>
-                  </motion.div>
-                ))}
-              </div>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+        <CardContent className="p-0">
+          <div className="overflow-hidden">
+            <Table>
+              <TableHeader>
+                <TableRow className="bg-slate-50 border-none hover:bg-slate-50">
+                  <TableHead className="font-medium text-slate-600 py-3 px-4 text-sm w-[200px]">Category</TableHead>
+                  <TableHead className="font-medium text-slate-600 py-3 px-4 text-sm">Metric</TableHead>
+                  <TableHead className="font-medium text-slate-600 py-3 px-4 text-sm text-right">Value</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {/* MFR Unpromoted Section */}
+                <TableRow className="border-b border-slate-100 hover:bg-blue-50/20 transition-colors">
+                  <TableCell rowSpan={5} className="font-medium text-slate-700 py-3 px-4 align-top border-r border-slate-100 bg-slate-50/50">
+                    <div className="flex items-center gap-2">
+                      <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                      <span className="text-sm">MFR Unpromoted</span>
+                    </div>
+                  </TableCell>
+                  <TableCell className="py-2 px-4 text-sm text-slate-600">Gross Revenue</TableCell>
+                  <TableCell className="py-2 px-4 text-right font-medium text-sm text-slate-800">{formatCurrency(unpromotedData.grossRevenue)}</TableCell>
+                </TableRow>
+                <TableRow className="border-b border-slate-100 hover:bg-blue-50/20 transition-colors">
+                  <TableCell className="py-2 px-4 text-sm text-slate-600">Incremental Revenue</TableCell>
+                  <TableCell className="py-2 px-4 text-right font-medium text-sm text-slate-800">{formatCurrency(unpromotedData.incrementalRevenue)}</TableCell>
+                </TableRow>
+                <TableRow className="border-b border-slate-100 hover:bg-blue-50/20 transition-colors">
+                  <TableCell className="py-2 px-4 text-sm text-slate-600">Net Revenue</TableCell>
+                  <TableCell className="py-2 px-4 text-right font-medium text-sm text-slate-800">{formatCurrency(unpromotedData.netRevenue)}</TableCell>
+                </TableRow>
+                <TableRow className="border-b border-slate-100 hover:bg-blue-50/20 transition-colors">
+                  <TableCell className="py-2 px-4 text-sm text-slate-600">Gross Margin %</TableCell>
+                  <TableCell className="py-2 px-4 text-right font-medium text-sm text-emerald-600">{formatPercentage(unpromotedData.grossMarginPercent)}</TableCell>
+                </TableRow>
+                <TableRow className="border-b-2 border-slate-200 hover:bg-blue-50/20 transition-colors">
+                  <TableCell className="py-2 px-4 text-sm text-slate-600">Gross Margin $</TableCell>
+                  <TableCell className="py-2 px-4 text-right font-medium text-sm text-slate-800">{formatCurrency(unpromotedData.grossMarginDollar)}</TableCell>
+                </TableRow>
 
-      {/* Key Metrics Summary */}
-      <Card className="border-gray-200 shadow-xl shadow-gray-100/50 bg-gradient-to-br from-blue-50 to-indigo-50 backdrop-blur-sm">
-        <CardHeader className="pb-4">
-          <CardTitle className="text-lg font-bold text-blue-900 flex items-center gap-3">
-            <TrendingUp className="w-6 h-6 text-blue-600" />
-            Key Performance Indicators
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="text-center p-4 bg-white/60 rounded-lg shadow-sm">
-              <div className="text-2xl font-bold text-blue-600 mb-1">
-                {formatDecimal(results.salesROI)}
-              </div>
-              <div className="text-sm font-medium text-blue-800">Sales ROI</div>
-            </div>
-            <div className="text-center p-4 bg-white/60 rounded-lg shadow-sm">
-              <div className="text-2xl font-bold text-emerald-600 mb-1">
-                {formatPercentage(results.mfrGrossMarginPercent)}
-              </div>
-              <div className="text-sm font-medium text-emerald-800">Mfr Margin %</div>
-            </div>
-            <div className="text-center p-4 bg-white/60 rounded-lg shadow-sm">
-              <div className="text-2xl font-bold text-purple-600 mb-1">
-                {formatCurrency(results.retailProfit)}
-              </div>
-              <div className="text-sm font-medium text-purple-800">Retail Profit</div>
-            </div>
+                {/* MFR Promoted Section */}
+                <TableRow className="border-b border-slate-100 hover:bg-emerald-50/20 transition-colors">
+                  <TableCell rowSpan={5} className="font-medium text-slate-700 py-3 px-4 align-top border-r border-slate-100 bg-slate-50/50">
+                    <div className="flex items-center gap-2">
+                      <div className="w-2 h-2 bg-emerald-500 rounded-full"></div>
+                      <span className="text-sm">MFR Promoted</span>
+                    </div>
+                  </TableCell>
+                  <TableCell className="py-2 px-4 text-sm text-slate-600">Gross Revenue</TableCell>
+                  <TableCell className="py-2 px-4 text-right font-medium text-sm text-slate-800">{formatCurrency(promotedData.grossRevenue)}</TableCell>
+                </TableRow>
+                <TableRow className="border-b border-slate-100 hover:bg-emerald-50/20 transition-colors">
+                  <TableCell className="py-2 px-4 text-sm text-slate-600">Incremental Revenue</TableCell>
+                  <TableCell className="py-2 px-4 text-right font-medium text-sm text-emerald-600">{formatCurrency(promotedData.incrementalRevenue)}</TableCell>
+                </TableRow>
+                <TableRow className="border-b border-slate-100 hover:bg-emerald-50/20 transition-colors">
+                  <TableCell className="py-2 px-4 text-sm text-slate-600">Net Revenue</TableCell>
+                  <TableCell className="py-2 px-4 text-right font-medium text-sm text-slate-800">{formatCurrency(promotedData.netRevenue)}</TableCell>
+                </TableRow>
+                <TableRow className="border-b border-slate-100 hover:bg-emerald-50/20 transition-colors">
+                  <TableCell className="py-2 px-4 text-sm text-slate-600">Gross Margin %</TableCell>
+                  <TableCell className="py-2 px-4 text-right font-medium text-sm text-emerald-600">{formatPercentage(promotedData.grossMarginPercent)}</TableCell>
+                </TableRow>
+                <TableRow className="border-b-2 border-slate-200 hover:bg-emerald-50/20 transition-colors">
+                  <TableCell className="py-2 px-4 text-sm text-slate-600">Gross Margin $</TableCell>
+                  <TableCell className="py-2 px-4 text-right font-medium text-sm text-slate-800">{formatCurrency(promotedData.grossMarginDollar)}</TableCell>
+                </TableRow>
+
+                {/* Retailer Section */}
+                <TableRow className="border-b border-slate-100 hover:bg-violet-50/20 transition-colors">
+                  <TableCell rowSpan={5} className="font-medium text-slate-700 py-3 px-4 align-top border-r border-slate-100 bg-slate-50/50">
+                    <div className="flex items-center gap-2">
+                      <div className="w-2 h-2 bg-violet-500 rounded-full"></div>
+                      <span className="text-sm">Retailer</span>
+                    </div>
+                  </TableCell>
+                  <TableCell className="py-2 px-4 text-sm text-slate-600">Retail Gross Revenue</TableCell>
+                  <TableCell className="py-2 px-4 text-right font-medium text-sm text-slate-800">{formatCurrency(results.retailGrossRevenue)}</TableCell>
+                </TableRow>
+                <TableRow className="border-b border-slate-100 hover:bg-violet-50/20 transition-colors">
+                  <TableCell className="py-2 px-4 text-sm text-slate-600">Retail Incremental Revenue</TableCell>
+                  <TableCell className="py-2 px-4 text-right font-medium text-sm text-violet-600">{formatCurrency(results.retailIncrementalRevenue)}</TableCell>
+                </TableRow>
+                <TableRow className="border-b border-slate-100 hover:bg-violet-50/20 transition-colors">
+                  <TableCell className="py-2 px-4 text-sm text-slate-600">Retail Promo Margin %</TableCell>
+                  <TableCell className="py-2 px-4 text-right font-medium text-sm text-violet-600">{formatPercentage(results.retailPromoMarginPercent)}</TableCell>
+                </TableRow>
+                <TableRow className="border-b border-slate-100 hover:bg-violet-50/20 transition-colors">
+                  <TableCell className="py-2 px-4 text-sm text-slate-600">Retail Everyday Margin %</TableCell>
+                  <TableCell className="py-2 px-4 text-right font-medium text-sm text-slate-600">{formatPercentage(results.retailEverydayMarginPercent)}</TableCell>
+                </TableRow>
+                <TableRow className="border-b-2 border-slate-200 hover:bg-violet-50/20 transition-colors">
+                  <TableCell className="py-2 px-4 text-sm text-slate-600">Retail Profit</TableCell>
+                  <TableCell className="py-2 px-4 text-right font-medium text-sm text-slate-800">{formatCurrency(results.retailProfit)}</TableCell>
+                </TableRow>
+
+                {/* MFR Contribution Section */}
+                <TableRow className="border-b border-slate-100 hover:bg-amber-50/20 transition-colors">
+                  <TableCell rowSpan={4} className="font-medium text-slate-700 py-3 px-4 align-top border-r border-slate-100 bg-slate-50/50">
+                    <div className="flex items-center gap-2">
+                      <div className="w-2 h-2 bg-amber-500 rounded-full"></div>
+                      <span className="text-sm">MFR Contribution</span>
+                    </div>
+                  </TableCell>
+                  <TableCell className="py-2 px-4 text-sm text-slate-600">Spoils</TableCell>
+                  <TableCell className="py-2 px-4 text-right font-medium text-sm text-red-600">-{formatCurrency(results.spoils)}</TableCell>
+                </TableRow>
+                <TableRow className="border-b border-slate-100 hover:bg-amber-50/20 transition-colors">
+                  <TableCell className="py-2 px-4 text-sm text-slate-600">Trade Spend</TableCell>
+                  <TableCell className="py-2 px-4 text-right font-medium text-sm text-red-600">-{formatCurrency(results.tradeSpend)}</TableCell>
+                </TableRow>
+                <TableRow className="border-b border-slate-100 hover:bg-amber-50/20 transition-colors">
+                  <TableCell className="py-2 px-4 text-sm text-slate-600">COGS</TableCell>
+                  <TableCell className="py-2 px-4 text-right font-medium text-sm text-red-600">-{formatCurrency(results.cogs)}</TableCell>
+                </TableRow>
+                <TableRow className="hover:bg-amber-50/20 transition-colors">
+                  <TableCell className="py-2 px-4 text-sm font-medium text-slate-700">Sales ROI</TableCell>
+                  <TableCell className="py-2 px-4 text-right font-semibold text-sm text-emerald-600">{formatDecimal(results.salesROI)}×</TableCell>
+                </TableRow>
+              </TableBody>
+            </Table>
           </div>
         </CardContent>
       </Card>

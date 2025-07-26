@@ -442,21 +442,6 @@ export function MarginAnalysisSection({
             </CardContent>
           </Card>
         </div>
-
-        {/* Action Buttons */}
-        <div className="flex justify-center gap-4 mt-8">
-          <Button
-            variant="outline"
-            className="px-6 py-2 border-gray-300 text-gray-700 hover:bg-gray-50 rounded-xl"
-          >
-            Reset Values
-          </Button>
-          <Button
-            className="px-6 py-2 bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white rounded-xl"
-          >
-            Apply Analysis
-          </Button>
-        </div>
       </div>
     </div>
   );

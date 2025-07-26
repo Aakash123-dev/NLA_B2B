@@ -185,7 +185,7 @@ export default function SimulatorPage() {
                   className="w-8 h-8 border-2 border-white border-t-transparent rounded-full"
                 />
               </div>
-              <h3 className="text-lg font-medium text-gray-900 mb-2">Running Analysis</h3>
+              <h3 className="text-lg font-medium text-gray-900 mb-2">Applying .... </h3>
               <p className="text-gray-600 mb-4">Processing your simulation data...</p>
               <div className="w-64 h-2 bg-gray-200 rounded-full mx-auto overflow-hidden">
                 <motion.div
@@ -205,8 +205,8 @@ export default function SimulatorPage() {
               <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
                 <Play className="w-8 h-8 text-gray-400" />
               </div>
-              <h3 className="text-lg font-medium text-gray-900 mb-2">Ready to Analyze</h3>
-              <p className="text-gray-600">Configure your filters above and run the analysis to see results.</p>
+              <h3 className="text-lg font-medium text-gray-900 mb-2">For Analyze</h3>
+              <p className="text-gray-600">Configure your filters above and click on apply the analysis to see results.</p>
             </div>
           )}
 

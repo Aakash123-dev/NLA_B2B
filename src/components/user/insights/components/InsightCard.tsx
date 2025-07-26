@@ -1,4 +1,6 @@
-'use client';
+
+
+"use client";
 
 import React, {
   useEffect,
@@ -56,8 +58,9 @@ import {
   setSelectedProduct8,
 } from '@/store/slices/filterSlices';
 
-import pptxgen from 'pptxgenjs';
-import * as htmlToImage from 'html-to-image';
+// Dynamic imports for client-side only packages
+const pptxgen = typeof window !== 'undefined' ? require('pptxgenjs') : null;
+const htmlToImage = typeof window !== 'undefined' ? require('html-to-image') : null;
 import PriceSlopeChart from './PriceSlopeChart';
 import MyChart from './LineBar';
 import StackedLineChart from './MultiLine';
@@ -439,6 +442,16 @@ export const InsightCard: React.FC<InsightCardProps> = ({
 
   const handleDownloadChart = async () => {
     if (isDownloading) return;
+
+    // Check if we're on the client side and modules are available
+    if (!pptxgen || !htmlToImage) {
+      toast({
+        title: 'Download failed',
+        description: 'Required modules are not available.',
+        duration: 2000,
+      });
+      return;
+    }
 
     setIsDownloading(true);
     try {

@@ -8,4 +8,4 @@ export { Canvas } from './Canvas';
 export { Toast, ToastContainer } from './Toast';
 
 // Configuration Components
-export { ForecastingNodeConfig, NodeConfigWrapper } from './configurations';
+export { ForecastingNodeConfig, NodeConfigWrapper, SimulatorNodeConfig } from './configurations';
