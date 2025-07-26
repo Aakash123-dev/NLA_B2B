@@ -68,6 +68,7 @@ export const useTabs = () => {
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tabs, activeTab]);
 
   const handleTabClick = useCallback((tabId: string) => {

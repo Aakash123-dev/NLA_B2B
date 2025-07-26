@@ -39,8 +39,14 @@ export function ConfigStepRenderer({
     case 2:
       return (
         <ColumnSelectionStep
-          config={config}
-          handleSelection={handleSelection}
+          formData={config}
+          onFormDataChange={(data) => {
+            Object.entries(data).forEach(([key, value]) => {
+              updateConfig(key as keyof PricingModelConfig, value);
+            });
+          }}
+          onNext={() => {}}
+          onBack={() => {}}
         />
       )
     case 3:
@@ -50,14 +56,32 @@ export function ConfigStepRenderer({
     case 4:
       return (
         <ExecutionStep
-          progress={progress}
-          startModeling={startModeling}
-          cancelProcess={cancelProcess}
+          processingState={{
+            fetchProgress: progress.fetchProgress,
+            modelProgress: progress.modelProgress,
+            isFetching: progress.isFetching,
+            isModeling: progress.isModeling,
+            isFetchComplete: progress.isFetchComplete,
+            isModelComplete: progress.isModelComplete
+          }}
+          onRunModel={startModeling}
+          onCancel={cancelProcess}
         />
       )
     case 5:
       return (
-        <ResultsStep config={config} />
+        <ResultsStep 
+          formData={config}
+          onFormDataChange={(data) => {
+            Object.entries(data).forEach(([key, value]) => {
+              updateConfig(key as keyof PricingModelConfig, value);
+            });
+          }}
+          onNext={() => {}}
+          onBack={() => {}}
+          onRestart={() => {}}
+          onBackToSummary={() => {}}
+        />
       )
     default:
       return null

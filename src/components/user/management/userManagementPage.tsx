@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import Image from 'next/image';
 import { 
   Users, 
   Plus, 
@@ -290,7 +291,8 @@ export default function UserManagementPage() {
   useEffect(() => {
     setUsers(initialUsers);
     setIsLoaded(true);
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // initialUsers is a static array defined in component
 
   const formatDate = (dateString: string): string => {
     if (!dateString || dateString === 'Never') return 'Never';
@@ -857,7 +859,7 @@ export default function UserManagementPage() {
                                   </Avatar>
                                   <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-white rounded-full shadow-sm border border-gray-200 flex items-center justify-center">
                                     {user.companyLogo ? (
-                                      <img src={user.companyLogo} alt="Company" className="w-3 h-3 rounded-full" />
+                                      <Image src={user.companyLogo} alt="Company" width={12} height={12} className="rounded-full" />
                                     ) : (
                                       <Building className="w-2 h-2 text-gray-400" />
                                     )}

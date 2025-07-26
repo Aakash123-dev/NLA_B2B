@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -156,7 +156,7 @@ export default function UsersPage() {
   const { toast } = useToast();
 
   // Sample data for the B2B user management system
-  const initialUsers: User[] = [
+  const initialUsers: User[] = useMemo(() => [
     {
       id: '1',
       name: 'John Smith',
@@ -297,13 +297,14 @@ export default function UsersPage() {
       department: 'Sales',
       location: 'Los Angeles'
     }
-  ];
+  ], []);
 
   // Initialize users state
   useEffect(() => {
     setUsers(initialUsers);
     setIsLoaded(true);
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // initialUsers is memoized and stable
 
   const formatDate = (dateString: string): string => {
     if (!dateString || dateString === 'Never') return 'Never';

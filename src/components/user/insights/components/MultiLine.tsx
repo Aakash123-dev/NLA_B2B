@@ -209,6 +209,7 @@ const StackedLineChart: React.FC = () => {
     selectedProductId3,
     selectedBrandId3,
     selectedRetailerId3,
+    filterPayload
   ]);
 
   return (

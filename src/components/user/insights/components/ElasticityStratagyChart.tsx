@@ -230,13 +230,13 @@ const ElasticityStratagyChart: React.FC<{ isLoading: boolean }> = ({
   const projectId = Number(searchParams.get('project'));
   const modelId = Number(searchParams.get('model'));
 
-  const filterPayload = {
+  const filterPayload = useMemo(() => ({
     projectId,
     modelId,
     Product: selectedProductId8,
     Brand: selectedBrandId8,
     Retailer: selectedRetailerId8,
-  };
+  }), [projectId, modelId, selectedProductId8, selectedBrandId8, selectedRetailerId8]);
 
   useEffect(() => {
     if (selectedRetailerId8) {
@@ -249,6 +249,7 @@ const ElasticityStratagyChart: React.FC<{ isLoading: boolean }> = ({
     selectedProductId8,
     selectedBrandId8,
     selectedRetailerId8,
+    filterPayload
   ]);
 
   const paginatedData = useMemo(() => {

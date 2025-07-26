@@ -1,3 +1,23 @@
+export interface DatabaseOption {
+  id: string
+  name: string
+}
+
+export interface RetailerOption {
+  id: string
+  name: string
+}
+
+export interface BrandOption {
+  id: string
+  name: string
+}
+
+export interface ProductOption {
+  id: string
+  name: string
+}
+
 export interface TradePlan {
   id: string
   trade_plan_name: string
@@ -29,7 +49,10 @@ export interface TradePlanFormData {
   selectedRetailers: string[]
   selectedBrands: string[]
   selectedProducts?: string[]
-  year: string
+  year: string | number
+  marketShare?: string
+  minRevenue?: string
+  numWeeks?: string
   targetVolume?: string
   targetRevenue?: string
   targetSpend?: string
@@ -60,4 +83,8 @@ export interface EventFormData {
   products?: string[]
   channels?: string[]
   planValue?: number
+}
+
+export interface FormErrors {
+  [key: string]: string
 }

@@ -98,6 +98,7 @@ const PromotionalLiftChart: React.FC = () => {
     selectedProductId6,
     selectedBrandId6,
     selectedRetailerId6,
+    filterPayload
   ]);
 
   const getChartOptions = (data: RetailerChart): ApexCharts.ApexOptions => ({
@@ -136,7 +137,7 @@ const PromotionalLiftChart: React.FC = () => {
     yaxis: {
       title: { text: data.yAxisTitle },
       labels: {
-        formatter: (value: number) => Math.round(value),
+        formatter: (value: number) => Math.round(value).toString(),
       },
     },
     legend: {
@@ -146,9 +147,7 @@ const PromotionalLiftChart: React.FC = () => {
       floating: false,
       offsetY: 0,
       markers: {
-        width: 12,
-        height: 12,
-        radius: 2,
+        size: 12,
       },
       onItemClick: {
         toggleDataSeries: true,
@@ -173,7 +172,7 @@ const PromotionalLiftChart: React.FC = () => {
         formatter: (value: number) => `${Math.round(value)}%`,
       },
       x: {
-        formatter: (_value: string, { dataPointIndex }: any) => {
+        formatter: (_value: number, { dataPointIndex }: any) => {
           const label = data.data.categories?.[dataPointIndex];
           if (!label) return '';
           return label.length > 15 ? label.substring(0, 12) + '...' : label;

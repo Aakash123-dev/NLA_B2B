@@ -1,11 +1,12 @@
+import { Suspense } from 'react';
 import PricingModelPage from '@/components/user/pricing';
 
-function page() {
+function Page() {
   return (
-    <div>
+    <Suspense fallback={<div>Loading Pricing Model...</div>}>
       <PricingModelPage />
-    </div>
+    </Suspense>
   );
 }
 
-export default page;
+export default Page;

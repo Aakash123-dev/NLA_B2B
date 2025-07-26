@@ -87,6 +87,7 @@ export const InsightsContentSection: React.FC = () => {
     selectedRetailers,
     selectedBrands,
     selectedProducts,
+    filterPayload
   ]);
 
   // Clear filters when new filter data arrives
@@ -154,7 +155,6 @@ export const InsightsContentSection: React.FC = () => {
   return (
     <>
       <InsightsFilters
-        chartFilterData={chartFilterData}
         selectedRetailers={selectedRetailers}
         setSelectedRetailers={setSelectedRetailers}
         selectedBrands={selectedBrands}

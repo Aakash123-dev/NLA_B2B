@@ -284,7 +284,7 @@ export function TpoSetupPage() {
                     <SearchableDropdownList
                       title="Products"
                       items={productOptions}
-                      selectedItems={formData.selectedProducts}
+                      selectedItems={formData.selectedProducts || []}
                       onSelectionChange={(selection: string[]) => handleSelectionChange('selectedProducts', selection)}
                       placeholder="Search products..."
                       maxHeight="200px"
@@ -493,12 +493,12 @@ export function TpoSetupPage() {
                   {/* Products */}
                   <div className="space-y-2">
                     <Label className="text-sm font-medium text-slate-700">
-                      Products ({formData.selectedProducts.length})
+                      Products ({(formData.selectedProducts || []).length})
                     </Label>
                     <div className="p-3 bg-slate-50 rounded-lg border min-h-[60px]">
-                      {formData.selectedProducts.length > 0 ? (
+                      {(formData.selectedProducts || []).length > 0 ? (
                         <div className="flex flex-wrap gap-1">
-                          {formData.selectedProducts.map(productId => (
+                          {(formData.selectedProducts || []).map(productId => (
                             <Badge 
                               key={productId} 
                               variant="secondary"

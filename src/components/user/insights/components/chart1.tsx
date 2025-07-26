@@ -90,6 +90,7 @@ const ChartOnly: React.FC = () => {
     selectedProductId,
     selectedBrandId,
     selectedRetailerId,
+    filterPayload
   ]);
 
   if (loading) {

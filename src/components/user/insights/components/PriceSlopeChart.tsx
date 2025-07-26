@@ -116,6 +116,7 @@ const PriceSlopeChart: React.FC = () => {
     selectedProductId1,
     selectedBrandId1,
     selectedRetailerId1,
+    filterPayload
   ]);
 
   const [currentPage, setCurrentPage] = useState<number>(1);

@@ -160,7 +160,7 @@ const useSelectedFilter = (
   };
 
   const val = useAppSelector(
-    (state: RootState) => state.filters[filterKeys[type][index]] ?? ''
+    (state: RootState) => (state.filters as any)[filterKeys[type][index]] ?? ''
   );
   return val as string;
 };
@@ -186,7 +186,10 @@ const FilterSelect: React.FC<FilterSelectProps> = ({
   placeholder,
 }) => {
   const [isOpen, setIsOpen] = useState(false);
-  const selectedArray = value ? value.split(',').filter(Boolean) : [];
+  
+  const selectedArray = useMemo(() => {
+    return value ? value.split(',').filter(Boolean) : [];
+  }, [value]);
 
   const displayValue = useMemo(() => {
     if (selectedArray.length === 0) {
@@ -422,7 +425,7 @@ export const InsightCard: React.FC<InsightCardProps> = ({
     }
     // If products are strings, filter based on inclusion
     return (products || ppgCategories).filter(product => product.includes(selectedBrand));
-  }, [selectedBrand, products, ppgCategories]);
+  }, [selectedBrand, products]);
 
   const chartMap: { [k: number]: React.ReactElement | null } = useMemo(
     () => ({

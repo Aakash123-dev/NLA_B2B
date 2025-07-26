@@ -67,7 +67,8 @@ function DesignStudioInner({ selectedProject }: DesignStudioProps) {
       setHistory([initialState]);
       setHistoryIndex(0);
     }
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Run only once on mount, history.length used for initial check only
 
   // Save current state to history
   const saveToHistory = useCallback((nodes: Node[], edges: Edge[]) => {
@@ -155,7 +156,7 @@ function DesignStudioInner({ selectedProject }: DesignStudioProps) {
   }, [nodes, edges, toolVersions, selectedProject, isSaving, showToast]);
 
   // Handle insights template navigation
-  const handleInsightsTemplateNavigation = () => {
+  const handleInsightsTemplateNavigation = useCallback(() => {
     // Get URL parameters
     const urlParams = new URLSearchParams(window.location.search);
     const projectId = urlParams.get('project');
@@ -177,7 +178,7 @@ function DesignStudioInner({ selectedProject }: DesignStudioProps) {
         type: 'info'
       });
     }
-  };
+  }, [showToast]);
 
   const handleNodeConfigure = useCallback((nodeId: string, nodeType: string, nodeName: string) => {
     // For insights-template nodes, navigate directly to insights page
@@ -253,7 +254,7 @@ function DesignStudioInner({ selectedProject }: DesignStudioProps) {
       nodeType,
       nodeName
     });
-  }, []);
+  }, [handleInsightsTemplateNavigation]);
 
   const handleConfigurationClose = useCallback(() => {
     setConfiguration({

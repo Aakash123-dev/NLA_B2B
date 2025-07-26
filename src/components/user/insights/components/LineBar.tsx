@@ -255,6 +255,7 @@ const MyChart: React.FC = () => {
     selectedProductId2,
     selectedBrandId2,
     selectedRetailerId2,
+    filterPayload
   ]);
 
   if (loading) return <p>Loading...</p>;

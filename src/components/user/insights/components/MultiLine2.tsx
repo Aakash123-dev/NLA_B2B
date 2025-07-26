@@ -159,8 +159,8 @@ const MultiLine2: React.FC<{ isLoading?: boolean }> = ({ isLoading }) => {
     xaxis: {
       categories: getEvenIndexElements(data.data.categories),
       title: { text: data.xAxisTitle },
-      axisBorder: { show: true, color: '#000', height: 1 },
-      axisTicks: { show: true, color: '#000', height: 6 },
+      axisBorder: { show: true, color: '#000' },
+      axisTicks: { show: true, color: '#000' },
       labels: {
         rotate: -45,
         style: { fontSize: '10px' },
@@ -180,7 +180,7 @@ const MultiLine2: React.FC<{ isLoading?: boolean }> = ({ isLoading }) => {
         title: { text: data.rightyAxisTitle },
         labels: {
           formatter: (value: number) =>
-            `$${value.toFixed(2).toLocaleString('en-US', {
+            `$${value.toLocaleString('en-US', {
               minimumFractionDigits: 2,
               maximumFractionDigits: 2,
             })}`,
@@ -276,6 +276,7 @@ const MultiLine2: React.FC<{ isLoading?: boolean }> = ({ isLoading }) => {
     selectedProductId4,
     selectedBrandId4,
     selectedRetailerId4,
+    filterPayload
   ]);
 
   if (!chart5Data || chart5Data.length === 0) {

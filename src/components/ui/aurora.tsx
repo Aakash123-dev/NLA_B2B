@@ -208,7 +208,7 @@ export default function Aurora(props: AuroraProps) {
       }
       gl.getExtension("WEBGL_lose_context")?.loseContext();
     };
-  }, [amplitude]);
+  }, [amplitude, blend, colorStops]);  // Include all dependencies used in the effect
 
   return <div ref={ctnDom} className="w-full h-full" />;
 }

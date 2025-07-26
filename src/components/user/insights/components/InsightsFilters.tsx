@@ -177,8 +177,8 @@ export const InsightsFilters: React.FC<InsightsFiltersProps> = ({
       updated,
       selectedRetailers
     );
-    setSelectedProducts((prev) =>
-      prev.filter((p) => possibleProducts.includes(p))
+    setSelectedProducts(
+      selectedProducts.filter((p) => possibleProducts.includes(p))
     );
   };
 

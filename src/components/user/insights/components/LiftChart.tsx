@@ -121,6 +121,7 @@ const LiftChart: React.FC = () => {
     selectedProductId7,
     selectedBrandId7,
     selectedRetailerId7,
+    filterPayload
   ]);
 
   const getChartOptions = (data: TransformedItem): ApexCharts.ApexOptions => ({

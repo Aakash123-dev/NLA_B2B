@@ -1,9 +1,9 @@
-import SubscriptionPage from '@/components/dashboard/subscriptions/SubscriptionsPage';
+import SubscriptionsPage from '@/components/dashboard/subscriptions';
 
 function page() {
   return (
     <div>
-        <SubscriptionPage />
+        <SubscriptionsPage />
     </div>
   );
 }
