@@ -100,14 +100,13 @@ export const InsightsContentSection: React.FC = () => {
   useEffect(() => {
     const updateFilters = async () => {
       try {
-        if (!modelId) return;
-        if (!chartFilterData) return;
+        if (!modelId || !chartFilterData) return;
 
         let brandsToPost = selectedBrands;
-        let productsToPost = selectedProducts;
+        let productsToPost: string[] = [];
 
-        // If retailers are selected, generate full brands/products for them to post instead of current selection
-        if (selectedRetailers.length > 0) {
+        // If only retailers are selected (no brands), fetch all brands/products under those retailers
+        if (selectedRetailers.length > 0 && selectedBrands.length === 0) {
           const relatedBrandsSet = new Set<string>();
           const relatedProductsSet = new Set<string>();
 
@@ -124,6 +123,30 @@ export const InsightsContentSection: React.FC = () => {
 
           brandsToPost = Array.from(relatedBrandsSet);
           productsToPost = Array.from(relatedProductsSet);
+        }
+
+        // If both retailers and brands are selected, fetch only products under those brands from the selected retailers
+        else if (selectedRetailers.length > 0 && selectedBrands.length > 0) {
+          const relatedProductsSet = new Set<string>();
+
+          chartFilterData.forEach((retailer) => {
+            if (selectedRetailers.includes(retailer.name)) {
+              retailer.brands.forEach((brand) => {
+                if (selectedBrands.includes(brand.name)) {
+                  brand.products.forEach((product) => {
+                    relatedProductsSet.add(product.name);
+                  });
+                }
+              });
+            }
+          });
+
+          productsToPost = Array.from(relatedProductsSet);
+        }
+
+        // Else use explicitly selected values (like for standalone brand/product filters)
+        else {
+          productsToPost = selectedProducts;
         }
 
         await postInsightsFilterData(

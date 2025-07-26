@@ -18,8 +18,10 @@ import {
 } from '@/components/ui/popover';
 import { useSelector } from 'react-redux';
 import { RootState } from '@/store';
+import { Retailer } from '@/types/insights';
 
 interface InsightsFiltersProps {
+  chartFilterData: Retailer[]; // Add this line
   selectedRetailers: string[];
   setSelectedRetailers: (retailers: string[]) => void;
   selectedBrands: string[];

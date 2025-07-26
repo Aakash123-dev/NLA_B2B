@@ -4,7 +4,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { AppDispatch, RootState, useAppSelector } from '@/store';
 import ApexCharts from 'react-apexcharts';
-import { fetchChart6DataThunk } from '@/store/slices/chartsSlices';
+import { fetchChart7DataThunk } from '@/store/slices/chartsSlices';
 import { useSearchParams } from 'next/navigation';
 import { useDispatch } from 'react-redux';
 
@@ -89,7 +89,7 @@ const PromotionalLiftChart: React.FC = () => {
 
   useEffect(() => {
     if (selectedRetailerId6) {
-      dispatch(fetchChart6DataThunk(filterPayload));
+      dispatch(fetchChart7DataThunk(filterPayload));
     }
   }, [
     dispatch,
@@ -136,7 +136,7 @@ const PromotionalLiftChart: React.FC = () => {
     yaxis: {
       title: { text: data.yAxisTitle },
       labels: {
-        formatter: (value: number) => Math.round(value),
+        formatter: (value: number) => Math.round(value).toString(),
       },
     },
     legend: {
@@ -146,9 +146,7 @@ const PromotionalLiftChart: React.FC = () => {
       floating: false,
       offsetY: 0,
       markers: {
-        width: 12,
-        height: 12,
-        radius: 2,
+        size: 12, // Changed from width to size
       },
       onItemClick: {
         toggleDataSeries: true,
@@ -173,7 +171,7 @@ const PromotionalLiftChart: React.FC = () => {
         formatter: (value: number) => `${Math.round(value)}%`,
       },
       x: {
-        formatter: (_value: string, { dataPointIndex }: any) => {
+        formatter: (value: number, { dataPointIndex }: any) => {
           const label = data.data.categories?.[dataPointIndex];
           if (!label) return '';
           return label.length > 15 ? label.substring(0, 12) + '...' : label;

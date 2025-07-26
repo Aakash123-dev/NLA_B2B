@@ -5,7 +5,6 @@ import ReactECharts from 'echarts-for-react';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState, AppDispatch, useAppSelector } from '@/store';
 import {
-  fetchChart8DataThunk,
   fetchChart9DataThunk,
 } from '@/store/slices/chartsSlices';
 import { useSearchParams } from 'next/navigation';
@@ -240,7 +239,7 @@ const ElasticityStratagyChart: React.FC<{ isLoading: boolean }> = ({
 
   useEffect(() => {
     if (selectedRetailerId8) {
-      dispatch(fetchChart8DataThunk(filterPayload));
+      dispatch(fetchChart9DataThunk(filterPayload));
     }
   }, [
     dispatch,

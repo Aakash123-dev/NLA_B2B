@@ -9,7 +9,7 @@ import { useSelector } from 'react-redux';
 import { AppDispatch, RootState, useAppSelector } from '@/store';
 import { useDispatch } from 'react-redux';
 import { useSearchParams } from 'next/navigation';
-import { fetchChart4DataThunk } from '@/store/slices/chartsSlices';
+import { fetchChart5DataThunk } from '@/store/slices/chartsSlices';
 
 const ApexCharts = dynamic(() => import('react-apexcharts'), { ssr: false });
 
@@ -267,7 +267,7 @@ const MultiLine2: React.FC<{ isLoading?: boolean }> = ({ isLoading }) => {
 
   useEffect(() => {
     if (selectedRetailerId4) {
-      dispatch(fetchChart4DataThunk(filterPayload));
+      dispatch(fetchChart5DataThunk(filterPayload));
     }
   }, [
     dispatch,

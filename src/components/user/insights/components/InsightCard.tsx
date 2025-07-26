@@ -442,92 +442,74 @@ export const InsightCard: React.FC<InsightCardProps> = ({
 
     setIsDownloading(true);
     try {
-      let chartImageDataUrl;
       if (chartRef.current) {
-        chartImageDataUrl = await htmlToImage.toPng(chartRef.current, {
-          backgroundColor: 'white',
-          quality: 1.0,
-          pixelRatio: 2,
-        });
-      }
+        console.log('Attempting to generate chart image...');
 
-      const pptx = new pptxgen();
-      pptx.layout = 'LAYOUT_WIDE';
-      const slide = pptx.addSlide();
-      slide.background = { color: 'FFFFFF' };
+        const pptx = new pptxgen();
+        pptx.layout = 'LAYOUT_WIDE';
+        const slide = pptx.addSlide();
+        slide.background = { color: 'FFFFFF' };
 
-      slide.addText(insight.name ?? 'Chart Insight', {
-        x: 0.5,
-        y: 0.2,
-        w: '90%',
-        h: 0.7,
-        fontSize: 20,
-        bold: true,
-        color: '174F73',
-      });
+        // Check if the chart is an SVG element
+        const svgElement = chartRef.current.querySelector('svg');
+        let chartImageDataUrl;
 
-      if (insight.question) {
-        slide.addText(`Question: ${insight.question}`, {
-          x: 0.5,
-          y: 1.0,
-          fontSize: 14,
-          color: '444444',
-          w: '90%',
-          wrap: true,
-        });
-      }
+        if (svgElement) {
+          const svgData = new XMLSerializer().serializeToString(svgElement);
+          const svgBlob = new Blob([svgData], { type: 'image/svg+xml;charset=utf-8' });
+          const svgUrl = URL.createObjectURL(svgBlob);
 
-      if (notes && notes.length > 0) {
-        slide.addText('Note:', {
-          x: 0.5,
-          y: 1.5,
-          fontSize: 12,
-          bold: true,
-          color: '000000',
-        });
-        slide.addText(notes, {
-          x: 1.3,
-          y: 1.5,
-          fontSize: 12,
-          color: '000000',
-          w: '75%',
-          h: 1,
-          wrap: true,
-        });
-      }
+          // Convert SVG to PNG using html-to-image
+          chartImageDataUrl = await htmlToImage.toPng(svgElement as unknown as HTMLElement, {
+            backgroundColor: 'white',
+            quality: 1.0,
+            pixelRatio: 2,
+            skipAutoScale: true,
+            cacheBust: true,
+          });
 
-      if (chartImageDataUrl) {
-        slide.addImage({
-          data: chartImageDataUrl,
-          x: 0.5,
-          y: 2,
-          w: 9,
-          h: 4,
-        });
+          URL.revokeObjectURL(svgUrl);
+        } else {
+          // Fallback to PNG if not SVG
+          chartImageDataUrl = await htmlToImage.toPng(chartRef.current, {
+            backgroundColor: 'white',
+            quality: 1.0,
+            pixelRatio: 2,
+            skipAutoScale: true,
+            cacheBust: true,
+          });
+        }
+
+        if (chartImageDataUrl) {
+          slide.addImage({
+            data: chartImageDataUrl,
+            x: 0.5,
+            y: 2,
+            w: 9,
+            h: 4,
+          });
+
+          await pptx.writeFile({
+            fileName: `${insight.name || 'insight'}-chart.pptx`,
+          });
+
+          toast({
+            title: 'Download successful',
+            description: 'Charts have been downloaded as PPTX.',
+            duration: 3000,
+          });
+        } else {
+          throw new Error('Failed to generate chart image.');
+        }
       } else {
-        slide.addText('No chart data available', {
-          x: 0.5,
-          y: 2,
-          fontSize: 16,
-          color: 'FF0000',
-        });
+        throw new Error('Chart reference is not set.');
       }
-
-      await pptx.writeFile({
-        fileName: `${insight.name || 'insight'}-chart.pptx`,
-      });
-
-      toast({
-        title: 'Download successful',
-        description: 'Chart has been downloaded as PPTX.',
-        duration: 3000,
-      });
-    } catch (error) {
+    } catch (error: any) {
       console.error('Download error:', error);
       toast({
         title: 'Download failed',
-        description: 'An error occurred while downloading the PPTX.',
-        duration: 2000,
+        description: `An error occurred while downloading the PPTX: ${error.message}`,
+        duration: 3000,
       });
     } finally {
       setIsDownloading(false);

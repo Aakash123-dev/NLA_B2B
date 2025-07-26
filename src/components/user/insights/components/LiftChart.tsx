@@ -4,7 +4,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import ApexCharts from 'react-apexcharts';
 import { useSelector } from 'react-redux';
 import { AppDispatch, RootState, useAppSelector } from '@/store';
-import { fetchChart7DataThunk } from '@/store/slices/chartsSlices';
+import { fetchChart8DataThunk } from '@/store/slices/chartsSlices';
 import { useSearchParams } from 'next/navigation';
 import { useDispatch } from 'react-redux';
 
@@ -112,7 +112,7 @@ const LiftChart: React.FC = () => {
 
   useEffect(() => {
     if (selectedRetailerId7) {
-      dispatch(fetchChart7DataThunk(filterPayload));
+      dispatch(fetchChart8DataThunk(filterPayload));
     }
   }, [
     dispatch,

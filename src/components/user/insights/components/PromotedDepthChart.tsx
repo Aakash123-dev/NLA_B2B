@@ -5,7 +5,7 @@ import { useSelector } from 'react-redux';
 import { AppDispatch, RootState, useAppSelector } from '@/store';
 import { useDispatch } from 'react-redux';
 import { useSearchParams } from 'next/navigation';
-import { fetchChart5DataThunk } from '@/store/slices/chartsSlices';
+import { fetchChart6DataThunk } from '@/store/slices/chartsSlices';
 
 type SeriesItem = {
   name: string;
@@ -200,7 +200,7 @@ const PromotedDepthChart: React.FC = () => {
 
   useEffect(() => {
     if (selectedRetailerId5) {
-      dispatch(fetchChart5DataThunk(filterPayload));
+      dispatch(fetchChart6DataThunk(filterPayload));
     }
   }, [
     dispatch,
