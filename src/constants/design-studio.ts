@@ -9,6 +9,7 @@ import {
   BarChart3,
   Target,
   Brain,
+  Play,
 } from 'lucide-react';
 
 import type { DatabaseOption, RetailerOption, BrandOption, ProductOption, EventType, PriorityLevel, OptimizationGoal, TimeHorizon } from '@/types/project';
@@ -21,12 +22,14 @@ export const NODE_TYPES = {
   TRADE_PLAN_OPTIMIZATION: 'trade-plan-optimization',
   PIE_CHART: 'pie-chart',
   FORECASTING: 'forecasting',
+  SIMULATOR: 'simulator',
 } as const;
 
 export const STATIC_TOOLS = {
   'MODELING TOOLS': [
     { name: 'Pricing Model', description: 'Configure pricing strategies and models', type: 'pricing', icon: DollarSign },
     { name: 'Forecasting', description: 'Predictive analytics and forecasting', type: 'forecasting', icon: TrendingUp },
+    { name: 'Simulator', description: 'Run pricing and scenario simulations', type: 'simulator', icon: Play },
   ],
   'VISUALIZATION TOOLS': [
     { name: 'Insights Template', description: 'Pre-built insight visualization templates', type: 'insights', icon: Lightbulb },

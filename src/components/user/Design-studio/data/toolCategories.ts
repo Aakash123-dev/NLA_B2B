@@ -17,7 +17,8 @@ import {
   Filter,
   FileText,
   DollarSign,
-  Megaphone
+  Megaphone,
+  Play
 } from 'lucide-react';
 import { ToolCategory, InsightTemplate } from '../types';
 
@@ -35,6 +36,7 @@ export const getToolCategories = (): ToolCategory[] => [
     tools: [
       { id: 'pricing', name: 'Pricing Model', icon: DollarSign, color: 'from-emerald-100 to-emerald-200' },
       { id: 'forecasting', name: 'Forecasting', icon: Brain, color: 'from-violet-100 to-violet-200' },
+      { id: 'simulator', name: 'Simulator', icon: Play, color: 'from-red-100 to-red-200' },
     ]
   },
   {
