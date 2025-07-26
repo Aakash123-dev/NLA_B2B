@@ -132,7 +132,7 @@ export function PromoOptimizationPage() {
             <div className="flex items-center gap-3">
               <Button variant="outline" className="border-slate-300 text-slate-600 hover:bg-slate-50">
                 <TrendingUp className="w-4 h-4 mr-2" />
-                Insights
+               Ai Insights
               </Button>
               <Button variant="outline" className="border-slate-300 text-slate-600 hover:bg-slate-50">
                 <Download className="w-4 h-4 mr-2" />
