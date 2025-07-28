@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import React, {
@@ -27,6 +26,7 @@ import { retailers, brands, ppgCategories } from '../data';
 import dynamic from 'next/dynamic';
 import { useDispatch } from 'react-redux';
 import { RootState, useAppSelector } from '@/store';
+import Logo from '../../../../assests/images/darkLogo.png'
 
 import {
   setSelectedRetailerId,
@@ -59,7 +59,7 @@ import {
 } from '@/store/slices/filterSlices';
 
 // Dynamic imports for client-side only packages
-import pptxgen from 'pptxgenjs';
+// const pptxgen = typeof window !== 'undefined' ? require('pptxgenjs') : null;
 const htmlToImage = typeof window !== 'undefined' ? require('html-to-image') : null;
 import PriceSlopeChart from './PriceSlopeChart';
 import MyChart from './LineBar';
@@ -70,7 +70,7 @@ import PromotionalLiftChart from './PromotionalLiftCharts';
 import LiftChart from './LiftChart';
 import ElasticityStratagyChart from './ElasticityStratagyChart';
 import ProfitCurvesChart from './ProfitCurvesCharts';
-
+import pptxgen from 'pptxgenjs';
 const ChartOnly = dynamic(() => import('./chart1'), {
   ssr: false,
   loading: () => (
@@ -420,11 +420,8 @@ export const InsightCard: React.FC<InsightCardProps> = ({
     if (selectedBrand === 'all' || !selectedBrand) {
       return products || ppgCategories;
     }
-    const selectedBrandsArray = selectedBrand.split(',').filter(Boolean);
     // If products are strings, filter based on inclusion
-    return (products || ppgCategories).filter(product =>
-      selectedBrandsArray.some(brand => product.includes(brand))
-    );
+    return (products || ppgCategories).filter(product => product.includes(selectedBrand));
   }, [selectedBrand, products, ppgCategories]);
 
   const chartMap: { [k: number]: React.ReactElement | null } = useMemo(
@@ -445,8 +442,7 @@ export const InsightCard: React.FC<InsightCardProps> = ({
 
   const handleDownloadChart = async () => {
     if (isDownloading) return;
-
-    // Check if we're on the client side and modules are available
+  
     if (!pptxgen || !htmlToImage) {
       toast({
         title: 'Download failed',
@@ -455,83 +451,275 @@ export const InsightCard: React.FC<InsightCardProps> = ({
       });
       return;
     }
-
+  
     setIsDownloading(true);
+  
     try {
+      const pptx = new pptxgen();
+      pptx.layout = 'LAYOUT_WIDE'; // 13.33" x 7.5"
+  
+      // Define master slide with clean, professional design
+      pptx.defineSlideMaster({
+        title: 'MASTER_SLIDE',
+        background: { color: 'FFFFFF' },
+        objects: [
+          // Header with company branding
+          {
+            rect: { 
+              x: 0, y: 0, w: '100%', h: 0.5,
+              fill: { color: '174F73' }
+            },
+          },
+          // Company name in header
+          {
+            text: {
+              text: 'North Light Analytics Report',
+              options: {
+                x: 0.3, y: 0.1, w: 10, h: 0.3,
+                fontSize: 16, color: 'FFFFFF', bold: true,
+                fontFace: 'Arial',
+                align: 'left',
+              },
+            },
+          },
+          // Page number
+          {
+            text: {
+              text: '1',
+              options: {
+                x: 12.7, y: 0.1, w: 0.5, h: 0.3,
+                fontSize: 14, color: 'FFFFFF', bold: true,
+                fontFace: 'Arial',
+                align: 'center',
+              },
+            },
+          },
+        ],
+      });
+  
+      const slide = pptx.addSlide({ masterName: 'MASTER_SLIDE' });
+  
+      // Main title - reduced size for better balance
+      slide.addText(insight.name ?? 'Chart Insight', {
+        x: 0.3, y: 0.7, w: 12.7, h: 0.4,
+        fontSize: 20, bold: true, color: '174F73',
+        fontFace: 'Arial',
+        align: 'left',
+      });
+  
+      // Question subtitle - reduced size
+      let currentY = 1.15;
+      if (insight.question) {
+        slide.addText(insight.question, {
+          x: 0.3, y: currentY, w: 12.7, h: 0.3,
+          fontSize: 11, color: '666666',
+          fontFace: 'Arial',
+          wrap: true,
+          italic: true,
+        });
+        currentY += 0.35;
+      }
+  
+      // Chart section - enhanced with gradient background (NO BORDER)
+      const chartY = currentY;
+      const chartHeight = 4.7; // Slightly increased
+      const chartWidth = 12.7;
+  
+      // Gradient background for chart area - REMOVED BORDER
+      slide.addShape(pptx.shapes.RECTANGLE, {
+        x: 0.3, y: chartY, w: chartWidth, h: chartHeight,
+        fill: { 
+          type: 'solid',
+          color: 'F8FAFB' 
+        },
+        line: { width: 0 }, // REMOVED THE BORDER
+      });
+  
+      // REMOVED the inner border completely - it was creating the unwanted border effect
+      // slide.addShape(pptx.shapes.RECTANGLE, {
+      //   x: 0.35, y: chartY + 0.05, w: chartWidth - 0.1, h: chartHeight - 0.1,
+      //   fill: 'transparent',
+      //   line: { color: 'E5E7EB', width: 0.5 },
+      // });
+  
+      // Generate and add chart image
       if (chartRef.current) {
-        console.log('Attempting to generate chart image...');
-
-        const pptx = new pptxgen();
-        pptx.layout = 'LAYOUT_WIDE';
-        const slide = pptx.addSlide();
-        slide.background = { color: 'FFFFFF' };
-
-        // Check if the chart is an SVG element
-        const svgElement = chartRef.current.querySelector('svg');
         let chartImageDataUrl;
-
-        if (svgElement) {
-          const svgData = new XMLSerializer().serializeToString(svgElement);
-          const svgBlob = new Blob([svgData], { type: 'image/svg+xml;charset=utf-8' });
-          const svgUrl = URL.createObjectURL(svgBlob);
-
-          // Convert SVG to PNG using html-to-image
-          chartImageDataUrl = await htmlToImage.toPng(svgElement as unknown as HTMLElement, {
+  
+        try {
+          const svgElement = chartRef.current.querySelector('svg');
+          const elementToCapture = svgElement || chartRef.current;
+          
+          chartImageDataUrl = await htmlToImage.toPng(elementToCapture as HTMLElement, {
             backgroundColor: 'white',
             quality: 1.0,
             pixelRatio: 2,
-            skipAutoScale: true,
+            skipAutoScale: false,
             cacheBust: true,
+            style: {
+              transform: 'scale(1)',
+              transformOrigin: 'top left',
+            },
           });
-
-          URL.revokeObjectURL(svgUrl);
-        } else {
-          // Fallback to PNG if not SVG
-          chartImageDataUrl = await htmlToImage.toPng(chartRef.current, {
-            backgroundColor: 'white',
-            quality: 1.0,
-            pixelRatio: 2,
-            skipAutoScale: true,
-            cacheBust: true,
+  
+          if (chartImageDataUrl) {
+            slide.addImage({
+              data: chartImageDataUrl,
+              x: 0.4, y: chartY + 0.1,
+              w: chartWidth - 0.2, h: chartHeight - 0.2,
+            });
+          }
+        } catch (imageError) {
+          console.error('Chart image generation failed:', imageError);
+          slide.addText('Chart could not be generated', {
+            x: 0.3, y: chartY + (chartHeight / 2) - 0.2, w: chartWidth, h: 0.4,
+            fontSize: 16, color: 'CC0000', align: 'center',
+            fontFace: 'Arial',
           });
-        }
-
-        if (chartImageDataUrl) {
-          slide.addImage({
-            data: chartImageDataUrl,
-            x: 0.5,
-            y: 2,
-            w: 9,
-            h: 4,
-          });
-
-          await pptx.writeFile({
-            fileName: `${insight.name || 'insight'}-chart.pptx`,
-          });
-
-          toast({
-            title: 'Download successful',
-            description: 'Charts have been downloaded as PPTX.',
-            duration: 3000,
-          });
-        } else {
-          throw new Error('Failed to generate chart image.');
         }
       } else {
-        throw new Error('Chart reference is not set.');
+        slide.addText('No chart data available', {
+          x: 0.3, y: chartY + (chartHeight / 2) - 0.2, w: chartWidth, h: 0.4,
+          fontSize: 16, color: 'CC0000', align: 'center',
+          fontFace: 'Arial',
+        });
       }
-    } catch (error: any) {
-      console.error('Download error:', error);
+  
+      // Footer area - enhanced design with logo on left (NO BORDER)
+      const footerY = 6.3;
+      
+      // Beautiful footer background - REMOVED BORDER
+      slide.addShape(pptx.shapes.RECTANGLE, {
+        x: 0, y: footerY - 0.05, w: '100%', h: 1.25,
+        fill: { 
+          type: 'solid',
+          color: 'F1F5F9'
+        },
+        line: { width: 0 }, // REMOVED THE BORDER
+      });
+  
+      // Top accent line for footer
+      slide.addShape(pptx.shapes.RECTANGLE, {
+        x: 0, y: footerY - 0.05, w: '100%', h: 0.02,
+        fill: { color: '174F73' },
+        line: { width: 0 },
+      });
+      
+      // Logo on the LEFT side with enhanced styling - REMOVED BORDER
+      if (Logo?.src) {
+        // Logo background - REMOVED BORDER
+        slide.addShape(pptx.shapes.RECTANGLE, {
+          x: 0.25, y: footerY + 0.05, w: 2.6, h: 0.8,
+          fill: { color: 'FFFFFF' },
+          line: { width: 0 }, // REMOVED THE BORDER
+        });
+        
+        // Shadow effect behind logo background
+        slide.addShape(pptx.shapes.RECTANGLE, {
+          x: 0.28, y: footerY + 0.08, w: 2.6, h: 0.8,
+          fill: { color: 'E2E8F0' },
+          line: { width: 0 },
+        });
+        
+        // Actual logo with increased height
+        slide.addImage({
+          path: Logo.src,
+          x: 0.35, y: footerY + 0.1,
+          w: 2.4,  // Good width
+          h: 0.7,  // Increased height for better visibility
+          objectName: 'Company Logo',
+        });
+      }
+  
+      // Notes section - positioned after logo
+      if (notes && notes.length > 0) {
+        slide.addText('Key Notes:', {
+          x: 3.2, y: footerY + 0.1, w: 1.5, h: 0.25,
+          fontSize: 10, bold: true, color: '174F73',
+          fontFace: 'Arial',
+        });
+        
+        const maxNoteLength = 140;
+        const displayNotes = notes.length > maxNoteLength ? 
+          notes.substring(0, maxNoteLength).trim() + '...' : notes;
+        
+        slide.addText(displayNotes, {
+          x: 3.2, y: footerY + 0.3, w: 7.5, h: 0.5,
+          fontSize: 9, color: '475569',
+          fontFace: 'Arial',
+          wrap: true,
+          valign: 'top',
+        });
+      }
+  
+      // Timestamp and metadata - right side
+      const currentDate = new Date().toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+      
+      slide.addText(`Generated: ${currentDate}`, {
+        x: 11.0, y: footerY + 0.1, w: 2.0, h: 0.2,
+        fontSize: 8, color: '64748B', bold: true,
+        fontFace: 'Arial',
+        align: 'center',
+      });
+  
+      // Additional metadata
+      slide.addText('North Light Analytics', {
+        x: 11.0, y: footerY + 0.3, w: 2.0, h: 0.2,
+        fontSize: 7, color: '94A3B8',
+        fontFace: 'Arial',
+        align: 'center',
+      });
+  
+      slide.addText('Confidential Report', {
+        x: 11.0, y: footerY + 0.45, w: 2.0, h: 0.2,
+        fontSize: 7, color: '94A3B8', italic: true,
+        fontFace: 'Arial',
+        align: 'center',
+      });
+  
+      // Generate filename
+      const sanitizedName = (insight.name || 'chart-insight')
+        .replace(/[^a-z0-9\s]/gi, '')
+        .replace(/\s+/g, '_')
+        .toLowerCase();
+      const fileName = `${sanitizedName}_${Date.now()}.pptx`;
+  
+      // Save the presentation
+      await pptx.writeFile({ fileName });
+  
       toast({
-        title: 'Download failed',
-        description: `An error occurred while downloading the PPTX: ${error.message}`,
+        title: 'Download Successful',
+        description: 'Professional chart presentation downloaded successfully.',
         duration: 3000,
+      });
+  
+    } catch (error: any) {
+      console.error('PPTX Generation Error:', error);
+      
+      // More detailed error handling
+      let errorMessage = 'An unexpected error occurred.';
+      if (error.message) {
+        errorMessage = error.message;
+      } else if (error.toString) {
+        errorMessage = error.toString();
+      }
+  
+      toast({
+        title: 'Download Failed',
+        description: `Error: ${errorMessage}`,
+        duration: 4000,
       });
     } finally {
       setIsDownloading(false);
     }
   };
-
+  
   return (
     <div className="border-t border-gray-200 bg-gray-50 p-6">
       <div className="mb-6 grid grid-cols-1 gap-6 lg:grid-cols-4">
