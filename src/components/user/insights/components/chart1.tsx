@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState, forwardRef } from 'react';
 import dynamic from 'next/dynamic';
 import { ApexOptions } from 'apexcharts';
 import { useSelector } from 'react-redux';
@@ -23,7 +23,7 @@ type ChartGroup = {
   retailers: RetailerGroup[];
 };
 
-const ChartOnly: React.FC = () => {
+const ChartOnly: React.FC = forwardRef<HTMLDivElement, {}>((props, ref) => {
   const { data: chartItems, loading } = useSelector(
     (state: RootState) => state.chart
   );
@@ -80,7 +80,7 @@ const ChartOnly: React.FC = () => {
   };
 
   useEffect(() => {
-    if (selectedRetailerId) {
+    if (selectedProductId || selectedRetailerId || selectedBrandId) {
       dispatch(fetchChartData(filterPayload));
     }
   }, [
@@ -115,7 +115,7 @@ const ChartOnly: React.FC = () => {
   const chartsToShow = chartDataArray.slice(startIdx, endIdx);
 
   return (
-    <div>
+    <div ref={ref}>
       {chartsToShow.map((chartData, index) => {
         const allXAxisLabels = Array.from(
           new Set(
@@ -212,6 +212,6 @@ const ChartOnly: React.FC = () => {
       </div>
     </div>
   );
-};
+});
 
 export default ChartOnly;

@@ -23,6 +23,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import RunDemo from "../../../../utils/AllPptDownload";
 
 interface InsightsHeaderProps {
   onShowPasswordShare: () => void;
@@ -111,10 +112,11 @@ export const InsightsHeader: React.FC<InsightsHeaderProps> = ({ onShowPasswordSh
                 size="sm" 
                 className="px-4 py-2 gap-2 rounded-full bg-gradient-to-r from-emerald-50 to-teal-50 border-emerald-200 text-emerald-700 hover:from-emerald-100 hover:to-teal-100 hover:border-emerald-300 hover:text-emerald-800 transition-all duration-300 shadow hover:shadow-md hover:-translate-y-0.5 transform"
               >
-                <div className="h-5 w-5 rounded-full bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center">
-                  <Download className="w-3 h-3 text-white" />
-                </div>
-                <span className="hidden sm:inline font-medium">Download</span>
+                 <RunDemo />
+                {/* <div className="h-5 w-5 rounded-full bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center">
+                 
+                </div> */}
+                {/* <span className="hidden sm:inline font-medium">Download</span> */}
               </Button>
             </div>
           </div>

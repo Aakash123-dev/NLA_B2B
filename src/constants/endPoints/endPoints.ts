@@ -34,6 +34,10 @@ export const API_ENDPOINTS = {
     FILTER_DATA: (projectId: number, modelId: number) =>
       `/insights/retailer_brands_products?project_id=${projectId}&model_id=${modelId}`,
     ADD_FILTERS: '/insights/global/filters/add',
-    FETCH_FILTERS: (modelId:number) => `/insights/global/filters/get/${modelId}`
+    FETCH_FILTERS: (modelId: number) =>
+      `/insights/global/filters/get/${modelId}`,
   },
+  getAllQuestions: (modelId: string) => `/admin/get-admin-questions/${modelId}`,
+  getQuestionsByType: (modelId: string, type: string) =>
+    `/insights/questions-per-type/${modelId}/${type}`,
 };

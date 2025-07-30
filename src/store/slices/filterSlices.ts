@@ -29,6 +29,7 @@ interface FiltersState {
   selectedRetailer8: string;
   selectedBrand8: string;
   selectedProduct8: string;
+  [key: string]: string;
 }
 
 const initialState: FiltersState = {
