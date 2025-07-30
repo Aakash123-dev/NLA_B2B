@@ -1,6 +1,4 @@
-
-"use client";
-
+'use client';
 import React, {
   useEffect,
   useState,
@@ -26,7 +24,7 @@ import { retailers, brands, ppgCategories } from '../data';
 import dynamic from 'next/dynamic';
 import { useDispatch } from 'react-redux';
 import { RootState, useAppSelector } from '@/store';
-import Logo from '../../../../assests/images/darkLogo.png'
+import Logo from '../../../../assests/images/darkLogo.png';
 
 import {
   setSelectedRetailerId,
@@ -60,7 +58,8 @@ import {
 
 // Dynamic imports for client-side only packages
 // const pptxgen = typeof window !== 'undefined' ? require('pptxgenjs') : null;
-const htmlToImage = typeof window !== 'undefined' ? require('html-to-image') : null;
+const htmlToImage =
+  typeof window !== 'undefined' ? require('html-to-image') : null;
 import PriceSlopeChart from './PriceSlopeChart';
 import MyChart from './LineBar';
 import StackedLineChart from './MultiLine';
@@ -70,7 +69,12 @@ import PromotionalLiftChart from './PromotionalLiftCharts';
 import LiftChart from './LiftChart';
 import ElasticityStratagyChart from './ElasticityStratagyChart';
 import ProfitCurvesChart from './ProfitCurvesCharts';
-import pptxgen from 'pptxgenjs';
+
+import { getRandomColor } from '@/lib/utils';
+import { RunDemo } from '@/utils/RunDemo';
+const BarRetailor = dynamic(() => import('./Retailer_chart'), {
+  ssr: false,
+});
 const ChartOnly = dynamic(() => import('./chart1'), {
   ssr: false,
   loading: () => (
@@ -248,7 +252,10 @@ const FilterSelect: React.FC<FilterSelectProps> = ({
   // Ensure 'All' is not duplicated
   const updatedOptions = useMemo(() => {
     const uniqueOptions = Array.from(new Set(options));
-    return ['all', ...uniqueOptions.filter(option => option.toLowerCase() !== 'all')];
+    return [
+      'all',
+      ...uniqueOptions.filter((option) => option.toLowerCase() !== 'all'),
+    ];
   }, [options]);
 
   return (
@@ -295,7 +302,9 @@ const FilterSelect: React.FC<FilterSelectProps> = ({
               </div>
             ) : (
               updatedOptions.map((option) => {
-                const isSelected = selectedArray.includes(option) || (option === 'all' && selectedArray.length === options.length);
+                const isSelected =
+                  selectedArray.includes(option) ||
+                  (option === 'all' && selectedArray.length === options.length);
                 return (
                   <button
                     key={option}
@@ -330,7 +339,9 @@ const FilterSelect: React.FC<FilterSelectProps> = ({
                         )}
                       </div>
                     )}
-                    <span className="truncate">{option === 'all' ? 'All' : option}</span>
+                    <span className="truncate">
+                      {option === 'all' ? 'All' : option}
+                    </span>
                   </button>
                 );
               })
@@ -389,6 +400,17 @@ export const InsightCard: React.FC<InsightCardProps> = ({
   const dispatch = useDispatch();
   const chartRef = useRef<HTMLDivElement>(null);
 
+  // Set viewBy to 'Retailer' by default on first mount only
+  // On mount, force viewBy to 'Retailer' and update Redux/global state if needed
+  useEffect(() => {
+    if (viewBy !== 'Retailer') {
+      setViewBy('Brand');
+      // If you have a Redux/global filter for viewBy, also dispatch it here
+      // Removed filterActionMaps['viewBy'] dispatch as it does not exist
+    }
+    // eslint-disable-next-line
+  }, []);
+
   useEffect(() => {
     const timeout = setTimeout(() => {
       setIsVisible(true);
@@ -409,24 +431,59 @@ export const InsightCard: React.FC<InsightCardProps> = ({
     [dispatch, index]
   );
 
+  // Get all global lists
   const {
     products,
     retailers: retailerList,
     brands: brandList,
   } = useAppSelector((state: RootState) => state.globalFilters);
 
-  // Adjust filtering logic to handle products as strings
+  // Parse selected retailer(s) and brand(s) as arrays
+  const selectedRetailerArr = selectedRetailer
+    ? selectedRetailer.split(',').filter(Boolean)
+    : [];
+  const selectedBrandArr = selectedBrand
+    ? selectedBrand.split(',').filter(Boolean)
+    : [];
+
+  // Filter brands based on selected retailers
+  const filteredBrands = useMemo(() => {
+    if (
+      selectedRetailerArr.length === 0 ||
+      selectedRetailerArr.includes('all') ||
+      selectedRetailerArr.includes('allRetailer')
+    ) {
+      return brandList;
+    }
+
+    const brandSet = new Set<string>();
+
+    // Loop through products and extract brand from the product name
+    products.forEach((product) => {
+      const brand = product.split('-').pop()?.trim(); // Extract brand name after last "-"
+      if (brand && brandList.includes(brand)) {
+        brandSet.add(brand);
+      }
+    });
+
+    return brandList.filter((brand) => brandSet.has(brand));
+  }, [selectedRetailerArr, products, brandList]);
+
+  // Filter products based on selected brands (only if one brand selected)
   const filteredProducts = useMemo(() => {
     if (selectedBrand === 'all' || !selectedBrand) {
       return products || ppgCategories;
     }
+    const selectedBrandsArray = selectedBrand.split(',').filter(Boolean);
     // If products are strings, filter based on inclusion
-    return (products || ppgCategories).filter(product => product.includes(selectedBrand));
+    return (products || ppgCategories).filter((product) =>
+      selectedBrandsArray.some((brand) => product.includes(brand))
+    );
   }, [selectedBrand, products, ppgCategories]);
 
   const chartMap: { [k: number]: React.ReactElement | null } = useMemo(
     () => ({
-      0: <ChartOnly />,
+      0: viewBy === 'Brand' ? <ChartOnly /> : <BarRetailor />,
       1: <PriceSlopeChart />,
       2: <MyChart />,
       3: <StackedLineChart />,
@@ -437,289 +494,21 @@ export const InsightCard: React.FC<InsightCardProps> = ({
       8: <ElasticityStratagyChart isLoading={false} />,
       9: <ProfitCurvesChart />,
     }),
-    []
+    [viewBy]
   );
 
-  const handleDownloadChart = async () => {
-    if (isDownloading) return;
-  
-    if (!pptxgen || !htmlToImage) {
-      toast({
-        title: 'Download failed',
-        description: 'Required modules are not available.',
-        duration: 2000,
-      });
-      return;
-    }
-  
-    setIsDownloading(true);
-  
-    try {
-      const pptx = new pptxgen();
-      pptx.layout = 'LAYOUT_WIDE'; // 13.33" x 7.5"
-  
-      // Define master slide with clean, professional design
-      pptx.defineSlideMaster({
-        title: 'MASTER_SLIDE',
-        background: { color: 'FFFFFF' },
-        objects: [
-          // Header with company branding
-          {
-            rect: { 
-              x: 0, y: 0, w: '100%', h: 0.5,
-              fill: { color: '174F73' }
-            },
-          },
-          // Company name in header
-          {
-            text: {
-              text: 'North Light Analytics Report',
-              options: {
-                x: 0.3, y: 0.1, w: 10, h: 0.3,
-                fontSize: 16, color: 'FFFFFF', bold: true,
-                fontFace: 'Arial',
-                align: 'left',
-              },
-            },
-          },
-          // Page number
-          {
-            text: {
-              text: '1',
-              options: {
-                x: 12.7, y: 0.1, w: 0.5, h: 0.3,
-                fontSize: 14, color: 'FFFFFF', bold: true,
-                fontFace: 'Arial',
-                align: 'center',
-              },
-            },
-          },
-        ],
-      });
-  
-      const slide = pptx.addSlide({ masterName: 'MASTER_SLIDE' });
-  
-      // Main title - reduced size for better balance
-      slide.addText(insight.name ?? 'Chart Insight', {
-        x: 0.3, y: 0.7, w: 12.7, h: 0.4,
-        fontSize: 20, bold: true, color: '174F73',
-        fontFace: 'Arial',
-        align: 'left',
-      });
-  
-      // Question subtitle - reduced size
-      let currentY = 1.15;
-      if (insight.question) {
-        slide.addText(insight.question, {
-          x: 0.3, y: currentY, w: 12.7, h: 0.3,
-          fontSize: 11, color: '666666',
-          fontFace: 'Arial',
-          wrap: true,
-          italic: true,
-        });
-        currentY += 0.35;
-      }
-  
-      // Chart section - enhanced with gradient background (NO BORDER)
-      const chartY = currentY;
-      const chartHeight = 4.7; // Slightly increased
-      const chartWidth = 12.7;
-  
-      // Gradient background for chart area - REMOVED BORDER
-      slide.addShape(pptx.shapes.RECTANGLE, {
-        x: 0.3, y: chartY, w: chartWidth, h: chartHeight,
-        fill: { 
-          type: 'solid',
-          color: 'F8FAFB' 
-        },
-        line: { width: 0 }, // REMOVED THE BORDER
-      });
-  
-      // REMOVED the inner border completely - it was creating the unwanted border effect
-      // slide.addShape(pptx.shapes.RECTANGLE, {
-      //   x: 0.35, y: chartY + 0.05, w: chartWidth - 0.1, h: chartHeight - 0.1,
-      //   fill: 'transparent',
-      //   line: { color: 'E5E7EB', width: 0.5 },
-      // });
-  
-      // Generate and add chart image
-      if (chartRef.current) {
-        let chartImageDataUrl;
-  
-        try {
-          const svgElement = chartRef.current.querySelector('svg');
-          const elementToCapture = svgElement || chartRef.current;
-          
-          chartImageDataUrl = await htmlToImage.toPng(elementToCapture as HTMLElement, {
-            backgroundColor: 'white',
-            quality: 1.0,
-            pixelRatio: 2,
-            skipAutoScale: false,
-            cacheBust: true,
-            style: {
-              transform: 'scale(1)',
-              transformOrigin: 'top left',
-            },
-          });
-  
-          if (chartImageDataUrl) {
-            slide.addImage({
-              data: chartImageDataUrl,
-              x: 0.4, y: chartY + 0.1,
-              w: chartWidth - 0.2, h: chartHeight - 0.2,
-            });
-          }
-        } catch (imageError) {
-          console.error('Chart image generation failed:', imageError);
-          slide.addText('Chart could not be generated', {
-            x: 0.3, y: chartY + (chartHeight / 2) - 0.2, w: chartWidth, h: 0.4,
-            fontSize: 16, color: 'CC0000', align: 'center',
-            fontFace: 'Arial',
-          });
-        }
-      } else {
-        slide.addText('No chart data available', {
-          x: 0.3, y: chartY + (chartHeight / 2) - 0.2, w: chartWidth, h: 0.4,
-          fontSize: 16, color: 'CC0000', align: 'center',
-          fontFace: 'Arial',
-        });
-      }
-  
-      // Footer area - enhanced design with logo on left (NO BORDER)
-      const footerY = 6.3;
-      
-      // Beautiful footer background - REMOVED BORDER
-      slide.addShape(pptx.shapes.RECTANGLE, {
-        x: 0, y: footerY - 0.05, w: '100%', h: 1.25,
-        fill: { 
-          type: 'solid',
-          color: 'F1F5F9'
-        },
-        line: { width: 0 }, // REMOVED THE BORDER
-      });
-  
-      // Top accent line for footer
-      slide.addShape(pptx.shapes.RECTANGLE, {
-        x: 0, y: footerY - 0.05, w: '100%', h: 0.02,
-        fill: { color: '174F73' },
-        line: { width: 0 },
-      });
-      
-      // Logo on the LEFT side with enhanced styling - REMOVED BORDER
-      if (Logo?.src) {
-        // Logo background - REMOVED BORDER
-        slide.addShape(pptx.shapes.RECTANGLE, {
-          x: 0.25, y: footerY + 0.05, w: 2.6, h: 0.8,
-          fill: { color: 'FFFFFF' },
-          line: { width: 0 }, // REMOVED THE BORDER
-        });
-        
-        // Shadow effect behind logo background
-        slide.addShape(pptx.shapes.RECTANGLE, {
-          x: 0.28, y: footerY + 0.08, w: 2.6, h: 0.8,
-          fill: { color: 'E2E8F0' },
-          line: { width: 0 },
-        });
-        
-        // Actual logo with increased height
-        slide.addImage({
-          path: Logo.src,
-          x: 0.35, y: footerY + 0.1,
-          w: 2.4,  // Good width
-          h: 0.7,  // Increased height for better visibility
-          objectName: 'Company Logo',
-        });
-      }
-  
-      // Notes section - positioned after logo
-      if (notes && notes.length > 0) {
-        slide.addText('Key Notes:', {
-          x: 3.2, y: footerY + 0.1, w: 1.5, h: 0.25,
-          fontSize: 10, bold: true, color: '174F73',
-          fontFace: 'Arial',
-        });
-        
-        const maxNoteLength = 140;
-        const displayNotes = notes.length > maxNoteLength ? 
-          notes.substring(0, maxNoteLength).trim() + '...' : notes;
-        
-        slide.addText(displayNotes, {
-          x: 3.2, y: footerY + 0.3, w: 7.5, h: 0.5,
-          fontSize: 9, color: '475569',
-          fontFace: 'Arial',
-          wrap: true,
-          valign: 'top',
-        });
-      }
-  
-      // Timestamp and metadata - right side
-      const currentDate = new Date().toLocaleDateString('en-US', {
-        year: 'numeric',
-        month: 'short',
-        day: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit'
-      });
-      
-      slide.addText(`Generated: ${currentDate}`, {
-        x: 11.0, y: footerY + 0.1, w: 2.0, h: 0.2,
-        fontSize: 8, color: '64748B', bold: true,
-        fontFace: 'Arial',
-        align: 'center',
-      });
-  
-      // Additional metadata
-      slide.addText('North Light Analytics', {
-        x: 11.0, y: footerY + 0.3, w: 2.0, h: 0.2,
-        fontSize: 7, color: '94A3B8',
-        fontFace: 'Arial',
-        align: 'center',
-      });
-  
-      slide.addText('Confidential Report', {
-        x: 11.0, y: footerY + 0.45, w: 2.0, h: 0.2,
-        fontSize: 7, color: '94A3B8', italic: true,
-        fontFace: 'Arial',
-        align: 'center',
-      });
-  
-      // Generate filename
-      const sanitizedName = (insight.name || 'chart-insight')
-        .replace(/[^a-z0-9\s]/gi, '')
-        .replace(/\s+/g, '_')
-        .toLowerCase();
-      const fileName = `${sanitizedName}_${Date.now()}.pptx`;
-  
-      // Save the presentation
-      await pptx.writeFile({ fileName });
-  
-      toast({
-        title: 'Download Successful',
-        description: 'Professional chart presentation downloaded successfully.',
-        duration: 3000,
-      });
-  
-    } catch (error: any) {
-      console.error('PPTX Generation Error:', error);
-      
-      // More detailed error handling
-      let errorMessage = 'An unexpected error occurred.';
-      if (error.message) {
-        errorMessage = error.message;
-      } else if (error.toString) {
-        errorMessage = error.toString();
-      }
-  
-      toast({
-        title: 'Download Failed',
-        description: `Error: ${errorMessage}`,
-        duration: 4000,
-      });
-    } finally {
-      setIsDownloading(false);
-    }
-  };
-  
+  // Access chart data from Redux store
+  const chart1Data = useAppSelector((state: RootState) => state.chart.data);
+  const chart2Data = useAppSelector((state: RootState) => state.chart.data2);
+  const chart3Data = useAppSelector((state: RootState) => state.chart.data3);
+  const chart4Data = useAppSelector((state: RootState) => state.chart.data4);
+  const chart5Data = useAppSelector((state: RootState) => state.chart.data5);
+  const chart6Data = useAppSelector((state: RootState) => state.chart.data6);
+  const chart7Data = useAppSelector((state: RootState) => state.chart.data7);
+  const chart8Data = useAppSelector((state: RootState) => state.chart.data8);
+  const chart9Data = useAppSelector((state: RootState) => state.chart.data9);
+
+  // Integrate PptDownloader component
   return (
     <div className="border-t border-gray-200 bg-gray-50 p-6">
       <div className="mb-6 grid grid-cols-1 gap-6 lg:grid-cols-4">
@@ -828,34 +617,45 @@ export const InsightCard: React.FC<InsightCardProps> = ({
                 isLoading={isDataLoading}
                 placeholder="Select retailers..."
               />
-
               <FilterSelect
                 label="Brand"
-                options={brandList || brands}
+                options={filteredBrands}
                 value={selectedBrand}
                 onChangeValue={(str) => setSelectedFilter('brand', str)}
                 isLoading={isDataLoading}
-                placeholder="Select brands..."
+                placeholder={
+                  filteredBrands.length === 0
+                    ? 'No brands available'
+                    : 'Select brands...'
+                }
               />
-
               <FilterSelect
                 label="PPG Categories"
                 options={filteredProducts}
                 value={selectedProduct}
                 onChangeValue={(str) => setSelectedFilter('product', str)}
                 isLoading={isDataLoading}
-                placeholder="Select categories..."
+                placeholder={
+                  selectedBrandArr.length > 1
+                    ? 'Select a single brand to see products'
+                    : filteredProducts.length === 0
+                      ? 'No products available'
+                      : 'Select categories...'
+                }
+                isMultiple={selectedBrandArr.length <= 1}
+                // Disable if multiple brands selected
+                // Optionally, you can add a disabled prop to FilterSelect and pass it here
               />
-
-              <FilterSelect
-                label="View By"
-                options={['retailer', 'brand', 'ppg']}
-                value={viewBy}
-                onChangeValue={setViewBy}
-                isMultiple={false}
-                placeholder="Select view..."
-              />
-
+              {index === 0 && (
+                <FilterSelect
+                  label="View By"
+                  options={['Retailer', 'Brand', 'ppg']}
+                  value={viewBy}
+                  onChangeValue={setViewBy}
+                  isMultiple={false}
+                  placeholder="Select view..."
+                />
+              )}
               <FilterSelect
                 label="Download Chart Type"
                 options={['category', 'retailer', 'brand', 'ppg', 'upc']}
@@ -864,12 +664,28 @@ export const InsightCard: React.FC<InsightCardProps> = ({
                 isMultiple={false}
                 placeholder="Select download type..."
               />
-
+              {/* Download Chart Type filter removed as per requirements */}
               <div className="border-t border-gray-200 pt-4">
                 <Button
                   variant="default"
                   className="w-full bg-indigo-600 text-white hover:bg-indigo-700"
-                  onClick={handleDownloadChart}
+                  onClick={() =>
+                    RunDemo(
+                      insight,
+                      index,
+                      viewBy,
+                      setIsDownloading,
+                      chart1Data,
+                      chart2Data,
+                      chart3Data,
+                      chart4Data,
+                      chart5Data,
+                      chart6Data,
+                      chart7Data,
+                      chart8Data,
+                      chart9Data
+                    )
+                  }
                   disabled={isDownloading}
                 >
                   {isDownloading ? (
@@ -880,10 +696,7 @@ export const InsightCard: React.FC<InsightCardProps> = ({
                   ) : (
                     <>
                       <Download className="mr-2 h-4 w-4" />
-                      Download{' '}
-                      {downloadType.charAt(0).toUpperCase() +
-                        downloadType.slice(1)}{' '}
-                      Chart
+                      Download Chart
                     </>
                   )}
                 </Button>

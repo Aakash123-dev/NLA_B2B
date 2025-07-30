@@ -22,6 +22,7 @@ export const fetchGlobalFiltersThunk = createAsyncThunk(
   async (modelId: number, thunkAPI) => {
     try {
       const response = await fetchGlobalFilters(modelId);
+      console.log(response.data, "responseData")
       return response.data;
     } catch (error: any) {
       return thunkAPI.rejectWithValue(error.message || 'Failed to fetch global filters');

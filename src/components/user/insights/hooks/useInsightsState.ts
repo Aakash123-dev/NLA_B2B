@@ -44,7 +44,7 @@ export const useInsightsState = () => {
   const [showLegend, setShowLegend] = useState(true);
   const [showDataLabels, setShowDataLabels] = useState(false);
   const [animationEnabled, setAnimationEnabled] = useState(true);
-  const [viewBy, setViewBy] = useState('retailer');
+  const [viewBy, setViewBy] = useState('brand');
   const [downloadType, setDownloadType] = useState('category');
 
   // Modal and drawer states
