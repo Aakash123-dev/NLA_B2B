@@ -7,7 +7,11 @@ import { Button } from '@/components/ui/button';
 import { ChevronDown, ChevronUp } from 'lucide-react';
 import { Product, MarginInputs } from '../types/product';
 import { MarginAnalysisSection } from './MarginAnalysisSection';
-import { formatCurrency, formatNumber, calculateMarginData } from '../utils/productUtils';
+import {
+  formatCurrency,
+  formatNumber,
+  calculateMarginData,
+} from '../utils/productUtils';
 
 interface ProductTableRowProps {
   product: Product;
@@ -16,7 +20,11 @@ interface ProductTableRowProps {
   marginInputs: Record<number, MarginInputs>;
   onPriceChange: (productId: number, newPrice: string) => void;
   toggleProductExpansion: (productId: number) => void;
-  updateMarginInput: (productId: number, field: 'costPerUnit' | 'targetMargin', value: number) => void;
+  updateMarginInput: (
+    productId: number,
+    field: 'costPerUnit' | 'targetMargin',
+    value: number
+  ) => void;
 }
 
 export function ProductTableRow({
@@ -24,106 +32,168 @@ export function ProductTableRow({
   index,
   isExpanded,
   marginInputs,
+  type,
+  showResults,
   onPriceChange,
   toggleProductExpansion,
-  updateMarginInput
+  updateMarginInput,
+  newPrice,
 }: ProductTableRowProps) {
+  console.log(product, 'newrice');
   const marginData = calculateMarginData(product, marginInputs[product.id]);
-
+  const { Price_avg_last_4_weeks, total_units_sum } = product;
+  const totalVolumeSum = parseFloat(total_units_sum);
+  const totalVolume = totalVolumeSum * Price_avg_last_4_weeks;
   return (
     <React.Fragment key={product.id}>
-      <motion.tr 
+      <motion.tr
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: index * 0.1 }}
-        className="hover:bg-gradient-to-r hover:from-indigo-50/30 hover:to-blue-50/30 transition-all duration-200 group cursor-pointer"
-        onClick={() => toggleProductExpansion(product.id)}
+        className="group cursor-pointer transition-all duration-200 hover:bg-gradient-to-r hover:from-indigo-50/30 hover:to-blue-50/30"
+        onClick={() => toggleProductExpansion(product?._id)}
       >
         <td className="px-6 py-6">
           <div className="flex items-center gap-3">
             <Button
               variant="ghost"
               size="sm"
-              className="p-1 h-8 w-8 rounded-full hover:bg-indigo-100"
+              className="h-8 w-8 rounded-full p-1 hover:bg-indigo-100"
             >
               {isExpanded ? (
-                <ChevronUp className="w-4 h-4 text-indigo-600" />
+                <ChevronUp className="h-4 w-4 text-indigo-600" />
               ) : (
-                <ChevronDown className="w-4 h-4 text-slate-600" />
+                <ChevronDown className="h-4 w-4 text-slate-600" />
               )}
             </Button>
-            <div className="text-sm text-slate-900 font-medium leading-5 line-clamp-3">
-              {product.name}
+            <div className="line-clamp-3 text-sm font-medium leading-5 text-slate-900">
+              {product?.Product}
             </div>
           </div>
         </td>
         <td className="px-4 py-6 text-center">
-          <div className="inline-flex items-center px-3 py-1.5 bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200/50 rounded-lg">
+          <div className="inline-flex items-center rounded-lg border border-green-200/50 bg-gradient-to-r from-green-50 to-emerald-50 px-3 py-1.5">
             <span className="text-sm font-bold text-green-700">
-              ${product.latestPrice.toFixed(2)}
+              {!isNaN(Price_avg_last_4_weeks)
+                ? '$' + Price_avg_last_4_weeks.toFixed(2).toLocaleString()
+                : '-'}
             </span>
           </div>
         </td>
         <td className="px-4 py-6 text-center">
           <div className="text-sm font-semibold text-slate-800">
-            {formatNumber(product.totalUnits)}
+            {!isNaN(total_units_sum)
+              ? Math.round(total_units_sum).toLocaleString()
+              : '-'}
           </div>
         </td>
         <td className="px-4 py-6 text-center">
           <div className="text-sm font-semibold text-slate-800">
-            {formatCurrency(product.totalDollars)}
+            {'$' +
+              (!isNaN(totalVolume)
+                ? Math.round(totalVolume).toLocaleString()
+                : '-')}
           </div>
         </td>
         <td className="px-4 py-6" onClick={(e) => e.stopPropagation()}>
           <Input
-            type="number"
-            step="0.01"
-            placeholder="$0.00"
-            value={product.newPrice}
-            onChange={(e) => onPriceChange(product.id, e.target.value)}
-            className="w-full text-center text-sm border-slate-200 rounded-lg focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 transition-all bg-white/80"
+            type="test"
+            inputMode="decimal"
+            placeholder="Enter new price:($)"
+            value={
+              newPrice[index]
+                ? newPrice[index]
+                    .toString()
+                    .replace(/\B(?=(\d{3})+(?!\d))/g, ',')
+                : ''
+            }
+            onChange={(event) => {
+              const value = event.target.value.replace(/,/g, '');
+              if (!isNaN(value) && value >= 0) {
+                onPriceChange(index, value, product, type);
+              }
+            }}
+            onKeyDown={(e) => {
+              if (e.key === '-') {
+                e.preventDefault();
+              }
+            }}
+            min={1}
+            className="w-full rounded-lg border-slate-200 bg-white/80 text-center text-sm transition-all focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100"
           />
         </td>
         <td className="px-4 py-6 text-center">
           <div className="text-sm font-semibold text-slate-700">
-            {product.newUnits || (product.newPrice ? `${Math.round(product.totalUnits * 0.92).toLocaleString()}` : '—')}
+            {newPrice[index] && !showResults
+              ? Math.round(product?.newVolume).toLocaleString()
+              : showResults && product?.percentageChangeInVolume
+                ? Math.round(product?.newVolume).toLocaleString()
+                : '-'}
           </div>
         </td>
         <td className="px-4 py-6 text-center">
-          <div className={`text-sm font-semibold ${product.changeInUnits || product.newPrice ? 'text-red-600' : 'text-slate-400'}`}>
-            {product.changeInUnits || (product.newPrice ? `-${Math.round(product.totalUnits * 0.08).toLocaleString()}` : '—')}
+          <div
+            className={`text-sm font-semibold ${product.changeInUnits || product.newPrice ? 'text-red-600' : 'text-slate-400'}`}
+          >
+            {newPrice[index] && !showResults
+              ? Math.round(product?.changeInVolume).toLocaleString()
+              : showResults && product?.changeInVolume
+                ? Math.round(product?.changeInVolume).toLocaleString()
+                : '-'}
           </div>
         </td>
         <td className="px-4 py-6 text-center">
-          <div className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold ${
-            product.percentChangeUnits || product.newPrice 
-              ? 'bg-gradient-to-r from-red-50 to-red-100 text-red-700 border border-red-200/50' 
-              : 'bg-slate-50 text-slate-400'
-          }`}>
-            {product.percentChangeUnits || (product.newPrice ? '-8.2%' : '—')}
+          <div
+            className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-bold ${
+              product.percentChangeUnits || product.newPrice
+                ? 'border border-red-200/50 bg-gradient-to-r from-red-50 to-red-100 text-red-700'
+                : 'bg-slate-50 text-slate-400'
+            }`}
+          >
+            {newPrice[index] && !showResults
+              ? product?.percentageChangeInVolume?.toFixed(2) + '%'
+              : showResults && product?.percentageChangeInVolume
+                ? product?.percentageChangeInVolume?.toFixed(2) + '%'
+                : '-'}
           </div>
         </td>
         <td className="px-4 py-6 text-center">
           <div className="text-sm font-semibold text-slate-700">
-            {product.newDollars || (product.newPrice ? `$${Math.round(product.totalUnits * 0.92 * parseFloat(product.newPrice)).toLocaleString()}` : '—')}
+            {newPrice[index] && !showResults
+              ? '$' + Math.round(product?.newDollars).toLocaleString()
+              : showResults && product?.percentageChangeInVolume
+                ? '$' + Math.round(product?.newDollars).toLocaleString()
+                : '-'}
           </div>
         </td>
         <td className="px-4 py-6 text-center">
-          <div className={`text-sm font-semibold ${product.changeInDollars || product.newPrice ? 'text-emerald-600' : 'text-slate-400'}`}>
-            {product.changeInDollars || (product.newPrice ? `+$${Math.round((product.totalUnits * 0.92 * parseFloat(product.newPrice)) - product.totalDollars).toLocaleString()}` : '—')}
+          <div
+            className={`text-sm font-semibold ${product.changeInDollars || product.newPrice ? 'text-emerald-600' : 'text-slate-400'}`}
+          >
+            {newPrice[index] && !showResults
+              ? '$' + Math.round(product?.changeInDollars).toLocaleString()
+              : showResults && product?.percentageChangeInVolume
+                ? '$' + Math.round(product?.changeInDollars).toLocaleString()
+                : '-'}
           </div>
         </td>
         <td className="px-4 py-6 text-center">
-          <div className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold ${
-            product.percentChangeDollars || product.newPrice 
-              ? 'bg-gradient-to-r from-emerald-50 to-green-100 text-emerald-700 border border-emerald-200/50' 
-              : 'bg-slate-50 text-slate-400'
-          }`}>
-            {product.percentChangeDollars || (product.newPrice ? '+12.8%' : '—')}
+          <div
+            className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-bold ${
+              product.percentChangeDollars || product.newPrice
+                ? 'border border-emerald-200/50 bg-gradient-to-r from-emerald-50 to-green-100 text-emerald-700'
+                : 'bg-slate-50 text-slate-400'
+            }`}
+          >
+            {newPrice[index] && !showResults
+              ? product?.percentageChangeInDollars?.toFixed(2) + '%'
+              : showResults && product?.percentageChangeInVolume
+                ? product?.percentageChangeInDollars?.toFixed(2) + '%'
+                : '-'}
           </div>
         </td>
       </motion.tr>
-      
+
       {/* Expanded Margin Analysis Section */}
       <AnimatePresence>
         {isExpanded && (
@@ -133,7 +203,10 @@ export function ProductTableRow({
             exit={{ opacity: 0, height: 0 }}
             transition={{ duration: 0.3 }}
           >
-            <td colSpan={11} className="px-0 py-0 bg-gradient-to-br from-indigo-50/50 to-blue-50/50 border-b border-indigo-100/50">
+            <td
+              colSpan={11}
+              className="border-b border-indigo-100/50 bg-gradient-to-br from-indigo-50/50 to-blue-50/50 px-0 py-0"
+            >
               <MarginAnalysisSection
                 product={product}
                 marginData={marginData}

@@ -46,7 +46,7 @@ export function SearchableSelect({
 }: SearchableSelectProps) {
   const [open, setOpen] = useState(false);
 
-  const selectedOption = options.find(option => option.id === value);
+  const selectedOption = options?.find(option => option?.id === value);
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -85,12 +85,12 @@ export function SearchableSelect({
               No options found.
             </CommandEmpty>
             <CommandGroup className="p-1">
-              {options.map((option) => (
+              {options?.map((option) => (
                 <CommandItem
-                  key={option.id}
-                  value={option.name}
+                  key={option?.id}
+                  value={option?.name}
                   onSelect={() => {
-                    onValueChange(option.id === value ? "" : option.id);
+                    onValueChange(option?.id === value ? "" : option?.id);
                     setOpen(false);
                   }}
                   className="cursor-pointer flex items-center gap-3 px-3 py-2.5 text-sm hover:bg-gray-50 focus:bg-gray-50 rounded-md"
@@ -101,7 +101,7 @@ export function SearchableSelect({
                       value === option.id ? "opacity-100" : "opacity-0"
                     )}
                   />
-                  <span className="flex-1">{option.name}</span>
+                  <span className="flex-1">{option?.name}</span>
                 </CommandItem>
               ))}
             </CommandGroup>

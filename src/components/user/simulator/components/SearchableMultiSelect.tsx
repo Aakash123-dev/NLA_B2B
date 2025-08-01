@@ -63,9 +63,9 @@ export function SearchableMultiSelect({
   };
 
   const displayText = () => {
-    if (value.length === 0) return placeholder;
-    if (value.length === 1) return selectedOptions[0]?.name;
-    return `${value.length} selected`;
+    if (value?.length === 0) return placeholder;
+    if (value?.length === 1) return selectedOptions[0]?.name;
+    return `${value?.length} selected`;
   };
 
   return (
@@ -78,7 +78,7 @@ export function SearchableMultiSelect({
             aria-expanded={open}
             className={cn(
               "h-11 justify-between border border-gray-200 focus:border-blue-500 focus:ring-blue-500/20 hover:border-gray-300 transition-all duration-200 bg-white",
-              value.length === 0 && "text-gray-500",
+              value?.length === 0 && "text-gray-500",
               className
             )}
             disabled={disabled}
@@ -131,7 +131,7 @@ export function SearchableMultiSelect({
       </Popover>
 
       {/* Selected Items Display */}
-      {value.length > 0 && (
+      {value?.length > 0 && (
         <div className="flex flex-wrap gap-1 mt-2">
           {selectedOptions.slice(0, maxDisplayItems).map((option) => (
             <Badge 
@@ -139,11 +139,11 @@ export function SearchableMultiSelect({
               variant="secondary" 
               className="bg-blue-50 text-blue-700 border-blue-200 px-2 py-1 text-xs font-medium max-w-[200px] hover:bg-blue-100 transition-colors"
             >
-              <span className="truncate">{option.name}</span>
+              <span className="truncate">{option?.name}</span>
               <button
                 onClick={(e) => {
                   e.stopPropagation();
-                  removeItem(option.id);
+                  removeItem(option?.id);
                 }}
                 className="ml-1 hover:text-blue-900 transition-colors rounded-full p-0.5 hover:bg-blue-200"
               >
@@ -151,9 +151,9 @@ export function SearchableMultiSelect({
               </button>
             </Badge>
           ))}
-          {selectedOptions.length > maxDisplayItems && (
+          {selectedOptions?.length > maxDisplayItems && (
             <Badge variant="secondary" className="bg-gray-100 text-gray-600 px-2 py-1 text-xs">
-              +{selectedOptions.length - maxDisplayItems} more
+              +{selectedOptions?.length - maxDisplayItems} more
             </Badge>
           )}
         </div>
