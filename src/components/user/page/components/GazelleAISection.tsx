@@ -46,7 +46,7 @@ export const GazelleAISection = () => {
 
   return (
     <section className="py-20 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-7xl mx-auto">
+      <div className="w-full">
         <div className="text-center mb-16">
           <div className="flex items-center justify-center mb-6">
             <div className="w-20 h-20 bg-gradient-to-br from-amber-300 via-yellow-500 to-amber-600 rounded-2xl flex items-center justify-center shadow-2xl border-2 border-amber-200">

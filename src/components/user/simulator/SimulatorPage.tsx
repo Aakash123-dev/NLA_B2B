@@ -9,8 +9,10 @@ import {
   ProductSection,
   RelevantCompetitorsSection,
 } from './components';
+import { SmartInsightsDrawer } from '../comparison/components/SmartInsightsDrawer';
 
 export default function SimulatorPage() {
+  const [isSmartInsightsOpen, setIsSmartInsightsOpen] = useState(false)
   const [simulationData, setSimulationData] = useState({
     testDate: "09/04/2025 Test",
     company: "ALBSCO Jewel Div TA",
@@ -143,6 +145,7 @@ export default function SimulatorPage() {
         company={simulationData.company}
         selectedBrand={simulationData.selectedBrand}
         onBackToHome={handleBackToHome}
+        onOpenSmartInsights={() => setIsSmartInsightsOpen(true)}
       />
 
       {/* Main Content */}
@@ -212,6 +215,11 @@ export default function SimulatorPage() {
 
         </div>
       </div>
+      
+      <SmartInsightsDrawer 
+        isSmartInsightsOpen={isSmartInsightsOpen}
+        setIsSmartInsightsOpen={setIsSmartInsightsOpen}
+      />
     </div>
   );
 }

@@ -1,0 +1,1 @@
+export { usePromoPriceComparison } from './usePromoPriceComparison'

@@ -28,75 +28,75 @@ interface TPOEvent {
 const sampleTPOEvents: TPOEvent[] = [
   {
     id: 'tpo-001',
-    name: 'Summer Sale Campaign',
-    brand: 'Coca Cola',
-    retailer: 'Walmart',
+    name: 'Plan 1',
+    brand: 'Brand A',
+    retailer: 'Retailer A',
     startDate: '2024-06-01',
     endDate: '2024-06-30',
     eventType: 'Promotion',
     status: 'Completed',
     revenue: 245000,
-    description: 'Summer promotional campaign with 20% discount on all Coca Cola products'
+    description: 'Promotional campaign with discount strategy and market expansion focus'
   },
   {
     id: 'tpo-002',
-    name: 'Back to School Bundle',
-    brand: 'PepsiCo',
-    retailer: 'Target',
+    name: 'Plan 2',
+    brand: 'Brand B',
+    retailer: 'Retailer B',
     startDate: '2024-08-01',
     endDate: '2024-08-31',
     eventType: 'Bundle',
     status: 'Active',
     revenue: 180000,
-    description: 'Bundle offer for snacks and beverages targeting back-to-school season'
+    description: 'Bundle offer strategy targeting specific customer segments'
   },
   {
     id: 'tpo-003',
-    name: 'Holiday BOGO Special',
-    brand: 'Nestlé',
-    retailer: 'Kroger',
+    name: 'Plan 3',
+    brand: 'Brand C',
+    retailer: 'Retailer C',
     startDate: '2024-12-01',
     endDate: '2024-12-25',
     eventType: 'BOGO',
     status: 'Scheduled',
     revenue: 320000,
-    description: 'Buy One Get One offer on chocolate and confectionery products'
+    description: 'Buy One Get One promotional strategy for customer acquisition'
   },
   {
     id: 'tpo-004',
-    name: 'Spring Fresh Launch',
-    brand: 'Unilever',
-    retailer: 'Safeway',
+    name: 'Plan 4',
+    brand: 'Brand D',
+    retailer: 'Retailer D',
     startDate: '2024-03-15',
     endDate: '2024-04-15',
     eventType: 'Discount',
     status: 'Completed',
     revenue: 155000,
-    description: 'Product launch campaign with introductory pricing'
+    description: 'Discount campaign with competitive pricing strategy'
   },
   {
     id: 'tpo-005',
-    name: 'Weekend Flash Sale',
-    brand: 'Procter & Gamble',
-    retailer: 'Costco',
+    name: 'Plan 5',
+    brand: 'Brand E',
+    retailer: 'Retailer E',
     startDate: '2024-07-15',
     endDate: '2024-07-17',
     eventType: 'Promotion',
     status: 'Completed',
     revenue: 89000,
-    description: 'Limited time flash sale on household products'
+    description: 'Limited time promotional campaign for market testing'
   },
   {
     id: 'tpo-006',
-    name: 'Winter Warmth Bundle',
-    brand: 'Kellogg\'s',
-    retailer: 'Publix',
+    name: 'Plan 6',
+    brand: 'Brand F',
+    retailer: 'Retailer F',
     startDate: '2024-01-10',
     endDate: '2024-02-10',
     eventType: 'Bundle',
     status: 'Completed',
     revenue: 198000,
-    description: 'Breakfast bundle promotion for winter season'
+    description: 'Bundle promotion strategy for seasonal market penetration'
   }
 ]
 
@@ -174,11 +174,11 @@ export function ComparisonSelection({ onTPOSelection }: ComparisonSelectionProps
           </div>
           
           <h2 className="text-3xl font-bold text-gray-900 mb-2">
-            Compare TPO Events
+            Compare Plans
           </h2>
           
           <p className="text-gray-600 mb-6">
-            Search and select TPO events to compare their performance and insights
+            Search and select plans to compare their performance and insights
           </p>
 
           {/* Search Bar and Compare Button */}
@@ -187,7 +187,7 @@ export function ComparisonSelection({ onTPOSelection }: ComparisonSelectionProps
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
               <Input
                 type="text"
-                placeholder="Search TPO events, brands, retailers..."
+                placeholder="Search plans, brands, retailers..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="pl-10 pr-4 py-3 w-full rounded-lg border-gray-200 focus:border-emerald-500 focus:ring-emerald-500"
@@ -219,7 +219,7 @@ export function ComparisonSelection({ onTPOSelection }: ComparisonSelectionProps
             <Alert className="max-w-md">
               <CheckCircle2 className="h-4 w-4" />
               <AlertDescription>
-                {selectedTPOs.length} events selected. 
+                {selectedTPOs.length} plans selected. 
                 {selectedTPOs.length < MIN_COMPARISON_ITEMS && ` Select at least ${MIN_COMPARISON_ITEMS - selectedTPOs.length} more to compare.`}
               </AlertDescription>
             </Alert>
@@ -310,7 +310,7 @@ export function ComparisonSelection({ onTPOSelection }: ComparisonSelectionProps
             <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
               <Search className="w-8 h-8 text-gray-400" />
             </div>
-            <h3 className="text-lg font-medium text-gray-900 mb-2">No TPO events found</h3>
+            <h3 className="text-lg font-medium text-gray-900 mb-2">No plans found</h3>
             <p className="text-gray-600">Try adjusting your search criteria</p>
           </div>
         )}
@@ -318,7 +318,7 @@ export function ComparisonSelection({ onTPOSelection }: ComparisonSelectionProps
         {/* Instructions */}
         <div className="text-center mt-8">
           <p className="text-sm text-gray-500">
-            Select at least {MIN_COMPARISON_ITEMS} TPO events to compare their performance, insights, and metrics
+            Select at least {MIN_COMPARISON_ITEMS} plans to compare their performance, insights, and metrics
           </p>
         </div>
       </motion.div>

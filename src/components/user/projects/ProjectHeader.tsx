@@ -1,4 +1,4 @@
-import { FolderOpen, Plus, Search } from "lucide-react";
+import { FolderOpen, Plus, Search, Brain } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogTrigger } from "@/components/ui/dialog";
 import { useState } from "react";
@@ -9,6 +9,7 @@ interface ProjectHeaderProps {
 	searchQuery: any;
 	setSearchQuery: any;
 	setIsCreateModalOpen: (isOpen: boolean) => void;
+	onOpenSmartInsights?: () => void;
 }
 
 export default function ProjectHeader({
@@ -17,6 +18,7 @@ export default function ProjectHeader({
 	setIsCreateModalOpen,
 	searchQuery,
 	setSearchQuery,
+	onOpenSmartInsights,
 }: ProjectHeaderProps) {
 	console.log(searchQuery, "all suchquery");
 	return (
@@ -50,6 +52,19 @@ export default function ProjectHeader({
 								className="pl-10 pr-4 py-2 w-full sm:w-64 rounded-lg bg-white border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-slate-800 placeholder-slate-400 text-sm transition-all duration-300"
 							/>
 						</div>
+
+						{/* Smart Insights Button */}
+						{onOpenSmartInsights && (
+							<Button 
+								variant="outline" 
+								size="sm" 
+								className="gap-2 bg-gradient-to-r from-indigo-50 to-violet-50 border-indigo-200 text-indigo-700 hover:from-indigo-100 hover:to-violet-100 hover:border-indigo-300 hover:text-indigo-800 transition-all duration-200 shadow-sm hover:shadow-md hover:-translate-y-0.5 transform rounded-full px-5"
+								onClick={onOpenSmartInsights}
+							>
+								<Brain className="w-4 h-4" />
+								Smart Insights
+							</Button>
+						)}
 
 						<Dialog
 							open={isCreateModalOpen}

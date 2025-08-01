@@ -9,6 +9,7 @@ import CreateProjectModal from './CreateProjectModal';
 import { EditProjectModal, DeleteProjectDialog } from './project-actions';
 import { duplicateProject } from './project-utils';
 import ReactPaginate from 'react-paginate';
+import { SharedSmartInsightsDrawer } from '@/components/common';
 
 import { ProjectType, NewProjectData, CustomInputsState } from './ProjectTypes';
 import { DEFAULT_NEW_PROJECT, DEFAULT_CUSTOM_INPUTS } from './ProjectData';
@@ -43,6 +44,7 @@ export default function ProjectsPage() {
   const [selectedFilter, setSelectedFilter] = useState<string>('All Projects');
   const [loading, setLoading] = useState<boolean>(true);
   const [searchQuery, setSearchQuery] = useState<string>('');
+  const [isSmartInsightsOpen, setIsSmartInsightsOpen] = useState(false);
 
   const dispatch = useAppDispatch();
   const { projects, isLoading, totalPages } = useAppSelector(
@@ -201,6 +203,7 @@ export default function ProjectsPage() {
         setIsCreateModalOpen={setIsCreateModalOpen}
         searchQuery={searchQuery}
         setSearchQuery={setSearchQuery}
+        onOpenSmartInsights={() => setIsSmartInsightsOpen(true)}
       />
 
       <div className="w-full px-6 py-8 lg:px-12">
@@ -271,6 +274,11 @@ export default function ProjectsPage() {
           setSelectedProject(null);
         }}
         onConfirm={handleConfirmDelete}
+      />
+      
+      <SharedSmartInsightsDrawer
+        isSmartInsightsOpen={isSmartInsightsOpen}
+        setIsSmartInsightsOpen={setIsSmartInsightsOpen}
       />
     </div>
   );

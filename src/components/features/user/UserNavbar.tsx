@@ -34,7 +34,8 @@ import {
   Info,
   TrendingUp,
   Calendar,
-  Mail
+  Mail,
+  Library
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -121,6 +122,10 @@ const UserNavbar = () => {
     { name: 'Dashboard', href: '/user/dashboard', icon: Gauge },
     { name: 'Projects', href: '/user/projects', icon: FolderOpen },
     { name: 'Comparison', href: '/user/comparison', icon: BarChart3 },
+    { name: 'Simulator Comparison', href: '/user/simulator-comparison', icon: TrendingUp },
+    { name: 'TPO Events Comparison', href: '/user/tpo-events-comparison', icon: PieChart },
+    { name: 'Event Library', href: '/user/event-library', icon: Library },
+    { name: 'Insights Management', href: '/user/insights-management', icon: Lightbulb },
     { name: 'Gazelle AI', href: '/user/chat-with-ai', icon: Brain },
     { name: 'Help & Support', href: '/user/help', icon: HelpCircle },
   ];

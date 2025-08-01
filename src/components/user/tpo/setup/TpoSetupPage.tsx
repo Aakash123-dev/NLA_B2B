@@ -8,15 +8,17 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Badge } from '@/components/ui/badge'
-import { ChevronRight, ArrowLeft, Target, Database, Store, Package, DollarSign, Calendar, TrendingUp, X } from 'lucide-react'
+import { ChevronRight, ArrowLeft, Target, Database, Store, Package, DollarSign, Calendar, TrendingUp, X, Brain } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { SearchableDropdownList } from './components'
 import { TradePlanFormData, FormErrors } from '../types'
 import { databaseOptions, retailerOptions, brandOptions, productOptions, yearOptions } from '../constants'
 import { validateTradePlanForm, generateMockTradePlan } from '../utils'
+import { SimpleSmartInsightsDrawer } from '@/components/common'
 
 export function TpoSetupPage() {
   const router = useRouter()
+  const [isSmartInsightsOpen, setIsSmartInsightsOpen] = useState(false)
   const [formData, setFormData] = useState<TradePlanFormData>({
     trade_plan_name: "Trade Plan 12 2025 - Real Good Foods 2",
     project: "Real Good Foods Project",
@@ -171,7 +173,7 @@ export function TpoSetupPage() {
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
       {/* Header */}
       <div className="bg-white/80 backdrop-blur-sm border-b border-slate-200 sticky top-0 z-30">
-        <div className="max-w-7xl mx-auto px-6 py-4">
+        <div className="w-full px-6 py-4">
           <div className="flex items-center justify-between">
             <Button
               onClick={handleBackToWelcome}
@@ -190,13 +192,23 @@ export function TpoSetupPage() {
                 <p className="text-sm text-slate-600">Configure your trade plan optimization</p>
               </div>
             </div>
-            <Button
-              onClick={handleBackToDesignStudio}
-              variant="outline"
-              className="border-slate-300 text-slate-600 hover:bg-slate-50"
-            >
-              Design Studio
-            </Button>
+            <div className="flex items-center gap-3">
+              <Button 
+                variant="outline" 
+                className="gap-2 bg-gradient-to-r from-indigo-50 to-violet-50 border-indigo-200 text-indigo-700 hover:from-indigo-100 hover:to-violet-100 hover:border-indigo-300 hover:text-indigo-800 transition-all duration-200 shadow-sm hover:shadow-md hover:-translate-y-0.5 transform rounded-full px-4"
+                onClick={() => setIsSmartInsightsOpen(true)}
+              >
+                <Brain className="w-4 h-4" />
+                Smart Insights
+              </Button>
+              <Button
+                onClick={handleBackToDesignStudio}
+                variant="outline"
+                className="border-slate-300 text-slate-600 hover:bg-slate-50"
+              >
+                Design Studio
+              </Button>
+            </div>
           </div>
         </div>
       </div>
@@ -636,6 +648,12 @@ export function TpoSetupPage() {
           </div>
         </motion.form>
       </div>
+
+      {/* Smart Insights Drawer */}
+      <SimpleSmartInsightsDrawer 
+        isSmartInsightsOpen={isSmartInsightsOpen}
+        setIsSmartInsightsOpen={setIsSmartInsightsOpen}
+      />
     </div>
   )
 }
