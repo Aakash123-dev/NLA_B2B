@@ -52,8 +52,8 @@ export const prepareChartData = (products: Product[]) => {
     const newDollars = newUnits * newPrice;
     
     return {
-      name: product.name.length > 15 ? product.name.substring(0, 15) + '...' : product.name,
-      fullName: product.name,
+      name: product?.name ? product.name.substring(0, 15) + '...' : product?.name,
+      fullName: product?.name,
       currentPrice: product.latestPrice,
       newPrice: newPrice,
       currentUnits: product.totalUnits,

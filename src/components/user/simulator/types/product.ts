@@ -25,7 +25,12 @@ export interface MarginData {
 
 export interface ProductSectionProps {
   products: Product[];
-  onPriceChange: (productId: number, newPrice: string) => void;
+  onPriceChange: any;
+  newPrice: any;
+  filteredSelectedPriceProducts: any[];
+  showProductResults: any;
+  selectedProducts: any;
+  type: any;
 }
 
 export interface MarginInputs {

@@ -7,9 +7,20 @@ import { ProductTable } from './ProductTable';
 import { useProductExpansion, useMarginInputs } from '../hooks/useProductState';
 import { prepareChartData } from '../utils/productUtils';
 
-export function ProductSectionRefactored({ products, onPriceChange }: ProductSectionProps) {
+export function ProductSectionRefactored({
+  products,
+  onPriceChange,
+  newPrice,
+  filteredSelectedPriceProducts,
+  type,
+  showResults,
+  selectedProducts,
+}: ProductSectionProps) {
   const { expandedProducts, toggleProductExpansion } = useProductExpansion();
-  const { marginInputs, updateMarginInput, initializeMarginInputs } = useMarginInputs(products);
+  const { marginInputs, updateMarginInput, initializeMarginInputs } =
+    useMarginInputs(products);
+
+    console.log(products, "allProductsWehave")
 
   const chartData = prepareChartData(products);
 
@@ -31,6 +42,11 @@ export function ProductSectionRefactored({ products, onPriceChange }: ProductSec
         onPriceChange={onPriceChange}
         toggleProductExpansion={handleToggleProductExpansion}
         updateMarginInput={updateMarginInput}
+        newPrice={newPrice}
+        filteredSelectedPriceProducts={filteredSelectedPriceProducts}
+        type={type}
+        showResults={showResults}
+        selectedProducts={selectedProducts}
       />
     </div>
   );
