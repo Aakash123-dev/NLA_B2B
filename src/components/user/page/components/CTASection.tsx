@@ -6,7 +6,7 @@ import { Rocket, ArrowRight, Zap, Users, CheckCircle } from 'lucide-react';
 export const CTASection = () => {
   return (
     <section className="py-20 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-4xl mx-auto text-center">
+      <div className="w-full text-center">
         <div className="bg-gradient-to-r from-blue-500/10 via-purple-500/10 to-cyan-500/10 rounded-3xl p-12 border border-blue-500/20 backdrop-blur-sm">
           <div className="flex items-center justify-center mb-6">
             <div className="w-20 h-20 bg-gradient-to-br from-blue-500 via-purple-500 to-cyan-500 rounded-2xl flex items-center justify-center shadow-2xl">

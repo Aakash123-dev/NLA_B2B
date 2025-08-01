@@ -3,8 +3,9 @@
 import React from 'react'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
-import { ArrowRight, BarChart3, Target, TrendingUp, Zap, ArrowLeft } from 'lucide-react'
+import { ArrowRight, BarChart3, Target, TrendingUp, Zap, ArrowLeft, Brain } from 'lucide-react'
 import { motion } from 'framer-motion'
+import { SharedSmartInsightsDrawer } from '@/components/common'
 
 const configurationSteps = [
   {
@@ -35,6 +36,7 @@ const configurationSteps = [
 
 export function TpoMainPage() {
   const router = useRouter()
+  const [isSmartInsightsOpen, setIsSmartInsightsOpen] = React.useState(false)
 
   const handleStartConfiguration = () => {
     router.push('/user/tpo/setup')
@@ -55,9 +57,9 @@ export function TpoMainPage() {
 
   return (
     <div className="min-h-screen py-12 px-4 sm:px-6 lg:px-8 bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
-      <div className="max-w-6xl mx-auto">
-        {/* Back to Design Studio Button */}
-        <div className="mb-6">
+      <div className="w-full">
+        {/* Header with Back Button and Smart Insights */}
+        <div className="mb-6 flex items-center justify-between">
           <Button
             onClick={handleBackToDesignStudio}
             variant="ghost"
@@ -65,6 +67,17 @@ export function TpoMainPage() {
           >
             <ArrowLeft className="w-4 h-4" />
             <span className="text-sm font-medium">Back to Design Studio</span>
+          </Button>
+          
+          {/* Smart Insights Button */}
+          <Button 
+            onClick={() => setIsSmartInsightsOpen(true)}
+            variant="outline" 
+            size="sm" 
+            className="gap-2 bg-gradient-to-r from-indigo-50 to-violet-50 border-indigo-200 text-indigo-700 hover:from-indigo-100 hover:to-violet-100 hover:border-indigo-300 hover:text-indigo-800 transition-all duration-200 shadow-sm hover:shadow-md hover:-translate-y-0.5 transform rounded-full px-5"
+          >
+            <Brain className="w-4 h-4" />
+            Smart Insights
           </Button>
         </div>
 
@@ -153,6 +166,12 @@ export function TpoMainPage() {
           </Button>
         </motion.div>
       </div>
+      
+      {/* Smart Insights Drawer */}
+      <SharedSmartInsightsDrawer
+        isSmartInsightsOpen={isSmartInsightsOpen}
+        setIsSmartInsightsOpen={setIsSmartInsightsOpen}
+      />
     </div>
   )
 }

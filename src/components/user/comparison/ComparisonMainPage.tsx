@@ -1,12 +1,13 @@
 'use client'
 
-import React from 'react'
+import React, { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { ComparisonHeader, ComparisonSelection, ComparisonTable } from './components'
+import { ComparisonHeader, ComparisonSelection, ComparisonTable, SmartInsightsDrawer } from './components'
 import { useComparison } from './hooks'
 
 export function ComparisonMainPage() {
   const router = useRouter()
+  const [isSmartInsightsOpen, setIsSmartInsightsOpen] = useState(false)
   const { 
     selectedTPOs,
     numberOfTpos, 
@@ -28,8 +29,13 @@ export function ComparisonMainPage() {
           numberOfTpos={numberOfTpos}
           onBack={handleBackToUser}
           onNewComparison={resetComparison}
+          onSmartInsightsOpen={() => setIsSmartInsightsOpen(true)}
         />
         <ComparisonSelection onTPOSelection={handleTPOSelection} />
+        <SmartInsightsDrawer 
+          isSmartInsightsOpen={isSmartInsightsOpen}
+          setIsSmartInsightsOpen={setIsSmartInsightsOpen}
+        />
       </div>
     )
   }
@@ -41,11 +47,16 @@ export function ComparisonMainPage() {
         onBack={resetComparison}
         onNewComparison={resetComparison}
         showNewComparisonButton={true}
+        onSmartInsightsOpen={() => setIsSmartInsightsOpen(true)}
       />
       <ComparisonTable 
         columns={columns}
         numberOfTpos={numberOfTpos}
         onToggleAttribute={toggleAttribute}
+      />
+      <SmartInsightsDrawer 
+        isSmartInsightsOpen={isSmartInsightsOpen}
+        setIsSmartInsightsOpen={setIsSmartInsightsOpen}
       />
     </div>
   )

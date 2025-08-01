@@ -1,19 +1,19 @@
 export const defaultAttributes = [
-  'Event Duration',
-  'Target Audience', 
-  'Promotional Strategy',
-  'Discount Percentage',
-  'Revenue Impact',
-  'ROI Performance',
-  'Market Response',
-  'Brand Visibility',
-  'Customer Acquisition',
-  'Retention Rate',
-  'Competitive Advantage',
-  'Channel Effectiveness',
-  'Geographic Reach',
-  'Seasonal Impact',
-  'Cost Effectiveness'
+  'Event 1',
+  'Event 2', 
+  'Event 3',
+  'Event 4',
+  'Event 5',
+  'Event 6',
+  'Event 7',
+  'Event 8',
+  'Event 9',
+  'Event 10',
+  'Event 11',
+  'Event 12',
+  'Event 13',
+  'Event 14',
+  'Event 15'
 ]
 
 // Detailed metrics for expandable rows

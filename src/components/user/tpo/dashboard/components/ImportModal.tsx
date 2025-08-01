@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
-import { Upload, File, Download, AlertCircle } from 'lucide-react'
+import { Upload, File, Download, AlertCircle, Library } from 'lucide-react'
 import { motion } from 'framer-motion'
 
 interface ImportModalProps {
@@ -89,6 +89,11 @@ export function ImportModal({ isOpen, onClose }: ImportModalProps) {
     a.click()
     window.URL.revokeObjectURL(url)
     document.body.removeChild(a)
+  }
+
+  const handleSaveToEventLibrary = () => {
+    // Redirect to Event Library with a flag to show import from calendar
+    window.open('/user/event-library?tab=save-from-calendar', '_blank')
   }
 
   return (
@@ -183,6 +188,28 @@ export function ImportModal({ isOpen, onClose }: ImportModalProps) {
                     </p>
                   </div>
                 )}
+              </div>
+            </div>
+          </div>
+
+          {/* Save to Event Library */}
+          <div className="bg-gradient-to-r from-indigo-50 to-purple-50 rounded-lg p-4 border border-indigo-200">
+            <div className="flex items-start gap-3">
+              <Library className="w-5 h-5 text-indigo-600 mt-0.5" />
+              <div className="flex-1">
+                <p className="text-sm font-medium text-indigo-900 mb-1">Save Events to Library</p>
+                <p className="text-xs text-indigo-700 mb-3">
+                  Save your Trade Calendar events to the Event Library for easy access and management.
+                </p>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={handleSaveToEventLibrary}
+                  className="border-indigo-300 text-indigo-700 hover:bg-indigo-100"
+                >
+                  <Library className="w-4 h-4 mr-2" />
+                  Open Event Library
+                </Button>
               </div>
             </div>
           </div>

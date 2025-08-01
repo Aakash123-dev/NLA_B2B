@@ -3,13 +3,14 @@
 import React from 'react'
 import { motion } from 'framer-motion'
 import { Button } from '@/components/ui/button'
-import { ArrowLeft, Calculator, Zap } from 'lucide-react'
+import { ArrowLeft, Calculator, Zap, Brain } from 'lucide-react'
 
 interface PromoOptimizationHeaderProps {
   onBack: () => void
+  onOpenSmartInsights?: () => void
 }
 
-export function PromoOptimizationHeader({ onBack }: PromoOptimizationHeaderProps) {
+export function PromoOptimizationHeader({ onBack, onOpenSmartInsights }: PromoOptimizationHeaderProps) {
   return (
     <motion.header
       initial={{ opacity: 0, y: -20 }}
@@ -17,7 +18,7 @@ export function PromoOptimizationHeader({ onBack }: PromoOptimizationHeaderProps
       transition={{ duration: 0.6 }}
       className="sticky top-0 z-40 bg-white/90 backdrop-blur-xl border-b border-gray-100 shadow-sm"
     >
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="w-full px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-20">
           {/* Left side - Back button and title */}
           <div className="flex items-center space-x-4">
@@ -49,6 +50,18 @@ export function PromoOptimizationHeader({ onBack }: PromoOptimizationHeaderProps
 
           {/* Right side - Action buttons */}
           <div className="flex items-center space-x-3">
+            {/* Smart Insights Button */}
+            {onOpenSmartInsights && (
+              <Button 
+                variant="outline" 
+                className="gap-2 bg-gradient-to-r from-indigo-50 to-violet-50 border-indigo-200 text-indigo-700 hover:from-indigo-100 hover:to-violet-100 hover:border-indigo-300 hover:text-indigo-800 transition-all duration-200 shadow-sm hover:shadow-md hover:-translate-y-0.5 transform rounded-full px-4"
+                onClick={onOpenSmartInsights}
+              >
+                <Brain className="w-4 h-4" />
+                Smart Insights
+              </Button>
+            )}
+            
             <Button
               variant="outline"
               className="border-gray-200 text-gray-700 hover:bg-gray-50"

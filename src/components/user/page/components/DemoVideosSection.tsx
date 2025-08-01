@@ -9,7 +9,7 @@ import { demoVideos } from '../data/mockData';
 export const DemoVideosSection = () => {
   return (
     <section className="py-20 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-7xl mx-auto">
+      <div className="w-full">
         <div className="text-center mb-16">
           <h2 className="text-4xl font-bold mb-4 bg-gradient-to-r from-white via-blue-400 to-cyan-300 bg-clip-text text-transparent">
             Demo Videos

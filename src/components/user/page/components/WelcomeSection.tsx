@@ -7,7 +7,7 @@ import { Play, Rocket } from 'lucide-react';
 export const WelcomeSection = () => {
   return (
     <section className="relative py-24 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-7xl mx-auto text-center">
+      <div className="w-full text-center">
         <div className="mb-8">
           <Badge className="bg-[#009bcc]/20 text-[#009bcc] border-[#009bcc]/30 px-4 py-2 text-sm font-medium">
             Welcome to Gazelle

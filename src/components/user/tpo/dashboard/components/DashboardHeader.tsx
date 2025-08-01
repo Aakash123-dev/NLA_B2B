@@ -3,7 +3,7 @@
 import React, { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
-import { ArrowLeft, FileText, Upload, Plus, Building } from 'lucide-react'
+import { ArrowLeft, FileText, Upload, Plus, Building, Brain } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { CreateEventModal } from './CreateEventModal'
 import { SetupImportModal } from '../../setup/components/SetupImportModal'
@@ -11,9 +11,10 @@ import { TradePlan } from '../../types'
 
 interface DashboardHeaderProps {
   tradePlan: TradePlan
+  onOpenSmartInsights?: () => void
 }
 
-export function DashboardHeader({ tradePlan }: DashboardHeaderProps) {
+export function DashboardHeader({ tradePlan, onOpenSmartInsights }: DashboardHeaderProps) {
   const router = useRouter()
   const [showCreateEvent, setShowCreateEvent] = useState(false)
   const [showImport, setShowImport] = useState(false)
@@ -75,6 +76,19 @@ export function DashboardHeader({ tradePlan }: DashboardHeaderProps) {
 
             {/* Right Section - Actions */}
             <div className="flex items-center gap-3">
+              {/* Smart Insights Button */}
+              {onOpenSmartInsights && (
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  className="gap-2 bg-gradient-to-r from-indigo-50 to-violet-50 border-indigo-200 text-indigo-700 hover:from-indigo-100 hover:to-violet-100 hover:border-indigo-300 hover:text-indigo-800 transition-all duration-200 shadow-sm hover:shadow-md hover:-translate-y-0.5 transform rounded-full px-4 h-9"
+                  onClick={onOpenSmartInsights}
+                >
+                  <Brain className="w-4 h-4" />
+                  Smart Insights
+                </Button>
+              )}
+              
               <Button
                 onClick={() => router.push('/user/tpo/reports')}
                 className="h-9 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white border-0 rounded-lg shadow-lg shadow-blue-500/25 px-4"

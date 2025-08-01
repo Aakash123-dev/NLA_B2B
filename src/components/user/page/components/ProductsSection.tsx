@@ -4,12 +4,37 @@ import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { CheckCircle, Star } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 import { allProducts } from '../data/mockData';
 
 export const ProductsSection = () => {
+  const router = useRouter();
+
+  const handleGetStarted = (productId: number) => {
+    // Navigate to specific product pages based on productId
+    switch (productId) {
+      case 13: // Simulator Comparison
+        router.push('/user/simulator-comparison');
+        break;
+      case 3: // Simulation Studio
+        router.push('/user/simulator');
+        break;
+      case 1: // Analytics Pro
+        router.push('/user/dashboard');
+        break;
+      case 4: // Business Optimizer
+        router.push('/user/promo-optimization');
+        break;
+      default:
+        // For other products, navigate to a general page or show coming soon
+        router.push('/user/dashboard');
+        break;
+    }
+  };
+  
   return (
     <section className="py-20 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-7xl mx-auto">
+      <div className="w-full">
         <div className="text-center mb-16">
           <h2 className="text-4xl font-bold mb-4 bg-gradient-to-r from-white via-blue-400 to-cyan-300 bg-clip-text text-transparent">
             All Products
@@ -59,7 +84,10 @@ export const ProductsSection = () => {
                         </li>
                       ))}
                     </ul>
-                    <Button className={`w-full ${colorScheme.bg} hover:bg-opacity-30 ${colorScheme.text} border ${colorScheme.border} rounded-xl transition-all duration-300 hover:shadow-lg`}>
+                    <Button 
+                      onClick={() => handleGetStarted(product.id)}
+                      className={`w-full ${colorScheme.bg} hover:bg-opacity-30 ${colorScheme.text} border ${colorScheme.border} rounded-xl transition-all duration-300 hover:shadow-lg`}
+                    >
                       Get Started
                     </Button>
                   </div>
