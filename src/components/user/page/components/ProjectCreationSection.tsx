@@ -7,7 +7,7 @@ import { Plus, Layers, Rocket, Zap } from 'lucide-react';
 export const ProjectCreationSection = () => {
   return (
     <section className="py-20 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-4xl mx-auto text-center">
+      <div className="w-full text-center">
         <div className="mb-16">
           <h2 className="text-4xl font-bold mb-4 bg-gradient-to-r from-white via-blue-400 to-cyan-300 bg-clip-text text-transparent">
             Create Your Project

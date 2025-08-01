@@ -14,7 +14,8 @@ import {
   Cpu,
   Layers,
   LineChart,
-  Gauge
+  Gauge,
+  GitCompare
 } from 'lucide-react';
 
 export const demoProjects = [
@@ -178,6 +179,14 @@ export const allProducts = [
     description: 'Track KPIs and business metrics',
     icon: Gauge,
     features: ['Real-time dashboards', 'Alerts & notifications', 'Goal tracking']
+  },
+  {
+    id: 13,
+    name: 'Simulator Comparison',
+    description: 'Compare promo and price simulation scenarios',
+    icon: GitCompare,
+    features: ['Multi-scenario analysis', 'Performance metrics', 'Side-by-side comparison'],
+    popular: true
   }
 ];
 

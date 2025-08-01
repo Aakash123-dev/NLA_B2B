@@ -46,7 +46,7 @@ export function ComparisonTableHeader({ columns, numberOfTpos }: ComparisonTable
                 ? 'bg-green-100 text-green-700 border border-green-200' 
                 : 'bg-gray-200 text-gray-600'
             }`}>
-              {column.isBestPerforming ? 'Best Performer' : `Event ${index + 1}`}
+              {column.isBestPerforming ? 'Best Performer' : `Plan ${index + 1}`}
             </div>
           </div>
         ))}

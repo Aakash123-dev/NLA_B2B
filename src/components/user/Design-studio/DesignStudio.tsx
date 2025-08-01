@@ -4,7 +4,7 @@ import React, { useState, useCallback, useEffect } from 'react';
 import { ReactFlowProvider, Node, Edge, addEdge, Connection, useNodesState, useEdgesState, useReactFlow, MarkerType } from 'reactflow';
 import 'reactflow/dist/style.css';
 import { Button } from '@/components/ui/button';
-import { Undo, Redo, Save, ZoomIn, ZoomOut, Maximize } from 'lucide-react';
+import { Undo, Redo, Save, ZoomIn, ZoomOut, Maximize, Brain } from 'lucide-react';
 
 import { 
   FlowNode, 
@@ -19,6 +19,7 @@ import { getToolCategories } from './data';
 import { DesignStudioProps, FlowNodeData, ConfigurationState } from './types';
 import { useTabs } from './hooks';
 import { useToast } from './hooks/useToast';
+import { SharedSmartInsightsDrawer } from '@/components/common';
 
 // Inner component that uses ReactFlow hooks
 function DesignStudioInner({ selectedProject }: DesignStudioProps) {
@@ -47,6 +48,9 @@ function DesignStudioInner({ selectedProject }: DesignStudioProps) {
 
   // Track tool versions
   const [toolVersions, setToolVersions] = useState<Record<string, number>>({});
+
+  // Smart Insights state
+  const [isSmartInsightsOpen, setIsSmartInsightsOpen] = useState(false);
 
   // Undo/Redo state
   const [history, setHistory] = useState<{
@@ -587,6 +591,20 @@ function DesignStudioInner({ selectedProject }: DesignStudioProps) {
             >
               <Maximize className="w-4 h-4 text-slate-600 dark:text-slate-400" />
             </Button>
+            
+            {/* Divider */}
+            <div className="w-px h-6 bg-slate-300 dark:bg-slate-600 mx-2"></div>
+            
+            {/* Smart Insights Button */}
+            <Button 
+              onClick={() => setIsSmartInsightsOpen(true)}
+              className="gap-2 bg-gradient-to-r from-indigo-50 to-violet-50 border-indigo-200 text-indigo-700 hover:from-indigo-100 hover:to-violet-100 hover:border-indigo-300 hover:text-indigo-800 transition-all duration-200 shadow-sm hover:shadow-md hover:-translate-y-0.5 transform rounded-full px-4"
+              variant="outline"
+              size="sm"
+            >
+              <Brain className="w-4 h-4" />
+              Smart Insights
+            </Button>
           </div>
         </div>
       </div>
@@ -646,6 +664,12 @@ function DesignStudioInner({ selectedProject }: DesignStudioProps) {
           {/* Add more configuration components as needed */}
         </div>
       )}
+
+      {/* Smart Insights Drawer */}
+      <SharedSmartInsightsDrawer
+        isSmartInsightsOpen={isSmartInsightsOpen}
+        setIsSmartInsightsOpen={setIsSmartInsightsOpen}
+      />
     </div>
   );
 }

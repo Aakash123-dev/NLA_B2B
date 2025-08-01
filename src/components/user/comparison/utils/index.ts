@@ -14,7 +14,7 @@ export const generateComparisonColumns = (numberOfTpos: number): ComparisonColum
   for (let i = 0; i < numberOfTpos; i++) {
     newColumns.push({
       id: `tpo-${i + 1}`,
-      title: `TPO Event ${i + 1}`,
+      title: `Plan ${i + 1}`,
       attributes: generateRandomAttributes()
     })
   }

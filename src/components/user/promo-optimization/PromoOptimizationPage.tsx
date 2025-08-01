@@ -17,11 +17,14 @@ import {
   EventConfigurationSection,
   PromotionResultsTableSection,
   SalesROIWidget,
-  FinancialParametersSection
+  FinancialParametersSection,
+  PromoOptimizationHeader
 } from './components'
+import { SharedSmartInsightsDrawer, SimpleSmartInsightsDrawer } from '@/components/common'
 
 export function PromoOptimizationPage() {
   const router = useRouter()
+  const [isSmartInsightsOpen, setIsSmartInsightsOpen] = useState(false)
   
   const [formData, setFormData] = useState({
     selectedRetailer: '',
@@ -68,7 +71,16 @@ export function PromoOptimizationPage() {
   }
 
   const handleBackToHome = () => {
-    router.push('/user/dashboard')
+    // Get URL parameters and preserve them when going back
+    const urlParams = new URLSearchParams(window.location.search);
+    const projectId = urlParams.get('project');
+    const modelId = urlParams.get('model');
+    
+    const params = new URLSearchParams();
+    if (projectId) params.set('project', projectId);
+    if (modelId) params.set('model', modelId);
+    
+    router.push(`/user/design-studio?${params.toString()}`);
   }
 
   const handleSelectionChange = (field: string, selection: string) => {
@@ -109,39 +121,10 @@ export function PromoOptimizationPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
       {/* Header */}
-      <div className="bg-white/80 backdrop-blur-sm border-b border-slate-200 sticky top-0 z-30">
-        <div className="w-full px-6 py-4">
-          <div className="flex items-center justify-between">
-            <Button
-              onClick={handleBackToHome}
-              variant="ghost"
-              className="text-slate-600 hover:text-slate-900 hover:bg-slate-100"
-            >
-              <ArrowLeft className="mr-2 h-4 w-4" />
-              Back to Dashboard
-            </Button>
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-blue-500/20 rounded-lg">
-                <Target className="h-5 w-5 text-blue-600" />
-              </div>
-              <div>
-                <h1 className="text-lg font-semibold text-slate-900">Promo Optimization</h1>
-                <p className="text-sm text-slate-600">Analyze promotional effectiveness and optimize performance</p>
-              </div>
-            </div>
-            <div className="flex items-center gap-3">
-              <Button variant="outline" className="border-slate-300 text-slate-600 hover:bg-slate-50">
-                <TrendingUp className="w-4 h-4 mr-2" />
-                Insights
-              </Button>
-              <Button variant="outline" className="border-slate-300 text-slate-600 hover:bg-slate-50">
-                <Download className="w-4 h-4 mr-2" />
-                Export
-              </Button>
-            </div>
-          </div>
-        </div>
-      </div>
+      <PromoOptimizationHeader 
+        onBack={handleBackToHome}
+        onOpenSmartInsights={() => setIsSmartInsightsOpen(true)}
+      />
 
       <div className="w-full px-6 py-8">
         <motion.div 
@@ -224,6 +207,12 @@ export function PromoOptimizationPage() {
           </div>
         </motion.div>
       </div>
+
+      {/* Smart Insights Drawer */}
+      <SimpleSmartInsightsDrawer 
+        isSmartInsightsOpen={isSmartInsightsOpen}
+        setIsSmartInsightsOpen={setIsSmartInsightsOpen}
+      />
     </div>
   )
 }

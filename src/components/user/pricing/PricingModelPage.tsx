@@ -26,10 +26,12 @@ import {
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
+import { SharedSmartInsightsDrawer } from '@/components/common'
 
 export default function PricingModelPage() {
   const router = useRouter()
   const searchParams = useSearchParams()
+  const [isSmartInsightsOpen, setIsSmartInsightsOpen] = React.useState(false)
   
   // Get project and model parameters from URL
   const projectId = searchParams.get('project')
@@ -170,6 +172,17 @@ export default function PricingModelPage() {
                 </Badge>
               </div>
             </div>
+            
+            {/* Smart Insights Button */}
+            <Button 
+              onClick={() => setIsSmartInsightsOpen(true)}
+              variant="outline" 
+              size="sm" 
+              className="gap-2 bg-gradient-to-r from-indigo-50 to-violet-50 border-indigo-200 text-indigo-700 hover:from-indigo-100 hover:to-violet-100 hover:border-indigo-300 hover:text-indigo-800 transition-all duration-200 shadow-sm hover:shadow-md hover:-translate-y-0.5 transform rounded-full px-5"
+            >
+              <Brain className="w-4 h-4" />
+              Smart Insights
+            </Button>
           </div>
 
         </div>

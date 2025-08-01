@@ -11,11 +11,13 @@ import { MetricsGrid } from './components/MetricsGrid'
 import { CalendarGrid } from './components/CalendarGrid'
 import { SidePanel } from './components/SidePanel'
 import { TradePlan } from '../types'
+import { SharedSmartInsightsDrawer } from '@/components/common'
 
 export function TpoDashboardPage() {
   const router = useRouter()
   const [tradePlan, setTradePlan] = useState<TradePlan | null>(null)
   const [isLoading, setIsLoading] = useState(true)
+  const [isSmartInsightsOpen, setIsSmartInsightsOpen] = useState(false)
 
   useEffect(() => {
     loadTradePlan()
@@ -77,7 +79,10 @@ export function TpoDashboardPage() {
       </div>
 
       {/* Sticky Header */}
-      <DashboardHeader tradePlan={tradePlan} />
+      <DashboardHeader 
+        tradePlan={tradePlan} 
+        onOpenSmartInsights={() => setIsSmartInsightsOpen(true)}
+      />
 
       {/* Main Content */}
       <div className="relative z-10 p-6 space-y-8">
@@ -191,6 +196,11 @@ export function TpoDashboardPage() {
           <CalendarGrid />
         </motion.div>
       </div>
+      
+      <SharedSmartInsightsDrawer
+        isSmartInsightsOpen={isSmartInsightsOpen}
+        setIsSmartInsightsOpen={setIsSmartInsightsOpen}
+      />
     </div>
   )
 }
