@@ -15,19 +15,26 @@ export function ProductSectionRefactored({
   type,
   showResults,
   selectedProducts,
+  marginPriceValues,
+  marginSimulationData,
+  marginChartData,
+  isPriceSimulationLoading,
+  handleMarginPriceInputChange,
+  setSelectedProduct1,
 }: ProductSectionProps) {
   const { expandedProducts, toggleProductExpansion } = useProductExpansion();
   const { marginInputs, updateMarginInput, initializeMarginInputs } =
     useMarginInputs(products);
 
-    console.log(products, "allProductsWehave")
+  console.log(products, 'allProductsWehave');
 
   const chartData = prepareChartData(products);
 
-  const handleToggleProductExpansion = (productId: number) => {
+  const handleToggleProductExpansion = (productId: string) => {
+    const shouldExpand = expandedProducts !== productId;
     toggleProductExpansion(productId);
-    // Initialize margin inputs when expanding
-    if (!expandedProducts.has(productId)) {
+
+    if (shouldExpand) {
       initializeMarginInputs(productId);
     }
   };
@@ -47,6 +54,12 @@ export function ProductSectionRefactored({
         type={type}
         showResults={showResults}
         selectedProducts={selectedProducts}
+        marginPriceValues={marginPriceValues}
+        marginSimulationData={marginSimulationData}
+        marginChartData={marginChartData}
+        isPriceSimulationLoading={isPriceSimulationLoading}
+        handleMarginPriceInputChange={handleMarginPriceInputChange}
+        setSelectedProduct1={setSelectedProduct1}
       />
     </div>
   );

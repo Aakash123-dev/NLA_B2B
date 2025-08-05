@@ -40,6 +40,7 @@ export function SimulatorFilters({
   handleRetailerChange,
   handleBrandChange,
   handleProductsChangeForPrice,
+  handleProductChange,
 }: SimulatorFiltersProps) {
   // Build options for selects from props
   const retailerOptions = useMemo(
@@ -149,7 +150,7 @@ export function SimulatorFilters({
               />
             </div>
 
-            {/* Product Filter */}
+            {/* Products Filter */}
             <div className="space-y-3">
               <div className="flex items-center gap-2">
                 <ShoppingCart className="h-4 w-4 text-gray-500" />
@@ -161,6 +162,8 @@ export function SimulatorFilters({
                 options={productOptions}
                 value={selectedProducts}
                 onValueChange={handleProductsChangeForPrice}
+                handleProductChange={handleProductChange}
+                
                 placeholder="Select products"
                 searchPlaceholder="Search products..."
                 className="w-full"

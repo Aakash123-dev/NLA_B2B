@@ -8,6 +8,7 @@ import {
   SimulatorFilters,
   ProductSection,
   RelevantCompetitorsSection,
+  MarginAnalysisSection,
 } from './components';
 import { axiosPythonInstance } from '@/services/projectservices/axiosInstance';
 import { useSearchParams } from 'next/navigation';
@@ -49,70 +50,39 @@ export default function SimulatorPage() {
   const model_id = Number(searchParams.get('model'));
   const [isPriceSimulationLoading, setIsPriceSimulationLoading] =
     useState(false);
-  const [retailerBrandProducts, setRetailerBrandProducts] = useState([]);
-  const [priceSimulationData, setPriceSimulationData] = useState([]);
-  const [marginSimulationData, setMarginSimulationData] = useState([]);
-  const [competitors, setCompetitors] = useState([]);
-  const [competitorNewPrice, setCompetitorNewPrice] = useState([]);
-  const [simulatorType, setSimulatorType] = React.useState('price');
+  const [retailerBrandProducts, setRetailerBrandProducts] = useState<any>({});
+  const [priceSimulationData, setPriceSimulationData] = useState<any[]>([]);
+  const [competitors, setCompetitors] = useState<any[]>([]);
+  const [competitorNewPrice, setCompetitorNewPrice] = useState<string[]>([]);
   // Price simulation states
-  const [selectedProducts, setSelectedProducts] = useState([]);
+  const [selectedProducts, setSelectedProducts] = useState<string[]>([]);
   const [filteredSelectedPriceProducts, setFilteredSelectedPriceProducts] =
-    useState([]);
-  const [newPrices, setNewPrices] = useState([]);
+    useState<any[]>([]);
+  const [newPrices, setNewPrices] = useState<string[]>([]);
   const [showProductResults, setShowProductResults] = useState(false);
   const [showCompetitorResults, setShowCompetitorResults] = useState(false);
-  // Margin simulation states
   const [marginPriceValues, setMarginPriceValues] = useState({
     listPrice: '',
     edlpSpend: '',
     netUnitPrice: '',
-    cogs: null,
+    cogs: '',
     basePriceElasticity: '',
     basePrice: '',
   });
 
   const [marginChartData, setMarginChartData] = useState({
-    manufacturerProfit: [],
-    annualProfit: [],
+    manufacturerProfit: [] as number[],
+    annualProfit: [] as number[],
   });
 
-  // Common Pirce/Margin simulator states
+  // Margin simulation states
+  const [marginSimulationData, setMarginSimulationData] = useState<any[]>([]);
+
+  // Common Price/Margin simulator states
   const [selectedRetailer, setSelectedRetailer] = useState<any>('');
   const [selectedBrand, setSelectedBrand] = useState<any>('');
   const [selectedProduct, setSelectedProduct] = useState<any>('');
-  /* Promo Event Simulation States */
-  const [promoEventPriceValues, setPromoEventPriceValues] = useState({
-    promoPrice: '',
-    discount: '',
-    total_units_sum: '',
-    promoPriceElasticity: '',
-    basePrice: '',
-    tprDist: '',
-    foDist: '',
-    doDist: '',
-    fdDist: '',
-    vcm: '',
-    fixedFee: '',
-    promoSpend: '',
-    edlpSpend: '',
-    listPrice: '',
-    edlpPerUnitRate: '',
-    promoPerUnitRate: '',
-    spoils: '',
-    cogs: '',
-    originalBasePrice: '',
-    originalTotalUnits: '',
-    basePriceElasticity: '',
-    product: '',
-  });
-
-  const [promoSimulationData, setPromoSimulationData] = useState([]);
-  const [discount, setDiscount] = React.useState('');
-  const [lift, setLift] = React.useState({});
-  const [units, setUnits] = React.useState({});
-  const [dollars, setDollars] = React.useState({});
-  const [promoEventChartData, setpromoEventChartData] = React.useState([]);
+  const [selectedProduct1, setSelectedProduct1] = useState('');
 
   const retailers = Object?.keys(retailerBrandProducts || {});
   let brands =
@@ -124,11 +94,14 @@ export default function SimulatorPage() {
       ? retailerBrandProducts[selectedRetailer][selectedBrand] || []
       : [];
 
-  /* -----start----- Margin API handler -----start----- */
-  const marginSimulationApiHandler = async (product: any) => {
+  /* -----start----- Common handlers -----start----- */
+  const [isAllProductSelected, setIsAllProductSelected] = useState(false);
+
+  const marginSimulationApiHandler = async (product: string) => {
+    const storedState = getStoredState(project_id, model_id);
     setIsPriceSimulationLoading(true);
     try {
-      const api = `/insights/simulation/price/product-data?project_id=${project_id}&model_id=${model_id}&Retailer=${selectedRetailer}&Product=${product}`;
+      const api = `/insights/simulation/price/product-data?project_id=${project_id}&model_id=${model_id}&Retailer=${selectedRetailer || storedState.retailer}&Product=${product}`;
       const response = await axiosPythonInstance.get(api);
       if (response.status === 200) {
         setMarginSimulationData(response?.data?.data);
@@ -152,12 +125,10 @@ export default function SimulatorPage() {
     }
   };
 
-  /* -----end----- Margin API handler -----end----- */
+  console.log(marginPriceValues, 'AllMarginPriceValues');
 
-  /* -----start----- Common handlers -----start----- */
-  const [isAllProductSelected, setIsAllProductSelected] = useState(false);
-
-  const handleProductsChangeForPrice = (values: any) => {
+  const handleProductsChangeForPrice = (values: string) => {
+    console.log(values, 'handleProductsChnageForPrice');
     setIsAllProductSelected(false);
     if (values && values.length && values.includes('select-all')) {
       if (values.length === products.length + 1) {
@@ -170,193 +141,152 @@ export default function SimulatorPage() {
     if (values.length === products.length) {
       setIsAllProductSelected(true);
     }
-    return setSelectedProducts(values);
+    setSelectedProducts(values);
+
+    // If a single product is selected, also set it for margin analysis
+    // if (values.length === 1) {
+    //   setSelectedProduct(values[0]);
+    //   // Call margin API for the selected product
+    //   if (selectedRetailer && values[0]) {
+    //     marginSimulationApiHandler(values[0]);
+    //   }
+    // } else {
+    //   setSelectedProduct('');
+    // }
   };
 
   // Retailer change handler
-  const handleRetailerChange = (value: any) => {
+  const handleRetailerChange = (value: string) => {
     setIsAllProductSelected(false);
     setSelectedRetailer(value);
     setSelectedBrand('');
     setSelectedProduct('');
     setSelectedProducts([]);
 
-    // Clear related data for all simulator types
-    if (simulatorType === 'price') {
-      setFilteredSelectedPriceProducts([]);
-      setCompetitors([]);
-      setNewPrices([]);
-      setCompetitorNewPrice([]);
-      setNewPriceChange([]);
-      setVolumeImpact([]);
-      setDollarImpact([]);
-      setShowProductResults(false);
-      setShowCompetitorResults(false);
-      getPriceSimulationApiHandler(value);
-    } else if (simulatorType === 'margin') {
-      setMarginSimulationData([]);
-      setMarginPriceValues({
-        listPrice: '',
-        edlpSpend: '',
-        netUnitPrice: '',
-        cogs: null,
-        basePriceElasticity: '',
-        basePrice: '',
-      });
-      setMarginChartData({
-        manufacturerProfit: [],
-        annualProfit: [],
-      });
-    } else if (simulatorType === 'promo') {
-      setPromoSimulationData([]);
-      setPromoEventPriceValues({
-        promoPrice: '',
-        discount: '',
-        total_units_sum: '',
-        discount: null,
-        promoPriceElasticity: '',
-        basePrice: '',
-        tprDist: '',
-        foDist: '',
-        doDist: '',
-        fdDist: '',
-        vcm: '',
-        fixedFee: '',
-        promoSpend: '',
-        edlpSpend: '',
-        listPrice: '',
-      });
-      setDiscount('');
-      setLift({});
-      setUnits({});
-      setDollars({});
-      setpromoEventChartData([]);
-    }
+    // Clear all related simulator states, regardless of type
+    setFilteredSelectedPriceProducts([]);
+    setCompetitors([]);
+    setNewPrices([]);
+    setCompetitorNewPrice([]);
+    setNewPriceChange([]);
+    setVolumeImpact([]);
+    setDollarImpact([]);
+    setShowProductResults(false);
+    setShowCompetitorResults(false);
 
-    // Save the updated state immediately
+    setMarginSimulationData([]);
+    setMarginPriceValues({
+      listPrice: '',
+      edlpSpend: '',
+      netUnitPrice: '',
+      cogs: '',
+      basePriceElasticity: '',
+      basePrice: '',
+    });
+    setMarginChartData({
+      manufacturerProfit: [],
+      annualProfit: [],
+    });
+
+    // Always call price simulation API handler
+    getPriceSimulationApiHandler(value);
+    // Remove the incorrect marginSimulationApiHandler call here since it needs a product parameter
+
+    // Save state without simulatorType key, flatten keys
     const currentState = getStoredState(project_id, model_id);
     const newState = {
       ...currentState,
-      [simulatorType]: {
-        ...currentState[simulatorType],
-        retailer: value,
-        brand: '',
-        product: '',
-        products: [],
-        newPrices: [],
-        competitorNewPrice: [],
-        priceValues:
-          simulatorType === 'margin'
-            ? {
-                listPrice: '',
-                edlpSpend: '',
-                netUnitPrice: '',
-                cogs: null,
-                basePriceElasticity: '',
-                basePrice: '',
-              }
-            : simulatorType === 'promo'
-              ? {
-                  promoPrice: '',
-                  discount: '',
-                  total_units_sum: '',
-                  discount: null,
-                  promoPriceElasticity: '',
-                  basePrice: '',
-                  tprDist: '',
-                  foDist: '',
-                  doDist: '',
-                  fdDist: '',
-                  vcm: '',
-                  fixedFee: '',
-                  promoSpend: '',
-                  edlpSpend: '',
-                  listPrice: '',
-                }
-              : {},
+      retailer: value,
+      brand: '',
+      product: '',
+      products: [],
+      newPrices: [],
+      competitorNewPrice: [],
+      priceValues: {
+        listPrice: '',
+        edlpSpend: '',
+        netUnitPrice: '',
+        cogs: '',
+        basePriceElasticity: '',
+        basePrice: '',
       },
     };
+
     saveState(project_id, model_id, newState);
   };
 
   // Brand change handler
-  const handleBrandChange = (value: any) => {
+  const handleBrandChange = (value: string) => {
     setIsAllProductSelected(false);
     setSelectedBrand(value);
     setSelectedProduct('');
     setSelectedProducts([]);
 
-    // Clear product-dependent data for all simulator types
-    if (simulatorType === 'price') {
-      setNewPrices([]);
-      setCompetitorNewPrice([]);
-      setNewPriceChange([]);
-      setVolumeImpact([]);
-      setDollarImpact([]);
-      setShowProductResults(false);
-      setShowCompetitorResults(false);
-    } else if (simulatorType === 'margin') {
-      setMarginSimulationData([]);
-      setMarginPriceValues({
+    // Clear all product-dependent data unconditionally
+    setNewPrices([]);
+    setCompetitorNewPrice([]);
+    setNewPriceChange([]);
+    setVolumeImpact([]);
+    setDollarImpact([]);
+    setShowProductResults(false);
+    setShowCompetitorResults(false);
+
+    setMarginSimulationData([]);
+    setMarginPriceValues({
+      listPrice: '',
+      edlpSpend: '',
+      netUnitPrice: '',
+      cogs: '',
+      basePriceElasticity: '',
+      basePrice: '',
+    });
+    setMarginChartData({
+      manufacturerProfit: [],
+      annualProfit: [],
+    });
+
+    // Save the updated state without simulatorType key
+    const currentState = getStoredState(project_id, model_id);
+    const newState = {
+      ...currentState,
+      brand: value,
+      product: '',
+      products: [],
+      newPrices: [],
+      competitorNewPrice: [],
+      priceValues: {
         listPrice: '',
         edlpSpend: '',
         netUnitPrice: '',
-        cogs: null,
+        cogs: '',
         basePriceElasticity: '',
         basePrice: '',
-      });
-      setMarginChartData({
-        manufacturerProfit: [],
-        annualProfit: [],
-      });
-    } else if (simulatorType === 'promo') {
-      setPromoSimulationData([]);
-      setPromoEventPriceValues({
-        promoPrice: '',
-        discount: '',
-        total_units_sum: '',
-        discount: null,
-        promoPriceElasticity: '',
-        basePrice: '',
-        tprDist: '',
-        foDist: '',
-        doDist: '',
-        fdDist: '',
-        vcm: '',
-        fixedFee: '',
-        promoSpend: '',
-        edlpSpend: '',
-        listPrice: '',
-      });
-      setDiscount('');
-      setLift({});
-      setUnits({});
-      setDollars({});
-      setpromoEventChartData([]);
-    }
+      },
+    };
+    saveState(project_id, model_id, newState);
+  };
+
+  // Product change handler (for direct product selection)
+  const handleProductChange = (value: string) => {
+    setSelectedProduct(value);
+
+    // Call margin simulation API handler when a product is selected
+    // if (value && selectedRetailer) {
+    //   marginSimulationApiHandler(value);
+    // }
 
     // Save the updated state immediately
     const currentState = getStoredState(project_id, model_id);
     const newState = {
       ...currentState,
-      [simulatorType]: {
-        ...currentState[simulatorType],
-        brand: value,
-        product: '',
-        products: [],
-        newPrices: [],
-        competitorNewPrice: [],
-      },
+      product: value,
     };
     saveState(project_id, model_id, newState);
   };
   /* -----end----- Common handlers -----end----- */
 
-  /******************************************************************************************************************************************************/
-  /*======================= START ===================================== PRICE SIMULATOR ================================= START ========================*/
-
   /* -----start----- Api Handler -----start----- */
-  const getPriceSimulationApiHandler = async (retailer) => {
+  const getPriceSimulationApiHandler = async (retailer: string) => {
     setIsPriceSimulationLoading(true);
     try {
       const api = `/insights/simulation/price/product-data?project_id=${project_id}&model_id=${model_id}&Retailer=${retailer}`;
@@ -372,12 +302,17 @@ export default function SimulatorPage() {
       return null;
     }
   };
-  /* -----start----- Api Handler -----start----- */
+  /* -----end----- Api Handler -----end----- */
 
   /* -----start----- Price change Handler -----start----- */
-  const [newPriceChange, setNewPriceChange] = useState([]);
+  const [newPriceChange, setNewPriceChange] = useState<any[]>([]);
 
-  const handleNewPriceOnChange = (index, event, product, type) => {
+  const handleNewPriceOnChange = (
+    index: number,
+    event: any,
+    product: any,
+    type: string
+  ) => {
     const newValue = event.target?.value || event.value || event; // Handle both event types
     let temp = [...newPriceChange];
 
@@ -418,36 +353,34 @@ export default function SimulatorPage() {
       setCompetitorNewPrice(updatedPrices);
     }
 
-    // Save the updated state to localStorage
+    // Save the updated state to localStorage without simulatorType nesting
     const currentState = getStoredState(project_id, model_id);
     const newState = {
       ...currentState,
-      [simulatorType]: {
-        ...currentState[simulatorType],
-        newPrices:
-          type === 'product'
-            ? [...newPrices].map((price, i) => (i === index ? newValue : price))
-            : currentState[simulatorType]?.newPrices || [],
-        competitorNewPrice:
-          type === 'competitor'
-            ? [...competitorNewPrice].map((price, i) =>
-                i === index ? newValue : price
-              )
-            : currentState[simulatorType]?.competitorNewPrice || [],
-        newPriceChange: temp,
-      },
+      newPrices:
+        type === 'product'
+          ? [...newPrices].map((price, i) => (i === index ? newValue : price))
+          : currentState.newPrices || [],
+      competitorNewPrice:
+        type === 'competitor'
+          ? [...competitorNewPrice].map((price, i) =>
+              i === index ? newValue : price
+            )
+          : currentState.competitorNewPrice || [],
+      newPriceChange: temp,
     };
     saveState(project_id, model_id, newState);
   };
+
   /* -----end----- Price change Handler -----end----- */
 
   /* -----start------ Impact handler function when there is a change in Price -----start----- */
-  const [volumeImpact, setVolumeImpact] = useState([]);
-  const [dollarImpact, setDollarImpact] = useState([]);
+  const [volumeImpact, setVolumeImpact] = useState<any[]>([]);
+  const [dollarImpact, setDollarImpact] = useState<any[]>([]);
 
   const impactHandler = () => {
-    let tempVolumeImpact = [];
-    let tempDollarImpact = [];
+    let tempVolumeImpact: any[] = [];
+    let tempDollarImpact: any[] = [];
     newPriceChange &&
       newPriceChange.length > 0 &&
       newPriceChange.map((ele, j) => {
@@ -526,26 +459,26 @@ export default function SimulatorPage() {
 
   /* -----start------ cross Effects handler function -----start----- */
 
-  const crossEffectHandler = (volumeImpact, dollarImpact) => {
-    let productCompetitorCrossEffects = [];
+  const crossEffectHandler = (volumeImpact: any[], dollarImpact: any[]) => {
+    let productCompetitorCrossEffects: any[] = [];
     if (volumeImpact.length > 0) {
       //gets cross effect values within selected products
       volumeImpact.map((ele) => {
         filteredSelectedPriceProducts.map((val) => {
           if (val.Product === ele.Product && ele.type === 'product') {
-            let crossEffects = [];
+            let crossEffects: any[] = [];
             let sum = 0;
             let comps = JSON.parse(val.Competitors).filter(
-              (comp) => comp.cross_effect > 0
+              (comp: any) => comp.cross_effect > 0
             );
             comps.length > 0 &&
-              comps.map((comp) => {
+              comps.map((comp: any) => {
                 if (comp.cross_effect > 0) {
                   sum = sum + comp.cross_effect;
                 }
               });
             comps.length > 0 &&
-              comps.map((comp) => {
+              comps.map((comp: any) => {
                 if (comp.cross_effect > 0) {
                   crossEffects.push((comp.cross_effect * comps.length) / sum);
                 }
@@ -577,20 +510,20 @@ export default function SimulatorPage() {
             ele.type === 'competitor' &&
             ele.NewPrice !== ''
           ) {
-            let crossEffects = [];
+            let crossEffects: any[] = [];
             let comps = JSON.parse(val.Competitors).filter(
-              (comp) => comp.cross_effect > 0
+              (comp: any) => comp.cross_effect > 0
             );
             // console.log("comps", comps, val);
             let sum = 0;
             comps.length > 0 &&
-              comps.map((comp) => {
+              comps.map((comp: any) => {
                 if (comp.cross_effect > 0) {
                   sum = sum + comp.cross_effect;
                 }
               });
             comps.length > 0 &&
-              comps.map((comp) => {
+              comps.map((comp: any) => {
                 if (comp.cross_effect > 0) {
                   crossEffects.push((comp.cross_effect * comps.length) / sum);
                 }
@@ -845,9 +778,20 @@ export default function SimulatorPage() {
   /*======================= END ===================================== PRICE SIMULATOR ================================= END ========================*/
   /**************************************************************************************************************************************************/
 
-  function filterCompetitorsHandler(products) {
-    // console.log("\n\nproducts from filterCompetitorsHandler:::::::: ", products);
+  /*======================= START ===================================== MARGIN SIMULATOR ================================= START ========================*/
 
+  const handleMarginPriceInputChange = (event) => {
+    const { name, value } = event.target;
+    setMarginPriceValues((prevInputValues) => ({
+      ...prevInputValues,
+      [name]: value,
+    }));
+  };
+
+  /*======================= END ===================================== MARGIN SIMULATOR ================================= END ========================*/
+  /**************************************************************************************************************************************************/
+
+  function filterCompetitorsHandler(products: any[]) {
     const seenProducts = new Set();
     const uniqueCompetitors = [];
 
@@ -873,13 +817,13 @@ export default function SimulatorPage() {
     }
 
     const updatedCompetitors = uniqueCompetitors.map((product) => {
-      const competitorTo = [];
+      const competitorTo: any[] = [];
       // Find products that are competitors to the current product
       products.forEach((otherProduct) => {
         if (otherProduct.Product !== product.Product) {
           const otherCompetitors = JSON.parse(otherProduct.Competitors);
           const isCompetitor = otherCompetitors.some(
-            (competitor) =>
+            (competitor: any) =>
               competitor.competitor === product.Product &&
               competitor.cross_effect > 0
           );
@@ -887,7 +831,7 @@ export default function SimulatorPage() {
             competitorTo.push({
               Product: otherProduct.Product,
               crossEffect: otherCompetitors.find(
-                (competitor) => competitor.competitor === product.Product
+                (competitor: any) => competitor.competitor === product.Product
               ).cross_effect,
             });
           }
@@ -907,92 +851,88 @@ export default function SimulatorPage() {
         setIsPriceSimulationLoading(true);
         const api = `/insights/retailer_brands_products?project_id=${project_id}&model_id=${model_id}`;
         const response = await axiosPythonInstance.get(api);
+
         if (response.status === 200) {
           setRetailerBrandProducts(response?.data?.data);
 
           // After getting the data, restore the stored state
           const storedState = getStoredState(project_id, model_id);
+          console.log(storedState, 'Adhhjfgdkjhskjfkhsjlfs');
+
           if (storedState) {
-            // Set simulator type
-            setSimulatorType(storedState.currentType || 'price');
+            // Restore retailer
+            if (storedState.retailer) {
+              setSelectedRetailer(storedState.retailer);
 
-            // Restore price simulator state
-            if (storedState.price) {
-              const priceState = storedState.price;
+              const priceResponse = await getPriceSimulationApiHandler(
+                storedState.retailer
+              );
 
-              if (priceState.retailer) {
-                setSelectedRetailer(priceState.retailer);
-                // Trigger API call for price simulation
-                const priceResponse = await getPriceSimulationApiHandler(
-                  priceState.retailer
-                );
+              if (priceResponse) {
+                // Restore brand
+                if (storedState.brand) {
+                  setSelectedBrand(storedState.brand);
+                }
 
-                // Only proceed with other settings if API call was successful
-                if (priceResponse) {
-                  if (priceState.brand) {
-                    setSelectedBrand(priceState.brand);
-                  }
+                // Restore products
+                if (storedState.products && storedState.products.length > 0) {
+                  setSelectedProducts(storedState.products);
 
-                  if (priceState.products && priceState.products.length > 0) {
-                    setSelectedProducts(priceState.products);
+                  const filteredData = priceResponse.data?.filter((item: any) =>
+                    storedState.products.includes(item.Product)
+                  );
+                  setFilteredSelectedPriceProducts(filteredData);
+                  filterCompetitorsHandler(filteredData);
 
-                    // First get the filtered products data
-                    const filteredData = priceResponse.data?.filter((item) =>
-                      priceState.products.includes(item.Product)
+                  if (
+                    storedState.newPrices &&
+                    storedState.newPrices.length > 0
+                  ) {
+                    setNewPrices(storedState.newPrices);
+
+                    const priceChanges = filteredData.map(
+                      (product: any, index: number) => ({
+                        ...product,
+                        type: 'product',
+                        newPrice: storedState.newPrices[index],
+                      })
                     );
-                    setFilteredSelectedPriceProducts(filteredData);
-                    filterCompetitorsHandler(filteredData);
 
-                    // Then restore prices and trigger calculations
                     if (
-                      priceState.newPrices &&
-                      priceState.newPrices.length > 0
+                      storedState.competitorNewPrice &&
+                      storedState.competitorNewPrice.length > 0
                     ) {
-                      setNewPrices(priceState.newPrices);
+                      setCompetitorNewPrice(storedState.competitorNewPrice);
 
-                      // Create price change events with complete product data
-                      const priceChanges = filteredData.map(
-                        (product, index) => ({
-                          ...product,
-                          type: 'product',
-                          newPrice: priceState.newPrices[index],
+                      const competitorChanges = competitors.map(
+                        (competitor, index) => ({
+                          ...competitor,
+                          type: 'competitor',
+                          newPrice: storedState.competitorNewPrice[index],
                         })
                       );
 
-                      // If there are competitor prices, add them
-                      if (
-                        priceState.competitorNewPrice &&
-                        priceState.competitorNewPrice.length > 0
-                      ) {
-                        setCompetitorNewPrice(priceState.competitorNewPrice);
-
-                        // Get competitor data and add their price changes
-                        const competitorChanges = competitors.map(
-                          (competitor, index) => ({
-                            ...competitor,
-                            type: 'competitor',
-                            newPrice: priceState.competitorNewPrice[index],
-                          })
-                        );
-
-                        // Combine product and competitor changes
-                        setNewPriceChange([
-                          ...priceChanges,
-                          ...competitorChanges,
-                        ]);
-                      } else {
-                        setNewPriceChange(priceChanges);
-                      }
-
-                      // Show results sections
-                      setShowProductResults(true);
-                      setShowCompetitorResults(true);
+                      setNewPriceChange([
+                        ...priceChanges,
+                        ...competitorChanges,
+                      ]);
+                    } else {
+                      setNewPriceChange(priceChanges);
                     }
+
+                    setShowProductResults(true);
+                    setShowCompetitorResults(true);
                   }
                 }
               }
             }
+
+            // Restore margin values
+            if (storedState.priceValues) {
+              setMarginPriceValues(storedState.priceValues);
+            }
           }
+
           setIsPriceSimulationLoading(false);
         }
       } catch (error) {
@@ -1000,12 +940,15 @@ export default function SimulatorPage() {
         console.log('Error in fetching retailers', error);
       }
     };
+
     fetchRetailerBrandProductApiHandler();
   }, []);
 
+  console.log(selectedProducts, 'selectedOronf');
+
   useEffect(() => {
     // Filter data based on selected retailers
-    const filteredData = priceSimulationData?.filter((item) =>
+    const filteredData = priceSimulationData?.filter((item: any) =>
       selectedProducts.includes(item.Product)
     );
     setFilteredSelectedPriceProducts(filteredData);
@@ -1013,18 +956,19 @@ export default function SimulatorPage() {
 
     // Get stored state
     const storedState = getStoredState(project_id, model_id);
-    const storedPrices = storedState?.price?.newPrices;
-    const storedCompetitorPrices = storedState?.price?.competitorNewPrice;
+    const storedPrices = storedState?.newPrices;
+    const storedCompetitorPrices = storedState?.competitorNewPrice;
 
     // Restore prices for currently selected products
     if (storedPrices && filteredData && filteredData.length > 0) {
       // Create new prices array for current selection, preserving stored values
-      const restoredPrices = [];
-      filteredData.forEach((product, index) => {
+      const restoredPrices: string[] = [];
+      filteredData.forEach((product: any, index) => {
         // Find stored price for this specific product (look for it in stored newPriceChange)
-        const storedPriceChange = storedState?.price?.newPriceChange || [];
+        const storedPriceChange = storedState?.newPriceChange || [];
         const productPriceData = storedPriceChange.find(
-          (item) => item.Product === product.Product && item.type === 'product'
+          (item: any) =>
+            item.Product === product.Product && item.type === 'product'
         );
         restoredPrices[index] = productPriceData
           ? productPriceData.newPrice
@@ -1083,41 +1027,95 @@ export default function SimulatorPage() {
     }
   }, [newPriceChange]);
 
+  useEffect(() => {
+    if (selectedProduct1 && selectedProduct1.Product && selectedRetailer) {
+      marginSimulationApiHandler(selectedProduct1.Product);
+
+      // Save updated state with selectedProduct1.product
+      const currentState = getStoredState(project_id, model_id) || {};
+      const newState = {
+        ...currentState,
+        product: selectedProduct1.Product,
+      };
+      saveState(project_id, model_id, newState);
+    }
+  }, [selectedProduct1, selectedRetailer]);
+
+  // Margin simulator useEffect
+  useEffect(() => {
+    const changeInPrice = [
+      -25, -24, -23, -22, -21, -20, -19, -18, -17, -16, -15, -14, -13, -12, -11,
+      -10, -9, -8, -7, -6, -5, -4, -3, -2, -1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10,
+      11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25,
+    ];
+    const TotalVolume = marginSimulationData[0]?.total_units_sum || 0;
+    const BasePriceElasticity = parseFloat(
+      marginPriceValues.basePriceElasticity || '0'
+    );
+    const listPrice = parseFloat(marginPriceValues.listPrice || '0');
+    const basePrice = parseFloat(marginPriceValues.basePrice || '0');
+    const cogs = parseFloat(marginPriceValues.cogs?.toString() || '0');
+
+    // Formula
+    const newUnits = changeInPrice.map(
+      (change) =>
+        TotalVolume +
+        TotalVolume * ((1 + change / 100) ** BasePriceElasticity - 1)
+    ); // Volume (pounds)
+    const baseMrev = newUnits.map((unit) => unit * listPrice);
+    const baseMtrade = changeInPrice.map(
+      (change, index) =>
+        newUnits[index] * (basePrice - basePrice * (1 + change / 100))
+    );
+    const baseMnetRev = baseMrev.map((rev, index) => rev - baseMtrade[index]);
+    const mProfit = baseMnetRev.map(
+      (netRev, index) => netRev - newUnits[index] * cogs
+    ); // Manufacture profit
+    // Annual Sales
+    const annualSales = newUnits.map(
+      (unit, index) => unit * basePrice * (1 + changeInPrice[index] / 100)
+    );
+
+    setMarginChartData({
+      ...marginChartData,
+      manufacturerProfit: mProfit,
+      annualProfit: annualSales,
+    });
+  }, [marginPriceValues]);
+
   // Add effect to save state when values change
   useEffect(() => {
     if (!retailerBrandProducts) return; // Don't save if data isn't loaded
 
     const currentState = getStoredState(project_id, model_id) || {};
     const state = {
-      currentType: simulatorType,
-      price: {
-        ...currentState.price,
-        retailer: selectedRetailer || currentState.price?.retailer,
-        brand: selectedBrand || currentState.price?.brand,
-        products: selectedProducts?.length
-          ? selectedProducts
-          : currentState.price?.products,
-        newPrices: newPrices?.length
-          ? newPrices
-          : currentState.price?.newPrices,
-        competitorNewPrice: competitorNewPrice?.length
-          ? competitorNewPrice
-          : currentState.price?.competitorNewPrice,
-      },
+      retailer: selectedRetailer || currentState.retailer,
+      brand: selectedBrand || currentState.brand,
+      product: selectedProduct || currentState.product,
+      products: selectedProducts?.length
+        ? selectedProducts
+        : currentState.products,
+      newPrices: newPrices?.length ? newPrices : currentState.newPrices,
+      competitorNewPrice: competitorNewPrice?.length
+        ? competitorNewPrice
+        : currentState.competitorNewPrice,
+      priceValues: Object.keys(marginPriceValues).some(
+        (key) => marginPriceValues[key as keyof typeof marginPriceValues]
+      )
+        ? marginPriceValues
+        : currentState.priceValues || marginPriceValues,
     };
 
     saveState(project_id, model_id, state);
   }, [
     retailerBrandProducts,
-    simulatorType,
     selectedRetailer,
     selectedBrand,
-    selectedProducts,
     selectedProduct,
+    selectedProducts,
     newPrices,
     competitorNewPrice,
     marginPriceValues,
-    promoEventPriceValues,
     project_id,
     model_id,
   ]);
@@ -1139,7 +1137,8 @@ export default function SimulatorPage() {
       });
     }, 300);
   };
-
+  console.log(marginSimulationData, 'marginSimulationData');
+  console.log(marginPriceValues, 'marginPriceValues');
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-slate-50">
       {/* Header */}
@@ -1155,30 +1154,40 @@ export default function SimulatorPage() {
               onRunAnalysis={runSimulation} // your runSimulation handler here
               isRunning={isRunning}
               selectedRetailer={selectedRetailer}
-              handleRetailerChange={handleRetailerChange}
+              setSelectedRetailer={setSelectedRetailer}
               selectedBrand={selectedBrand}
-              handleBrandChange={handleBrandChange}
+              setSelectedBrand={setSelectedBrand}
               selectedProducts={selectedProducts}
-              handleProductsChangeForPrice={handleProductsChangeForPrice}
+              setSelectedProducts={setSelectedProducts}
               retailers={retailers}
               brands={brands}
               products={products}
+              handleRetailerChange={handleRetailerChange}
+              handleBrandChange={handleBrandChange}
+              handleProductsChangeForPrice={handleProductsChangeForPrice}
+              handleProductChange={handleProductChange}
             />
           </div>
 
           {/* Analysis Results - Only show after running analysis */}
           {hasRunAnalysis && (
             <>
-              {/* Product Analysis Section */}
+              {/* Price Simulator Section */}
               <div className="px-8">
                 <ProductSection
                   products={priceSimulationData}
                   newPrice={newPrices}
                   filteredSelectedPriceProducts={filteredSelectedPriceProducts}
                   type="product"
-                  showResults={showProductResults}
+                  showProductResults={showProductResults}
                   selectedProducts={selectedProducts}
                   onPriceChange={handleNewPriceOnChange}
+                  marginPriceValues={marginPriceValues}
+                  marginSimulationData={marginSimulationData}
+                  marginChartData={marginChartData}
+                  isPriceSimulationLoading={isPriceSimulationLoading}
+                  handleMarginPriceInputChange={handleMarginPriceInputChange}
+                  setSelectedProduct1={setSelectedProduct1}
                 />
               </div>
 
@@ -1233,11 +1242,11 @@ export default function SimulatorPage() {
                 <Play className="h-8 w-8 text-gray-400" />
               </div>
               <h3 className="mb-2 text-lg font-medium text-gray-900">
-                For Analyze
+                Price Analysis
               </h3>
               <p className="text-gray-600">
                 Configure your filters above and click on apply the analysis to
-                see results.
+                see simulation results.
               </p>
             </div>
           )}

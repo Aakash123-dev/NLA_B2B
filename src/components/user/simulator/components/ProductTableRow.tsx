@@ -38,8 +38,14 @@ export function ProductTableRow({
   toggleProductExpansion,
   updateMarginInput,
   newPrice,
+  marginPriceValues,
+  marginSimulationData,
+  marginChartData,
+  isPriceSimulationLoading,
+  handleMarginPriceInputChange,
+  setSelectedProduct1,
 }: ProductTableRowProps) {
-  console.log(product, 'newrice');
+  console.log(product?._id, 'newrice');
   const marginData = calculateMarginData(product, marginInputs[product.id]);
   const { Price_avg_last_4_weeks, total_units_sum } = product;
   const totalVolumeSum = parseFloat(total_units_sum);
@@ -51,7 +57,10 @@ export function ProductTableRow({
         animate={{ opacity: 1 }}
         transition={{ delay: index * 0.1 }}
         className="group cursor-pointer transition-all duration-200 hover:bg-gradient-to-r hover:from-indigo-50/30 hover:to-blue-50/30"
-        onClick={() => toggleProductExpansion(product?._id)}
+        onClick={() => {
+          setSelectedProduct1(product);
+          toggleProductExpansion(product?._id);
+        }}
       >
         <td className="px-6 py-6">
           <div className="flex items-center gap-3">
@@ -213,6 +222,11 @@ export function ProductTableRow({
                 marginInputs={marginInputs[product.id]}
                 updateMarginInput={updateMarginInput}
                 toggleProductExpansion={toggleProductExpansion}
+                marginPriceValues={marginPriceValues}
+                marginSimulationData={marginSimulationData}
+                marginChartData={marginChartData}
+                isPriceSimulationLoading={isPriceSimulationLoading}
+                handleMarginPriceInputChange={handleMarginPriceInputChange}
               />
             </td>
           </motion.tr>

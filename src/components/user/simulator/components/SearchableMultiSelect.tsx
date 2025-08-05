@@ -28,6 +28,7 @@ interface SearchableMultiSelectProps {
   options: Option[];
   value: string[];
   onValueChange: (value: string[]) => void;
+  handleProductChange?: (productString: string) => void; // ✅ Added
   placeholder: string;
   searchPlaceholder: string;
   icon?: React.ReactNode;
@@ -40,26 +41,45 @@ export function SearchableMultiSelect({
   options,
   value,
   onValueChange,
+  handleProductChange, // ✅ Added
   placeholder,
   searchPlaceholder,
   icon,
   className,
   disabled = false,
-  maxDisplayItems = 2
+  maxDisplayItems = 2,
 }: SearchableMultiSelectProps) {
   const [open, setOpen] = useState(false);
 
-  const selectedOptions = options.filter(option => value.includes(option.id));
+  const selectedOptions = options.filter((option) => value.includes(option.id));
 
   const handleSelect = (optionId: string) => {
     const newValue = value.includes(optionId)
-      ? value.filter(id => id !== optionId)
+      ? value.filter((id) => id !== optionId)
       : [...value, optionId];
+
     onValueChange(newValue);
+
+    if (handleProductChange) {
+      const newSelectedOptions = options.filter((option) =>
+        newValue.includes(option.id)
+      );
+      const productString = newSelectedOptions.map((opt) => opt.name).join(',');
+      handleProductChange(productString); // ✅ Call handler
+    }
   };
 
   const removeItem = (optionId: string) => {
-    onValueChange(value.filter(id => id !== optionId));
+    const newValue = value.filter((id) => id !== optionId);
+    onValueChange(newValue);
+
+    if (handleProductChange) {
+      const newSelectedOptions = options.filter((option) =>
+        newValue.includes(option.id)
+      );
+      const productString = newSelectedOptions.map((opt) => opt.name).join(',');
+      handleProductChange(productString); // ✅ Call handler
+    }
   };
 
   const displayText = () => {
@@ -77,27 +97,27 @@ export function SearchableMultiSelect({
             role="combobox"
             aria-expanded={open}
             className={cn(
-              "h-11 justify-between border border-gray-200 focus:border-blue-500 focus:ring-blue-500/20 hover:border-gray-300 transition-all duration-200 bg-white",
-              value?.length === 0 && "text-gray-500",
+              'h-11 justify-between border border-gray-200 bg-white transition-all duration-200 hover:border-gray-300 focus:border-blue-500 focus:ring-blue-500/20',
+              value?.length === 0 && 'text-gray-500',
               className
             )}
             disabled={disabled}
           >
-            <div className="flex items-center gap-2 flex-1 min-w-0">
+            <div className="flex min-w-0 flex-1 items-center gap-2">
               {icon && <div className="shrink-0">{icon}</div>}
-              <span className="truncate text-left">
-                {displayText()}
-              </span>
+              <span className="truncate text-left">{displayText()}</span>
             </div>
-            <ChevronDown className={cn(
-              "h-4 w-4 shrink-0 transition-transform duration-200",
-              open && "transform rotate-180"
-            )} />
+            <ChevronDown
+              className={cn(
+                'h-4 w-4 shrink-0 transition-transform duration-200',
+                open && 'rotate-180 transform'
+              )}
+            />
           </Button>
         </PopoverTrigger>
-        <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0 shadow-lg border-gray-200 bg-white">
+        <PopoverContent className="w-[var(--radix-popover-trigger-width)] border-gray-200 bg-white p-0 shadow-lg">
           <Command>
-            <CommandInput 
+            <CommandInput
               placeholder={searchPlaceholder}
               className="h-10 border-b border-gray-100"
             />
@@ -111,12 +131,16 @@ export function SearchableMultiSelect({
                     key={option.id}
                     value={option.name}
                     onSelect={() => handleSelect(option.id)}
-                    className="cursor-pointer flex items-center gap-3 px-3 py-2.5 text-sm hover:bg-gray-50 focus:bg-gray-50 rounded-md"
+                    className="flex cursor-pointer items-center gap-3 rounded-md px-3 py-2.5 text-sm hover:bg-gray-50 focus:bg-gray-50"
                   >
-                    <div className={cn(
-                      "h-4 w-4 border border-gray-300 rounded flex items-center justify-center transition-colors",
-                      value.includes(option.id) ? "bg-blue-500 border-blue-500" : "bg-white hover:border-blue-300"
-                    )}>
+                    <div
+                      className={cn(
+                        'flex h-4 w-4 items-center justify-center rounded border border-gray-300 transition-colors',
+                        value.includes(option.id)
+                          ? 'border-blue-500 bg-blue-500'
+                          : 'bg-white hover:border-blue-300'
+                      )}
+                    >
                       {value.includes(option.id) && (
                         <Check className="h-3 w-3 text-white" />
                       )}
@@ -132,12 +156,12 @@ export function SearchableMultiSelect({
 
       {/* Selected Items Display */}
       {value?.length > 0 && (
-        <div className="flex flex-wrap gap-1 mt-2">
+        <div className="mt-2 flex flex-wrap gap-1">
           {selectedOptions.slice(0, maxDisplayItems).map((option) => (
-            <Badge 
+            <Badge
               key={option.id}
-              variant="secondary" 
-              className="bg-blue-50 text-blue-700 border-blue-200 px-2 py-1 text-xs font-medium max-w-[200px] hover:bg-blue-100 transition-colors"
+              variant="secondary"
+              className="max-w-[200px] border-blue-200 bg-blue-50 px-2 py-1 text-xs font-medium text-blue-700 transition-colors hover:bg-blue-100"
             >
               <span className="truncate">{option?.name}</span>
               <button
@@ -145,14 +169,17 @@ export function SearchableMultiSelect({
                   e.stopPropagation();
                   removeItem(option?.id);
                 }}
-                className="ml-1 hover:text-blue-900 transition-colors rounded-full p-0.5 hover:bg-blue-200"
+                className="ml-1 rounded-full p-0.5 transition-colors hover:bg-blue-200 hover:text-blue-900"
               >
-                <X className="w-3 h-3" />
+                <X className="h-3 w-3" />
               </button>
             </Badge>
           ))}
           {selectedOptions?.length > maxDisplayItems && (
-            <Badge variant="secondary" className="bg-gray-100 text-gray-600 px-2 py-1 text-xs">
+            <Badge
+              variant="secondary"
+              className="bg-gray-100 px-2 py-1 text-xs text-gray-600"
+            >
               +{selectedOptions?.length - maxDisplayItems} more
             </Badge>
           )}
