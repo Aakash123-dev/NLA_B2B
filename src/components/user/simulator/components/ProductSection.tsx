@@ -11,9 +11,14 @@ export function ProductSection({
   filteredSelectedPriceProducts,
   showProductResults,
   selectedProducts,
-  type
+  type,
+  marginPriceValues,
+  marginSimulationData,
+  marginChartData,
+  isPriceSimulationLoading,
+  handleMarginPriceInputChange,
+  setSelectedProduct1
 }: ProductSectionProps) {
-  
   return (
     <ProductSectionRefactored
       products={products}
@@ -23,6 +28,12 @@ export function ProductSection({
       type={type}
       showResults={showProductResults}
       selectedProducts={selectedProducts}
+      marginPriceValues={marginPriceValues}
+      marginSimulationData={marginSimulationData}
+      marginChartData={marginChartData}
+      isPriceSimulationLoading={isPriceSimulationLoading}
+      handleMarginPriceInputChange={handleMarginPriceInputChange}
+      setSelectedProduct1 = {setSelectedProduct1}
     />
   );
 }

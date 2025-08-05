@@ -17,10 +17,10 @@ import { ProductTableHeader } from './ProductTableHeader';
 
 interface ProductTableProps {
   products: Product[];
-  expandedProducts: Set<number>;
+  expandedProductId: string | null;
+  toggleProductExpansion: (productId: string) => void;
   marginInputs: Record<number, MarginInputs>;
   onPriceChange: any;
-  toggleProductExpansion: (productId: number) => void;
   updateMarginInput: (
     productId: number,
     field: 'costPerUnit' | 'targetMargin',
@@ -41,8 +41,14 @@ export function ProductTable({
   type,
   showResults,
   selectedProducts,
+  marginPriceValues,
+  marginSimulationData,
+  marginChartData,
+  isPriceSimulationLoading,
+  handleMarginPriceInputChange,
+  setSelectedProduct1,
 }: ProductTableProps) {
-  console.log(newPrice, 'newPriceProductTable');
+  console.log(expandedProducts, 'ExapadedProps');
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -68,7 +74,7 @@ export function ProductTable({
                     key={product?._id}
                     product={product}
                     index={index}
-                    isExpanded={expandedProducts.has(product?._id)}
+                    isExpanded={expandedProducts === product?._id}
                     marginInputs={marginInputs}
                     onPriceChange={onPriceChange}
                     toggleProductExpansion={toggleProductExpansion}
@@ -77,6 +83,12 @@ export function ProductTable({
                     type={type}
                     showResults={showResults}
                     selectedProducts={selectedProducts}
+                    marginPriceValues={marginPriceValues}
+                    marginSimulationData={marginSimulationData}
+                    marginChartData={marginChartData}
+                    isPriceSimulationLoading={isPriceSimulationLoading}
+                    handleMarginPriceInputChange={handleMarginPriceInputChange}
+                    setSelectedProduct1={setSelectedProduct1}
                   />
                 ))}
               </tbody>

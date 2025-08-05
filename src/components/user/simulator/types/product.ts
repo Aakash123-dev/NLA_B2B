@@ -31,6 +31,11 @@ export interface ProductSectionProps {
   showProductResults: any;
   selectedProducts: any;
   type: any;
+  marginPriceValues?: any;
+  marginSimulationData?: any[];
+  marginChartData?: any;
+  isPriceSimulationLoading?: boolean;
+  handleMarginPriceInputChange?: any;
 }
 
 export interface MarginInputs {
