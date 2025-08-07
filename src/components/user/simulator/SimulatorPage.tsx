@@ -12,6 +12,10 @@ import {
 } from './components';
 import { axiosPythonInstance } from '@/services/projectservices/axiosInstance';
 import { useSearchParams } from 'next/navigation';
+import { fetchPriceSimulationData, getMarginSimulationData } from '@/services/simulation/priceSimulationServices';
+import { getPriceSimulation, getMarginSimulation } from '@/store/slices/priceSimulationSlice';
+import { useDispatch } from 'react-redux';
+import { useSelector } from 'react-redux';
 
 const getStorageKey = (projectId: number, modelId: number) => {
   return `simulator_state_${projectId}_${modelId}`;
@@ -51,7 +55,7 @@ export default function SimulatorPage() {
   const [isPriceSimulationLoading, setIsPriceSimulationLoading] =
     useState(false);
   const [retailerBrandProducts, setRetailerBrandProducts] = useState<any>({});
-  const [priceSimulationData, setPriceSimulationData] = useState<any[]>([]);
+  // const [priceSimulationData, setPriceSimulationData] = useState<any[]>([]);
   const [competitors, setCompetitors] = useState<any[]>([]);
   const [competitorNewPrice, setCompetitorNewPrice] = useState<string[]>([]);
   // Price simulation states
@@ -82,7 +86,7 @@ export default function SimulatorPage() {
   const [selectedRetailer, setSelectedRetailer] = useState<any>('');
   const [selectedBrand, setSelectedBrand] = useState<any>('');
   const [selectedProduct, setSelectedProduct] = useState<any>('');
-  const [selectedProduct1, setSelectedProduct1] = useState('');
+  const [selectedProduct1, setSelectedProduct1] = useState<any>('');
 
   const retailers = Object?.keys(retailerBrandProducts || {});
   let brands =
@@ -97,35 +101,29 @@ export default function SimulatorPage() {
   /* -----start----- Common handlers -----start----- */
   const [isAllProductSelected, setIsAllProductSelected] = useState(false);
 
+  const dispatch = useDispatch<any>();
+
+  const {
+    data: priceSimulationData,
+    loading,
+    error,
+    marginData,
+    marginLoading,
+    marginError,
+  } = useSelector((state: any) => state.priceSimulation);
+
   const marginSimulationApiHandler = async (product: string) => {
     const storedState = getStoredState(project_id, model_id);
-    setIsPriceSimulationLoading(true);
-    try {
-      const api = `/insights/simulation/price/product-data?project_id=${project_id}&model_id=${model_id}&Retailer=${selectedRetailer || storedState.retailer}&Product=${product}`;
-      const response = await axiosPythonInstance.get(api);
-      if (response.status === 200) {
-        setMarginSimulationData(response?.data?.data);
-        const basePrice = !isNaN(
-          response?.data?.data[0]?.Price_avg_last_4_weeks
-        )
-          ? response?.data?.data[0]?.Price_avg_last_4_weeks
-          : 0;
-        setMarginPriceValues((prevInputValues) => ({
-          ...prevInputValues,
-          basePriceElasticity: response?.data?.data[0]?.Base_Price_Elasticity,
-          basePrice: parseFloat(basePrice).toFixed(2),
-        }));
-        setIsPriceSimulationLoading(false);
-        return response.data;
-      }
-    } catch (error) {
-      setIsPriceSimulationLoading(false);
-      console.log('Error in fetching margin simulation data: ', error);
-      return null;
-    }
+    
+    dispatch(
+      getMarginSimulation({ 
+        projectId: project_id, 
+        modelId: model_id, 
+        retailer: selectedRetailer || storedState?.retailer || '', 
+        product 
+      })
+    );
   };
-
-  console.log(marginPriceValues, 'AllMarginPriceValues');
 
   const handleProductsChangeForPrice = (values: string) => {
     console.log(values, 'handleProductsChnageForPrice');
@@ -192,16 +190,19 @@ export default function SimulatorPage() {
     getPriceSimulationApiHandler(value);
     // Remove the incorrect marginSimulationApiHandler call here since it needs a product parameter
 
-    // Save state without simulatorType key, flatten keys
-    const currentState = getStoredState(project_id, model_id);
+    // Clear localStorage when retailer changes
+    const key = getStorageKey(project_id, model_id);
+    localStorage.removeItem(key);
+
+    // Save only the new retailer state
     const newState = {
-      ...currentState,
       retailer: value,
       brand: '',
       product: '',
       products: [],
       newPrices: [],
       competitorNewPrice: [],
+      newPriceChange: [],
       priceValues: {
         listPrice: '',
         edlpSpend: '',
@@ -286,26 +287,17 @@ export default function SimulatorPage() {
   /* -----end----- Common handlers -----end----- */
 
   /* -----start----- Api Handler -----start----- */
-  const getPriceSimulationApiHandler = async (retailer: string) => {
-    setIsPriceSimulationLoading(true);
-    try {
-      const api = `/insights/simulation/price/product-data?project_id=${project_id}&model_id=${model_id}&Retailer=${retailer}`;
-      const response = await axiosPythonInstance.get(api);
-      if (response.status === 200) {
-        setPriceSimulationData(response?.data?.data);
-        setIsPriceSimulationLoading(false);
-        return response.data;
-      }
-    } catch (error) {
-      setIsPriceSimulationLoading(false);
-      console.log('Error in fetching simulation data: ', error);
-      return null;
-    }
+  const getPriceSimulationApiHandler = async (retailer) => {
+    dispatch(
+      getPriceSimulation({ projectId: project_id, modelId: model_id, retailer })
+    );
   };
   /* -----end----- Api Handler -----end----- */
 
   /* -----start----- Price change Handler -----start----- */
   const [newPriceChange, setNewPriceChange] = useState<any[]>([]);
+  const [isRestoringPrices, setIsRestoringPrices] = useState(false);
+  const isRestoringRef = React.useRef(false);
 
   const handleNewPriceOnChange = (
     index: number,
@@ -314,6 +306,10 @@ export default function SimulatorPage() {
     type: string
   ) => {
     const newValue = event.target?.value || event.value || event; // Handle both event types
+    
+    // Set flag to prevent restoration during active price changes
+    isRestoringRef.current = true;
+    
     let temp = [...newPriceChange];
 
     if (newPriceChange && newPriceChange.length > 0) {
@@ -370,6 +366,11 @@ export default function SimulatorPage() {
       newPriceChange: temp,
     };
     saveState(project_id, model_id, newState);
+    
+    // Reset the flag after a short delay
+    setTimeout(() => {
+      isRestoringRef.current = false;
+    }, 100);
   };
 
   /* -----end----- Price change Handler -----end----- */
@@ -807,9 +808,13 @@ export default function SimulatorPage() {
               !products.some((p) => p.Product === competitorName)
           );
           if (competitorData && competitor.cross_effect > 0) {
-            competitorData.cross_effect = competitor.cross_effect;
-            competitorData.competitorNewChangeInVolumn = 0;
-            uniqueCompetitors.push(competitorData);
+            // Create a new object instead of modifying the frozen Redux state
+            const modifiedCompetitorData = {
+              ...competitorData,
+              cross_effect: competitor.cross_effect,
+              competitorNewChangeInVolumn: 0,
+            };
+            uniqueCompetitors.push(modifiedCompetitorData);
             seenProducts.add(competitorName);
           }
         }
@@ -857,79 +862,36 @@ export default function SimulatorPage() {
 
           // After getting the data, restore the stored state
           const storedState = getStoredState(project_id, model_id);
-          console.log(storedState, 'Adhhjfgdkjhskjfkhsjlfs');
+          console.log(storedState, 'Stored state restored');
 
           if (storedState) {
             // Restore retailer
             if (storedState.retailer) {
               setSelectedRetailer(storedState.retailer);
 
-              const priceResponse = await getPriceSimulationApiHandler(
-                storedState.retailer
+              // Call price simulation API handler
+              dispatch(
+                getPriceSimulation({ 
+                  projectId: project_id, 
+                  modelId: model_id, 
+                  retailer: storedState.retailer 
+                })
               );
 
-              if (priceResponse) {
-                // Restore brand
-                if (storedState.brand) {
-                  setSelectedBrand(storedState.brand);
-                }
-
-                // Restore products
-                if (storedState.products && storedState.products.length > 0) {
-                  setSelectedProducts(storedState.products);
-
-                  const filteredData = priceResponse.data?.filter((item: any) =>
-                    storedState.products.includes(item.Product)
-                  );
-                  setFilteredSelectedPriceProducts(filteredData);
-                  filterCompetitorsHandler(filteredData);
-
-                  if (
-                    storedState.newPrices &&
-                    storedState.newPrices.length > 0
-                  ) {
-                    setNewPrices(storedState.newPrices);
-
-                    const priceChanges = filteredData.map(
-                      (product: any, index: number) => ({
-                        ...product,
-                        type: 'product',
-                        newPrice: storedState.newPrices[index],
-                      })
-                    );
-
-                    if (
-                      storedState.competitorNewPrice &&
-                      storedState.competitorNewPrice.length > 0
-                    ) {
-                      setCompetitorNewPrice(storedState.competitorNewPrice);
-
-                      const competitorChanges = competitors.map(
-                        (competitor, index) => ({
-                          ...competitor,
-                          type: 'competitor',
-                          newPrice: storedState.competitorNewPrice[index],
-                        })
-                      );
-
-                      setNewPriceChange([
-                        ...priceChanges,
-                        ...competitorChanges,
-                      ]);
-                    } else {
-                      setNewPriceChange(priceChanges);
-                    }
-
-                    setShowProductResults(true);
-                    setShowCompetitorResults(true);
-                  }
-                }
+              // Restore brand
+              if (storedState.brand) {
+                setSelectedBrand(storedState.brand);
               }
-            }
 
-            // Restore margin values
-            if (storedState.priceValues) {
-              setMarginPriceValues(storedState.priceValues);
+              // Restore products
+              if (storedState.products && storedState.products.length > 0) {
+                setSelectedProducts(storedState.products);
+              }
+
+              // Restore margin values
+              if (storedState.priceValues) {
+                setMarginPriceValues(storedState.priceValues);
+              }
             }
           }
 
@@ -944,8 +906,6 @@ export default function SimulatorPage() {
     fetchRetailerBrandProductApiHandler();
   }, []);
 
-  console.log(selectedProducts, 'selectedOronf');
-
   useEffect(() => {
     // Filter data based on selected retailers
     const filteredData = priceSimulationData?.filter((item: any) =>
@@ -956,17 +916,15 @@ export default function SimulatorPage() {
 
     // Get stored state
     const storedState = getStoredState(project_id, model_id);
-    const storedPrices = storedState?.newPrices;
-    const storedCompetitorPrices = storedState?.competitorNewPrice;
+    const storedNewPriceChange = storedState?.newPriceChange || [];
 
     // Restore prices for currently selected products
-    if (storedPrices && filteredData && filteredData.length > 0) {
+    if (filteredData && filteredData.length > 0) {
       // Create new prices array for current selection, preserving stored values
       const restoredPrices: string[] = [];
       filteredData.forEach((product: any, index) => {
-        // Find stored price for this specific product (look for it in stored newPriceChange)
-        const storedPriceChange = storedState?.newPriceChange || [];
-        const productPriceData = storedPriceChange.find(
+        // Find stored price for this specific product from newPriceChange
+        const productPriceData = storedNewPriceChange.find(
           (item: any) =>
             item.Product === product.Product && item.type === 'product'
         );
@@ -985,40 +943,65 @@ export default function SimulatorPage() {
         }))
         .filter((item) => item.newPrice !== ''); // Only include items with actual prices
 
-      if (
-        storedCompetitorPrices &&
-        storedCompetitorPrices.length > 0 &&
-        competitors
-      ) {
-        const competitorChanges = competitors
-          .map((competitor, index) => ({
-            ...competitor,
-            type: 'competitor',
-            newPrice: storedCompetitorPrices[index] || '',
-          }))
-          .filter((item) => item.newPrice !== '');
-        setNewPriceChange([...priceChanges, ...competitorChanges]);
-      } else {
-        setNewPriceChange(priceChanges);
-      }
+      setNewPriceChange(priceChanges);
     } else {
-      // No stored prices, initialize empty arrays based on current selection
-      setNewPrices(new Array(filteredData.length).fill(''));
+      // No filtered data, initialize empty arrays
+      setNewPrices([]);
       setNewPriceChange([]);
-    }
-
-    // Handle competitor prices separately
-    if (storedCompetitorPrices && competitors?.length > 0) {
-      setCompetitorNewPrice(
-        storedCompetitorPrices.slice(0, competitors.length)
-      );
-    } else {
-      setCompetitorNewPrice(new Array(competitors?.length || 0).fill(''));
     }
 
     setShowCompetitorResults(true);
     setShowProductResults(true);
   }, [selectedProducts, priceSimulationData]);
+
+  // Separate useEffect to handle competitor price restoration after competitors are set
+  useEffect(() => {
+    if (!competitors || competitors.length === 0 || isRestoringRef.current) return;
+
+    isRestoringRef.current = true;
+
+    const storedState = getStoredState(project_id, model_id);
+    const storedNewPriceChange = storedState?.newPriceChange || [];
+
+    // Handle competitor prices for the UI arrays
+    const restoredCompetitorPrices: string[] = [];
+    competitors.forEach((competitor: any, index) => {
+      const competitorPriceData = storedNewPriceChange.find(
+        (item: any) =>
+          item.Product === competitor.Product && item.type === 'competitor'
+      );
+      restoredCompetitorPrices[index] = competitorPriceData
+        ? competitorPriceData.newPrice
+        : '';
+    });
+    setCompetitorNewPrice(restoredCompetitorPrices);
+
+    // Handle competitor prices for calculations
+    const competitorChanges = competitors
+      .map((competitor, index) => {
+        const competitorPriceData = storedNewPriceChange.find(
+          (item: any) =>
+            item.Product === competitor.Product && item.type === 'competitor'
+        );
+        return {
+          ...competitor,
+          type: 'competitor',
+          newPrice: competitorPriceData ? competitorPriceData.newPrice : '',
+        };
+      })
+      .filter((item) => item.newPrice !== '');
+
+    // Update newPriceChange to include competitor changes
+    setNewPriceChange((prev) => {
+      const productChanges = prev.filter((item) => item.type === 'product');
+      return [...productChanges, ...competitorChanges];
+    });
+
+    // Reset the flag after a short delay
+    setTimeout(() => {
+      isRestoringRef.current = false;
+    }, 100);
+  }, [competitors, project_id, model_id]);
 
   // Add useEffect to trigger impact calculation when newPriceChange is updated
   useEffect(() => {
@@ -1027,8 +1010,32 @@ export default function SimulatorPage() {
     }
   }, [newPriceChange]);
 
+  // Add useEffect to trigger impact calculation when newPriceChange is updated
   useEffect(() => {
-    if (selectedProduct1 && selectedProduct1.Product && selectedRetailer) {
+    if (newPriceChange && newPriceChange.length > 0) {
+      impactHandler();
+    }
+  }, [newPriceChange]);
+
+  // Handle margin data from Redux
+  useEffect(() => {
+    if (marginData && marginData.length > 0) {
+      setMarginSimulationData(marginData);
+      
+      const basePrice = !isNaN(marginData[0]?.Price_avg_last_4_weeks)
+        ? marginData[0]?.Price_avg_last_4_weeks
+        : 0;
+      
+      setMarginPriceValues((prevInputValues) => ({
+        ...prevInputValues,
+        basePriceElasticity: marginData[0]?.Base_Price_Elasticity,
+        basePrice: parseFloat(basePrice).toFixed(2),
+      }));
+    }
+  }, [marginData]);
+
+  useEffect(() => {
+    if (selectedProduct1 && typeof selectedProduct1 === 'object' && selectedProduct1.Product && selectedRetailer) {
       marginSimulationApiHandler(selectedProduct1.Product);
 
       // Save updated state with selectedProduct1.product
@@ -1099,6 +1106,7 @@ export default function SimulatorPage() {
       competitorNewPrice: competitorNewPrice?.length
         ? competitorNewPrice
         : currentState.competitorNewPrice,
+      newPriceChange: newPriceChange?.length ? newPriceChange : currentState.newPriceChange,
       priceValues: Object.keys(marginPriceValues).some(
         (key) => marginPriceValues[key as keyof typeof marginPriceValues]
       )
@@ -1115,6 +1123,7 @@ export default function SimulatorPage() {
     selectedProducts,
     newPrices,
     competitorNewPrice,
+    newPriceChange,
     marginPriceValues,
     project_id,
     model_id,
@@ -1137,8 +1146,7 @@ export default function SimulatorPage() {
       });
     }, 300);
   };
-  console.log(marginSimulationData, 'marginSimulationData');
-  console.log(marginPriceValues, 'marginPriceValues');
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-slate-50">
       {/* Header */}

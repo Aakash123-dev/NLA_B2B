@@ -18,10 +18,23 @@ import {
 } from '@/components/ui/popover';
 import { useSelector } from 'react-redux';
 import { RootState } from '@/store';
-import { Retailer } from '@/types/insights';
+
+// Define the interfaces to match the Redux state structure
+interface Product {
+  name: string;
+}
+
+interface Brand {
+  name: string;
+  products: Product[];
+}
+
+interface Retailer {
+  name: string;
+  brands: Brand[];
+}
 
 interface InsightsFiltersProps {
-  chartFilterData: Retailer[]; // Add this line
   selectedRetailers: string[];
   setSelectedRetailers: (retailers: string[]) => void;
   selectedBrands: string[];
@@ -178,10 +191,8 @@ export const InsightsFilters: React.FC<InsightsFiltersProps> = ({
     const possibleProducts = getProductsForBrandsAndRetailers(
       updated,
       selectedRetailers
-    );
-    setSelectedProducts((prev) =>
-      prev.filter((p) => possibleProducts.includes(p))
-    );
+    ); 
+    setSelectedProducts(selectedProducts.filter((p) => possibleProducts.includes(p)));
   };
 
   // Handle product select/deselect

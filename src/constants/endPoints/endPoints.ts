@@ -40,4 +40,14 @@ export const API_ENDPOINTS = {
   getAllQuestions: (modelId: string) => `/admin/get-admin-questions/${modelId}`,
   getQuestionsByType: (modelId: string, type: string) =>
     `/insights/questions-per-type/${modelId}/${type}`,
+  SIMULATION: {
+    GET_PRICE_SIMULATION: (projectId, modelId, retailer) =>
+      `/insights/simulation/price/product-data?project_id=${projectId}&model_id=${modelId}&Retailer=${retailer}`,
+    MARGIN_SIMULATION_ENDPOINT:'/insights/simulation/price/product-data',
+    PRODUCT_SIMULATION_DATA: (projectId, modelId, retailer, product) =>
+      `/insights/simulation/price/product-data?project_id=${projectId}&model_id=${modelId}&Retailer=${retailer}&Product=${product}`,
+  },
+  QUESTION_TYPES: {
+    GET_QUESTION_TYPES: (modelId) => `/insights/question-types/${modelId}`,
+  }
 };

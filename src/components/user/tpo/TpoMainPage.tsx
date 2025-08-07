@@ -1,7 +1,7 @@
 'use client'
 
 import React from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { ArrowRight, BarChart3, Target, TrendingUp, Zap, ArrowLeft, Brain } from 'lucide-react'
 import { motion } from 'framer-motion'
@@ -37,9 +37,20 @@ const configurationSteps = [
 export function TpoMainPage() {
   const router = useRouter()
   const [isSmartInsightsOpen, setIsSmartInsightsOpen] = React.useState(false)
+  const searchParams = useSearchParams()
 
   const handleStartConfiguration = () => {
-    router.push('/user/tpo/setup')
+    const project = searchParams.get('project')
+    const model = searchParams.get('model')
+    const projectName = searchParams.get('projectName')
+
+    const query = new URLSearchParams({
+      project: project || '',
+      model: model || '',
+      projectName: projectName || '',
+    })
+
+    router.push(`/user/tpo/setup?${query.toString()}`)
   }
 
   const handleBackToDesignStudio = () => {

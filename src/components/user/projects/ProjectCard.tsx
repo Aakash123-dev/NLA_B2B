@@ -384,7 +384,7 @@ export default function ProjectCard({
 				{/* Button - Fixed at bottom */}
 				<div className="mt-3 pt-2.5 border-t border-slate-200/60">
 					<Link
-						href={`/user/design-studio?project=${project.id}&model=${project?.Models?.[0]?.id ?? ""}`}
+						href={`/user/design-studio?projectName=${project?.project_name}&project=${project.id}&model=${project?.Models?.[0]?.id ?? ""}`}
 						className={`w-full ${theme.accent} hover:shadow-lg text-white font-semibold py-2.5 px-5 rounded-2xl transition-all duration-300 text-sm shadow-md flex items-center justify-center gap-2 cursor-pointer group`}
 					>
 						<Activity className="w-4 h-4 group-hover:scale-110 transition-transform duration-200" />

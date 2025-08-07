@@ -54,7 +54,7 @@ export const createPageUrl = (page: string): string => {
   // This utility function creates URLs for navigation
   // Adjust the base path according to your routing structure
   const routes: { [key: string]: string } = {
-    'Welcome': '/user/tpo',
+    // 'Welcome': '/user/tpo',
     'Setup': '/user/tpo/setup',
     'Dashboard': '/user/tpo/dashboard',
     'PromotionReport': '/user/tpo/reports'

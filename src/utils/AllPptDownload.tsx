@@ -7,7 +7,40 @@ import { ToastContainer, toast } from 'react-toastify';
 import { RootState, useAppSelector } from '@/store';
 // import 'react-toastify/dist/ReactToastify.css';
 
-const generateCommonUIElements = (slide, value, pptx) => {
+interface SlideData {
+  question?: string;
+  Notes?: Array<{ notes: string }>;
+  SlideNames?: Array<{ slide_title: string }>;
+}
+
+interface ChartData {
+  data: {
+    labels: string[];
+    datasets: Array<{
+      label: string;
+      data: number[];
+      borderColor: string;
+      backgroundColor: string;
+      pointStyle?: string;
+      pointRadius?: number;
+      pointHoverRadius?: number;
+    }>;
+  };
+}
+
+interface RetailerData {
+  [key: string]: ChartData;
+}
+
+interface DatasetMapping {
+  [key: string]: {
+    label: string;
+    data: number[];
+    pointStyle: string;
+  };
+}
+
+const generateCommonUIElements = (slide: any, value: SlideData, pptx: any) => {
   slide.addShape(pptx.shapes.RECTANGLE, {
     x: 0.19,
     y: 0.49,
@@ -18,7 +51,7 @@ const generateCommonUIElements = (slide, value, pptx) => {
       color: 'ffffff',
     },
   });
-  slide?.addText(value.question, {
+  slide?.addText(value.question || '', {
     x: 0.2,
     y: 0.5,
     w: 13,
@@ -49,7 +82,7 @@ const generateCommonUIElements = (slide, value, pptx) => {
     objectName: 'Company Logo',
   });
 
-  if (value?.Notes?.length > 0) {
+  if (value?.Notes && value.Notes.length > 0) {
     slide?.addText('Note:', {
       x: 4,
       y: '85%',
@@ -60,7 +93,7 @@ const generateCommonUIElements = (slide, value, pptx) => {
       color: '000000', // Black color
       bold: true,
     });
-    slide?.addText(value?.Notes[0]?.notes, {
+    slide?.addText(value.Notes[0]?.notes || '', {
       x: 4.6,
       y: '85%',
       w: 4.4,
@@ -90,14 +123,14 @@ const AllPptDownloader = () => {
   const chart8Reducer = useAppSelector((state: RootState) => state.chart.data8);
   const chart9Reducer = useAppSelector((state: RootState) => state.chart.data9);
 
-  const generateFirstSlide = (slide, pptx) => {
-    return new Promise((resolve) => {
+  const generateFirstSlide = (slide: any, pptx: any) => {
+    return new Promise<void>((resolve, reject) => {
       if (adminQuestionsReducer[0]?.question) {
-        const chartData = [];
+        const chartData: any[] = [];
 
-        const retailers = {}; // To store unique retailers
+        const retailers: RetailerData = {}; // To store unique retailers
 
-        chart1Reducer?.forEach((item) => {
+        chart1Reducer?.forEach((item: any) => {
           const retailer = item.Retailer;
           const product = item.Product;
           const price = item.Price_avg_last_4_weeks;
@@ -144,7 +177,7 @@ const AllPptDownloader = () => {
           showLegend: true,
           legendPos: 't',
         });
-        resolve();
+        resolve(undefined);
       } else {
         console.log('Condition for first slide not met.');
         // Reject the promise when condition is not met
@@ -154,12 +187,12 @@ const AllPptDownloader = () => {
     });
   };
 
-  const generateSecondSlide = (slide, pptx) => {
-    return new Promise((resolve) => {
+  const generateSecondSlide = (slide: any, pptx: any) => {
+    return new Promise<void>((resolve) => {
       if (adminQuestionsReducer[1]?.question) {
         const chart2Data = chart2Reducer;
 
-        const transformedData = {};
+        const transformedData: RetailerData = {};
 
         // Iterate through the chart2Data and group it by Retailer
         if (chart2Data) {
@@ -331,13 +364,13 @@ const AllPptDownloader = () => {
     });
   };
 
-  const generateThirdSlide = (slide, pptx) => {
-    return new Promise((resolve) => {
+  const generateThirdSlide = (slide: any, pptx: any) => {
+    return new Promise<void>((resolve) => {
       if (adminQuestionsReducer[2]?.question) {
         const productData = chart3Reducer;
 
         // Create an object to store data for each product
-        const productChartData = {};
+        const productChartData: RetailerData = {};
 
         // Iterate through the data and group it by product
         productData.forEach((item) => {
@@ -494,11 +527,11 @@ const AllPptDownloader = () => {
     });
   };
 
-  const generateFourthSlide = (slide, pptx) => {
-    return new Promise((resolve) => {
+  const generateFourthSlide = (slide: any, pptx: any) => {
+    return new Promise<void>((resolve) => {
       if (adminQuestionsReducer[3]?.question) {
         const chartData = chart4Reducer;
-        const productRetailerMap = {};
+        const productRetailerMap: DatasetMapping = {};
         chartData.forEach((item) => {
           const product = item.Product;
           const retailer = item.Retailer;
@@ -686,11 +719,11 @@ const AllPptDownloader = () => {
     });
   };
 
-  const generateFifthSlide = (slide, pptx) => {
-    return new Promise((resolve) => {
+  const generateFifthSlide = (slide: any, pptx: any) => {
+    return new Promise<void>((resolve) => {
       if (adminQuestionsReducer[4]?.question) {
         const chart5Data = chart5Reducer || [];
-        const transformedData = {};
+        const transformedData: RetailerData = {};
 
         // Restructure the data
         chart5Data.forEach((item) => {
@@ -849,11 +882,11 @@ const AllPptDownloader = () => {
     });
   };
 
-  const generateSixthSlide = (slide, pptx) => {
-    return new Promise((resolve) => {
+  const generateSixthSlide = (slide: any, pptx: any) => {
+    return new Promise<void>((resolve) => {
       if (adminQuestionsReducer[5]?.question) {
         const chart6Data = chart6Reducer || [];
-        const retailers = {};
+        const retailers: RetailerData = {};
 
         chart6Data.forEach((item) => {
           const retailer = item.Retailer;
@@ -1020,11 +1053,11 @@ const AllPptDownloader = () => {
     });
   };
 
-  const generateSeventhSlide = (slide, pptx) => {
-    return new Promise((resolve) => {
+  const generateSeventhSlide = (slide: any, pptx: any) => {
+    return new Promise<void>((resolve) => {
       if (adminQuestionsReducer[6]?.question) {
         const chart7Data = chart7Reducer || [];
-        const retailers = {};
+        const retailers: RetailerData = {};
 
         chart7Data.forEach((item) => {
           const retailer = item.Retailer;
@@ -1098,7 +1131,7 @@ const AllPptDownloader = () => {
           const chartDataArray = [
             {
               type: pptx.charts.BAR,
-              data: retailerData.data.datasets.map((dataset, datasetIndex) => ({
+              data: retailerData.data.datasets.map((dataset: any, datasetIndex: number) => ({
                 name: dataset.label,
                 labels: retailerData.data.labels,
                 values: dataset.data,
@@ -1178,13 +1211,13 @@ const AllPptDownloader = () => {
     });
   };
 
-  const generateEightSlide = (slide, pptx) => {
-    return new Promise((resolve) => {
+  const generateEightSlide = (slide: any, pptx: any) => {
+    return new Promise<void>((resolve) => {
       if (adminQuestionsReducer[7]?.question) {
         const chart8Data = chart8Reducer || [];
 
         chart8Data.forEach((item, index) => {
-          const transformedItem = {
+          const transformedItem: DatasetMapping = {
             multiAxes: false,
             xycoordinated: false,
             quadrant: false,
@@ -1229,7 +1262,7 @@ const AllPptDownloader = () => {
           };
 
           // Create a mapping to group datasets by label name
-          const datasetMapping = {};
+          const datasetMapping: DatasetMapping = {};
 
           // Iterate through the original data properties to dynamically populate labels and datasets
           for (const key in item) {
@@ -1269,7 +1302,7 @@ const AllPptDownloader = () => {
           }
 
           // Function to rename label names
-          function getRenamedLabel(originalLabel) {
+          function getRenamedLabel(originalLabel: string) {
             switch (originalLabel) {
               case 'FO':
                 return 'Feature Only';
@@ -1284,7 +1317,7 @@ const AllPptDownloader = () => {
           }
 
           // Function to determine point style based on label
-          function getPointStyle(label) {
+          function getPointStyle(label: string) {
             switch (label) {
               case 'Feature Only':
                 return 'triangle';
@@ -1375,12 +1408,12 @@ const AllPptDownloader = () => {
     });
   };
 
-  const generateNingthSlide = (slide, pptx) => {
-    return new Promise((resolve) => {
+  const generateNingthSlide = (slide: any, pptx: any) => {
+    return new Promise<void>((resolve) => {
       if (adminQuestionsReducer[8]?.question) {
         // const chart9Reducer = useSelector((state) => state.chart9Reducer);
 
-        const chartDataMap = {};
+        const chartDataMap: RetailerData = {};
 
         chart9Reducer?.forEach((item, index) => {
           const retailer = item.Retailer;

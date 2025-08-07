@@ -72,6 +72,8 @@ import ProfitCurvesChart from './ProfitCurvesCharts';
 
 import { getRandomColor } from '@/lib/utils';
 import { RunDemo } from '@/utils/RunDemo';
+import { useInsightsContext } from '../contexts';
+
 const BarRetailor = dynamic(() => import('./Retailer_chart'), {
   ssr: false,
 });
@@ -394,11 +396,14 @@ export const InsightCard: React.FC<InsightCardProps> = ({
   toast,
   index,
 }) => {
+  console.log(insight, 'insight')
   const [isVisible, setIsVisible] = useState(false);
   const [isDownloading, setIsDownloading] = useState(false);
   const [isDataLoading, setIsDataLoading] = useState(true);
   const dispatch = useDispatch();
   const chartRef = useRef<HTMLDivElement>(null);
+  const { state } = useInsightsContext();
+  const selectedTab = state.selectedTab;
 
   // Set viewBy to 'Retailer' by default on first mount only
   // On mount, force viewBy to 'Retailer' and update Redux/global state if needed
@@ -481,21 +486,64 @@ export const InsightCard: React.FC<InsightCardProps> = ({
     );
   }, [selectedBrand, products, ppgCategories]);
 
-  const chartMap: { [k: number]: React.ReactElement | null } = useMemo(
+  const chartMap: { [k: string]: { [k: number]: React.ReactElement | null } } = useMemo(
     () => ({
-      0: viewBy === 'Brand' ? <ChartOnly /> : <BarRetailor />,
-      1: <PriceSlopeChart />,
-      2: <MyChart />,
-      3: <StackedLineChart />,
-      4: <MultiLine2 />,
-      5: <PromotedDepthChart />,
-      6: <PromotionalLiftChart />,
-      7: <LiftChart />,
-      8: <ElasticityStratagyChart isLoading={false} />,
-      9: <ProfitCurvesChart />,
+      // All insights - show all charts based on index
+      'all': {
+        0: viewBy === 'Brand' ? <ChartOnly /> : <BarRetailor />,
+        1: <PriceSlopeChart />,
+        2: <MyChart />,
+        3: <StackedLineChart />,
+        4: <MultiLine2 />,
+        5: <PromotedDepthChart />,
+        6: <PromotionalLiftChart />,
+        7: <LiftChart />,
+        8: <ElasticityStratagyChart isLoading={false} />,
+        9: <ProfitCurvesChart />,
+      },
+      // Base insights - show first 4 charts (index 0-3)
+      'base': {
+        0: viewBy === 'Brand' ? <ChartOnly /> : <BarRetailor />,
+        1: <PriceSlopeChart />,
+        2: <MyChart />,
+        3: <StackedLineChart />,
+      },
+      // Promo insights - show next 4 charts (index 4-7)
+      'promo': {
+        0: <MultiLine2 />,
+        1: <PromotedDepthChart />,
+        2: <PromotionalLiftChart />,
+        3: <LiftChart />,
+      },
+      // Strategic insights - show last 2 charts (index 8-9)
+      'strat': {
+        0: <ElasticityStratagyChart isLoading={false} />,
+        1: <ProfitCurvesChart />,
+      },
     }),
     [viewBy]
   );
+
+  // Function to get the appropriate chart based on selected tab and index
+  const getChartForInsight = useCallback(() => {
+    const tabCharts = chartMap[selectedTab] || chartMap['all'];
+    const chart = tabCharts[index];
+    
+    if (!chart) {
+      return (
+        <div className="flex h-full items-center justify-center text-sm text-slate-500">
+          <div className="text-center">
+            <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-gray-100">
+              <FileText className="h-8 w-8 text-gray-400" />
+            </div>
+            <p>No chart data available for this index</p>
+          </div>
+        </div>
+      );
+    }
+    
+    return chart;
+  }, [selectedTab, index, chartMap]);
 
   // Access chart data from Redux store
   const chart1Data = useAppSelector((state: RootState) => state.chart.data);
@@ -536,16 +584,7 @@ export const InsightCard: React.FC<InsightCardProps> = ({
               >
                 {isVisible ? (
                   <ResponsiveContainer width="100%" height="100%">
-                    {chartMap[index] || (
-                      <div className="flex h-full items-center justify-center text-sm text-slate-500">
-                        <div className="text-center">
-                          <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-gray-100">
-                            <FileText className="h-8 w-8 text-gray-400" />
-                          </div>
-                          <p>No chart data available</p>
-                        </div>
-                      </div>
-                    )}
+                    {getChartForInsight()}
                   </ResponsiveContainer>
                 ) : (
                   <div className="flex h-full items-center justify-center">

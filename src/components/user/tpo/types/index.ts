@@ -29,7 +29,10 @@ export interface TradePlanFormData {
   selectedRetailers: string[]
   selectedBrands: string[]
   selectedProducts?: string[]
-  year: string
+  year: number
+  marketShare?: string
+  minRevenue?: string
+  numWeeks?: string
   targetVolume?: string
   targetRevenue?: string
   targetSpend?: string

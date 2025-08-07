@@ -177,7 +177,6 @@ export const InsightsContentSection: React.FC = () => {
   return (
     <>
       <InsightsFilters
-        chartFilterData={chartFilterData}
         selectedRetailers={selectedRetailers}
         setSelectedRetailers={setSelectedRetailers}
         selectedBrands={selectedBrands}

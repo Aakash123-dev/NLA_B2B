@@ -211,10 +211,12 @@ function DesignStudioInner({ selectedProject }: DesignStudioProps) {
       const urlParams = new URLSearchParams(window.location.search);
       const projectId = urlParams.get('project');
       const modelId = urlParams.get('model');
+      const projectName = urlParams.get('projectName');
       
       const params = new URLSearchParams();
       if (projectId) params.set('project', projectId);
       if (modelId) params.set('model', modelId);
+      if (projectName) params.set('projectName', projectName)
       
       window.location.href = `/user/tpo?${params.toString()}`;
       return;

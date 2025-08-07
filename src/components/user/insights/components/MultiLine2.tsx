@@ -159,7 +159,7 @@ const MultiLine2: React.FC<{ isLoading?: boolean }> = ({ isLoading }) => {
     xaxis: {
       categories: getEvenIndexElements(data.data.categories),
       title: { text: data.xAxisTitle },
-      axisBorder: { show: true, color: '#000', height: 1 },
+      axisBorder: { show: true, color: '#000' },
       axisTicks: { show: true, color: '#000', height: 6 },
       labels: {
         rotate: -45,
@@ -180,7 +180,7 @@ const MultiLine2: React.FC<{ isLoading?: boolean }> = ({ isLoading }) => {
         title: { text: data.rightyAxisTitle },
         labels: {
           formatter: (value: number) =>
-            `$${value.toFixed(2).toLocaleString('en-US', {
+            `$${value.toLocaleString('en-US', {
               minimumFractionDigits: 2,
               maximumFractionDigits: 2,
             })}`,
