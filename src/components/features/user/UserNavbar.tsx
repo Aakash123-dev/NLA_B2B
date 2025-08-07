@@ -47,11 +47,13 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Badge } from '@/components/ui/badge';
+import { useAuth } from '@/components/features/auth/AuthProvider';
 
 const UserNavbar = () => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const pathname = usePathname();
+  const { user, logout } = useAuth();
 
   // Sample notifications data
   const notifications = [
@@ -131,6 +133,39 @@ const UserNavbar = () => {
   ];
 
   const isActive = (href: string) => pathname === href;
+
+  // Handle logout
+  const handleLogout = async () => {
+    try {
+      await logout();
+    } catch (error) {
+      console.error('Logout error:', error);
+    }
+  };
+
+  // Get user initials for avatar
+  const getUserInitials = () => {
+    if (!user) return 'U';
+    if (user.first_name && user.last_name) {
+      return `${user.first_name.charAt(0)}${user.last_name.charAt(0)}`.toUpperCase();
+    }
+    if (user.full_name) {
+      return user.full_name.split(' ').map(n => n.charAt(0)).join('').toUpperCase();
+    }
+    if (user.email) {
+      return user.email.charAt(0).toUpperCase();
+    }
+    return 'U';
+  };
+
+  // Get user display name
+  const getUserDisplayName = () => {
+    if (!user) return 'User';
+    if (user.full_name) return user.full_name;
+    if (user.first_name && user.last_name) return `${user.first_name} ${user.last_name}`;
+    if (user.email) return user.email.split('@')[0];
+    return 'User';
+  };
 
   return (
     <nav className="sticky top-0 z-50 w-full bg-slate-900 border-b border-white/20 shadow-xl">
@@ -236,12 +271,14 @@ const UserNavbar = () => {
             <DropdownMenu>
               <DropdownMenuTrigger className="flex items-center space-x-2 hover:bg-white/10 rounded-xl p-2 transition-all duration-300">
                 <Avatar className="w-9 h-9 border-2 border-white/30 shadow-lg">
-                  <AvatarImage src="/placeholder-avatar.jpg" alt="User" />
-                  <AvatarFallback className="bg-white text-slate-900 font-semibold">JD</AvatarFallback>
+                  <AvatarImage src={user?.client_logo || "/placeholder-avatar.jpg"} alt="User" />
+                  <AvatarFallback className="bg-white text-slate-900 font-semibold">
+                    {getUserInitials()}
+                  </AvatarFallback>
                 </Avatar>
                 <div className="hidden md:block text-left">
-                  <div className="text-sm font-semibold text-white">John Doe</div>
-                  <div className="text-xs text-white/70">Admin</div>
+                  <div className="text-sm font-semibold text-white">{getUserDisplayName()}</div>
+                  <div className="text-xs text-white/70">{user?.role || 'User'}</div>
                 </div>
                 <ChevronDown className="w-4 h-4 text-white/70 hidden md:block" />
               </DropdownMenuTrigger>
@@ -284,7 +321,10 @@ const UserNavbar = () => {
                   </DropdownMenuItem>
                 </Link>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem className="text-red-400 hover:bg-red-500/20 p-3">
+                <DropdownMenuItem 
+                  className="text-red-400 hover:bg-red-500/20 p-3 cursor-pointer"
+                  onClick={handleLogout}
+                >
                   <LogOut className="w-4 h-4 mr-3" />
                   Sign out
                 </DropdownMenuItem>
@@ -385,6 +425,17 @@ const UserNavbar = () => {
                   <Settings className="w-5 h-5" />
                   <span>Settings</span>
                 </Link>
+
+                <button
+                  onClick={() => {
+                    handleLogout();
+                    setIsMobileMenuOpen(false);
+                  }}
+                  className="flex items-center space-x-3 px-3 py-3 rounded-xl text-base font-medium text-red-400 hover:text-white hover:bg-red-500/20 transition-all duration-300 w-full"
+                >
+                  <LogOut className="w-5 h-5" />
+                  <span>Sign out</span>
+                </button>
               </div>
             </div>
           </div>

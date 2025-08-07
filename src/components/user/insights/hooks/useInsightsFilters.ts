@@ -31,21 +31,37 @@ export const useInsightsFilters = (
     if (!modelId) return;
 
     const fetchData = async () => {
-      const data = await fetchInsights(modelId, selectedTab);
-      setApiData(data);
-      dispatch(setInsights(data));
+      try {
+        console.log(`Fetching insights for tab: ${selectedTab}, modelId: ${modelId}`);
+        const data = await fetchInsights(modelId, selectedTab);
+        console.log(`Fetched ${data.length} insights for ${selectedTab}`, data);
+        setApiData(data);
+        dispatch(setInsights(data));
+      } catch (error) {
+        console.error(`Error fetching insights for ${selectedTab}:`, error);
+        setApiData([]);
+        dispatch(setInsights([]));
+      }
     };
+    
     fetchData();
-  }, [modelId, selectedTab, setApiData]);
+  }, [modelId, selectedTab, setApiData, dispatch]);
 
   const insights = useSelector((state: RootState) => state.question.insights);
 
-  console.log(insights, 'apidata');
-
   const filteredInsights = useMemo(() => {
-    return selectedTab === 'all'
-      ? apiData
-      : apiData.filter((insight) => insight.type === selectedTab);
+    if (selectedTab === 'all') {
+      return apiData;
+    }
+    
+    // Filter by the selected tab type
+    const filtered = apiData.filter((insight) => {
+      const insightType = insight.category || insight.type;
+      return insightType === selectedTab;
+    });
+    
+    console.log(`Filtered ${filtered.length} insights for ${selectedTab}`, filtered);
+    return filtered;
   }, [selectedTab, apiData]);
 
   return {

@@ -60,6 +60,8 @@ import chartFilter from './slices/chartFilterSlices';
 import globalFilters from './slices/globalFilterSlice';
 import filterSlice from './slices/filterSlices';
 import questionSlice from './slices/questionSlice';
+import priceSimulationSlice from './slices/priceSimulationSlice';
+import questionTypesSlice from './slices/questionTypesSlices'
 
 // import authSlice from './slices/authSlice';
 // import userSlice from './slices/userSlice';
@@ -83,6 +85,8 @@ const rootReducer = combineReducers({
   globalFilters: globalFilters,
   filters: filterSlice,
   question: questionSlice,
+  priceSimulation: priceSimulationSlice,
+  questionTypes: questionTypesSlice
 });
 
 const persistConfig = {

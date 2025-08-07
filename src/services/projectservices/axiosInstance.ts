@@ -1,19 +1,88 @@
 import axios from 'axios';
-export const STATIC_TOKEN =
-  'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjp7ImlkIjo3LCJlbWFpbCI6InRlc3RpbmdAbmxhLmNvbSIsInN0YXR1cyI6ImFjdGl2ZSIsInJvbGUiOiJ1c2VyIiwic2hvd19wb3B1cCI6MSwicGFzc3dvcmQiOiIkMmEkMTAkeW9HSi5WU3hRck1kWGpIc0NHMENWLnhCUWxBSlppWmdCaFZ5UGZCVlIyaGVlREZHUVcyclMiLCJjbGllbnRfZmlyc3RfbmFtZSI6IlRlc3RpbmciLCJjbGllbnRfbGFzdF9uYW1lIjoiTmFtZTEiLCJmdWxsX25hbWUiOm51bGwsImFkZHJlc3MiOiJqYWhza2pkbiIsInBob25lX251bWJlciI6IjIzMjEzMzQzIiwiY2xpZW50X2xvZ28iOm51bGwsImNyZWF0ZWRfYnkiOm51bGwsImNyZWF0ZWRBdCI6IjIwMjItMTItMDdUMjM6NDQ6MDIuMDAwWiIsInVwZGF0ZWRBdCI6IjIwMjMtMDQtMThUMTc6Mjk6NDMuMDAwWiJ9LCJpYXQiOjE3NTI1NTM1MzMsImV4cCI6MTc1NTE0NTUzM30.6FZGkZOd4ircbZzfELkcCWJ87nnLos_QsY-q0HvFZGs';
-export const axiosInstance = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_API_BASE_URL,
+
+// Base URL configurations
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
+const API_BASE_URL_PYTHON = process.env.NEXT_PUBLIC_API_BASE_URL_PYTHON;
+
+// Helper function to get token from localStorage or sessionStorage
+const getAuthToken = (): string | null => {
+  if (typeof window === 'undefined') return null;
+  return localStorage.getItem('auth-token') || sessionStorage.getItem('auth-token');
+};
+
+// Axios instance for authentication (no token required)
+export const authAxiosInstance = axios.create({
+  baseURL: API_BASE_URL,
   headers: {
-    Authorization: STATIC_TOKEN,
     'Content-Type': 'application/json',
   },
 });
 
-// Axios for Python backend
-export const axiosPythonInstance = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_API_BASE_URL_PYTHON,
+// Axios instance for authenticated requests (with dynamic token)
+export const axiosInstance = axios.create({
+  baseURL: API_BASE_URL,
   headers: {
-    Authorization: STATIC_TOKEN,
     'Content-Type': 'application/json',
   },
 });
+
+// Axios instance for Python backend (with dynamic token)
+export const axiosPythonInstance = axios.create({
+  baseURL: API_BASE_URL_PYTHON,
+  headers: {
+    'Content-Type': 'application/json',
+  },
+});
+
+// Request interceptor to add token dynamically
+const addAuthToken = (config: any) => {
+  const token = getAuthToken();
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
+};
+
+// Add request interceptors to authenticated instances
+axiosInstance.interceptors.request.use(addAuthToken);
+axiosPythonInstance.interceptors.request.use(addAuthToken);
+
+// Response interceptor to handle token expiration
+const handleTokenExpiration = (error: any) => {
+  if (error.response?.status === 401) {
+    // Token is expired or invalid
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('auth-token');
+      sessionStorage.removeItem('auth-token');
+      localStorage.removeItem('user');
+      
+      // Redirect to login page
+      window.location.href = '/login';
+    }
+  }
+  return Promise.reject(error);
+};
+
+// Add response interceptors to handle token expiration
+axiosInstance.interceptors.response.use(
+  (response) => response,
+  handleTokenExpiration
+);
+
+axiosPythonInstance.interceptors.response.use(
+  (response) => response,
+  handleTokenExpiration
+);
+
+// Export types for better TypeScript support
+export interface ApiResponse<T = any> {
+  code: number;
+  status: string;
+  msg: string;
+  data: T;
+}
+
+export interface ApiError {
+  error: string;
+  details?: any;
+}

@@ -16,6 +16,8 @@ interface SearchableDropdownListProps {
   placeholder?: string
   maxHeight?: string
   colorScheme?: 'blue' | 'emerald' | 'purple' | 'default'
+  singleSelect?: boolean
+  disabled?: boolean
 }
 
 export const SearchableDropdownList = React.memo(function SearchableDropdownList({ 
@@ -25,7 +27,9 @@ export const SearchableDropdownList = React.memo(function SearchableDropdownList
   onSelectionChange, 
   placeholder = "Search items...",
   maxHeight = "300px",
-  colorScheme = 'default'
+  colorScheme = 'default',
+  singleSelect = false,
+  disabled = false
 }: SearchableDropdownListProps) {
   const [searchQuery, setSearchQuery] = useState('')
   const [isOpen, setIsOpen] = useState(false)
@@ -38,11 +42,17 @@ export const SearchableDropdownList = React.memo(function SearchableDropdownList
   }, [items, searchQuery])
 
   const handleToggle = useCallback((id: string) => {
-    const newSelection = selectedItems.includes(id)
-      ? selectedItems.filter(item => item !== id)
-      : [...selectedItems, id]
-    onSelectionChange(newSelection)
-  }, [selectedItems, onSelectionChange])
+    if (singleSelect) {
+      // For single select, replace the selection
+      onSelectionChange([id])
+    } else {
+      // For multi select, toggle the selection
+      const newSelection = selectedItems.includes(id)
+        ? selectedItems.filter(item => item !== id)
+        : [...selectedItems, id]
+      onSelectionChange(newSelection)
+    }
+  }, [selectedItems, onSelectionChange, singleSelect])
 
   const handleRemoveSelection = useCallback((id: string) => {
     const newSelection = selectedItems.filter(item => item !== id)
@@ -50,6 +60,8 @@ export const SearchableDropdownList = React.memo(function SearchableDropdownList
   }, [selectedItems, onSelectionChange])
 
   const handleSelectAll = useCallback(() => {
+    if (singleSelect) return // Don't allow select all for single select
+    
     const allFilteredIds = filteredItems.map(item => item.id)
     const allSelected = allFilteredIds.every(id => selectedItems.includes(id))
     
@@ -62,7 +74,7 @@ export const SearchableDropdownList = React.memo(function SearchableDropdownList
       const newSelection = [...new Set([...selectedItems, ...allFilteredIds])]
       onSelectionChange(newSelection)
     }
-  }, [filteredItems, selectedItems, onSelectionChange])
+  }, [filteredItems, selectedItems, onSelectionChange, singleSelect])
 
   const selectedItemsData = useMemo(() => {
     return items.filter(item => selectedItems.includes(item.id))
@@ -70,9 +82,10 @@ export const SearchableDropdownList = React.memo(function SearchableDropdownList
   
   // Check if all filtered items are selected
   const allFilteredSelected = useMemo(() => {
+    if (singleSelect) return false // Don't show select all for single select
     return filteredItems.length > 0 && 
       filteredItems.every(item => selectedItems.includes(item.id))
-  }, [filteredItems, selectedItems])
+  }, [filteredItems, selectedItems, singleSelect])
 
   const getColorClasses = useMemo(() => {
     switch (colorScheme) {
@@ -101,6 +114,25 @@ export const SearchableDropdownList = React.memo(function SearchableDropdownList
 
   const colorClasses = getColorClasses
 
+  // Get display text for single select
+  const getDisplayText = () => {
+    if (disabled) {
+      return `Select ${title.toLowerCase()}...`
+    }
+    if (singleSelect) {
+      if (selectedItems.length > 0) {
+        const selectedItem = items.find(item => item.id === selectedItems[0])
+        return selectedItem?.name || `Select ${title.toLowerCase()}...`
+      }
+      return `Select ${title.toLowerCase()}...`
+    } else {
+      if (selectedItems.length > 0) {
+        return `${selectedItems.length} item${selectedItems.length !== 1 ? 's' : ''} selected`
+      }
+      return `Select ${title.toLowerCase()}...`
+    }
+  }
+
   return (
     <div className="space-y-3">
       <Label className="text-sm font-medium text-slate-700">{title}</Label>
@@ -110,20 +142,20 @@ export const SearchableDropdownList = React.memo(function SearchableDropdownList
         <Button
           type="button"
           variant="outline"
-          onClick={() => setIsOpen(!isOpen)}
-          className="w-full justify-between bg-white border-2 border-slate-300 hover:border-slate-400 focus:border-slate-500 transition-colors h-11 shadow-sm"
+          onClick={() => !disabled && setIsOpen(!isOpen)}
+          disabled={disabled}
+          className={`w-full justify-between bg-white border-2 border-slate-300 hover:border-slate-400 focus:border-slate-500 transition-colors h-11 shadow-sm ${
+            disabled ? 'opacity-50 cursor-not-allowed' : ''
+          }`}
         >
           <span className="text-slate-600 truncate">
-            {selectedItems.length > 0 
-              ? `${selectedItems.length} item${selectedItems.length !== 1 ? 's' : ''} selected`
-              : `Select ${title.toLowerCase()}...`
-            }
+            {getDisplayText()}
           </span>
           <ChevronDown className={`w-4 h-4 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
         </Button>
 
         {/* Dropdown Content */}
-        {isOpen && (
+        {isOpen && !disabled && (
           <div className="absolute top-full left-0 right-0 z-50 mt-1 bg-white border-2 border-slate-300 rounded-lg shadow-lg">
             {/* Search Input */}
             <div className="p-3 border-b border-slate-200">
@@ -139,8 +171,8 @@ export const SearchableDropdownList = React.memo(function SearchableDropdownList
               </div>
             </div>
 
-            {/* Select All Option */}
-            {filteredItems.length > 0 && (
+            {/* Select All Option - Only for multi-select */}
+            {!singleSelect && filteredItems.length > 0 && (
               <div className="p-3 border-b border-slate-200 bg-slate-50/50">
                 <div className="flex items-center space-x-3 p-2 hover:bg-slate-100 rounded-md cursor-pointer">
                   <Checkbox

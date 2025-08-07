@@ -2,27 +2,34 @@
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
+import { toast } from 'react-hot-toast';
+import { authAxiosInstance, axiosInstance } from '@/services/projectservices/axiosInstance';
 
 // Define available roles and their dashboard redirects
 export const roleRedirects = {
   admin: '/dashboard',
-  cxo: '/dashboard/executive',
-  brand_manager: '/dashboard/promo-optimization',
-  marketing: '/dashboard/campaigns',
-  product_manager: '/dashboard/product-performance',
-  sales: '/dashboard/sales-analytics',
-  analyst: '/dashboard/analytics',
-  default: '/dashboard',
+  manager: '/dashboard',
+  audit: '/dashboard',
+  user: '/user/dashboard',
+  default: '/user/dashboard',
 };
 
-// User interface
+// User interface matching the database schema
 export interface User {
-  id: string;
-  firstName: string;
-  lastName: string;
+  user_id: number;
   email: string;
-  role: string;
-  company: string;
+  first_name?: string;
+  last_name?: string;
+  full_name?: string;
+  role: 'admin' | 'manager' | 'audit' | 'user';
+  status: 'active' | 'inactive';
+  phone_number?: string;
+  address?: string;
+  client_logo?: string;
+  show_popup?: '0' | '1';
+  createdAt?: Date;
+  updatedAt?: Date;
+  token?: string;
 }
 
 // Auth Context interface
@@ -31,43 +38,13 @@ interface AuthContextType {
   isLoading: boolean;
   error: string | null;
   isAuthenticated: boolean;
-  login: (email: string, password: string) => Promise<void>;
+  login: (email: string, password: string, rememberMe?: boolean) => Promise<void>;
   loginAsDemo: (demoId: string, role?: string) => Promise<void>;
   logout: () => void;
   register: (userData: Partial<User> & { password: string }) => Promise<void>;
   clearError: () => void;
+  refreshUser: () => Promise<void>;
 }
-
-// Sample users for demo
-const sampleUsers: Record<string, User & { password: string }> = {
-  'admin@example.com': {
-    id: '1',
-    firstName: 'Admin',
-    lastName: 'User',
-    email: 'admin@example.com',
-    password: 'password',
-    role: 'admin',
-    company: 'Analytics Corp',
-  },
-  'cxo@example.com': {
-    id: '2',
-    firstName: 'Executive',
-    lastName: 'User',
-    email: 'cxo@example.com',
-    password: 'password',
-    role: 'cxo',
-    company: 'Analytics Corp',
-  },
-  'brand@example.com': {
-    id: '3',
-    firstName: 'Brand',
-    lastName: 'Manager',
-    email: 'brand@example.com',
-    password: 'password',
-    role: 'brand_manager',
-    company: 'Analytics Corp',
-  },
-};
 
 // Create the context
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -81,151 +58,266 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [error, setError] = useState<string | null>(null);
   const [isInitialized, setIsInitialized] = useState(false);
   
-  // Initialize the auth state from localStorage (client-side only)
+  // Initialize the auth state from localStorage and cookies (client-side only)
   useEffect(() => {
-    // Add a small delay to avoid immediate redirects
-    const initTimeout = setTimeout(() => {
-      const storedUser = localStorage.getItem('user');
-      if (storedUser) {
-        try {
-          const parsedUser = JSON.parse(storedUser);
-          setUser(parsedUser);
-        } catch (e) {
-          localStorage.removeItem('user');
+    const initAuth = async () => {
+      try {
+        // Check for stored user data
+        const storedUser = localStorage.getItem('user');
+        const storedToken = localStorage.getItem('auth-token') || sessionStorage.getItem('auth-token');
+        
+        if (storedUser && storedToken) {
+          try {
+            const parsedUser = JSON.parse(storedUser);
+            
+            // Verify token is still valid (but don't fail if it's not)
+            const isTokenValid = await verifyToken(storedToken);
+            
+            if (isTokenValid) {
+              setUser(parsedUser);
+            } else {
+              // Token is invalid, clear stored data
+              console.log('Stored token is invalid, clearing auth data');
+              localStorage.removeItem('user');
+              localStorage.removeItem('auth-token');
+              sessionStorage.removeItem('auth-token');
+            }
+          } catch (e) {
+            console.error('Failed to parse stored user:', e);
+            localStorage.removeItem('user');
+            localStorage.removeItem('auth-token');
+            sessionStorage.removeItem('auth-token');
+          }
         }
+      } catch (error) {
+        console.error('Auth initialization error:', error);
+        // Don't throw errors during initialization, just log them
+      } finally {
+        setIsLoading(false);
+        setIsInitialized(true);
       }
-      setIsLoading(false);
-      setIsInitialized(true);
-    }, 100); // Small delay to allow the component to mount
-    
-    return () => clearTimeout(initTimeout);
+    };
+
+    initAuth();
   }, []);
   
   // Check if user should be redirected based on auth status and current route
   useEffect(() => {
-    // if (!isInitialized) return;
+    if (!isInitialized) return;
     
-    // // Don't perform any redirects if we're on login or register pages
-    // if (pathname === '/login' || pathname === '/register') {
-    //   return;
-    // }
+    // Don't perform any redirects if we're on login or register pages
+    if (pathname === '/login') {
+      return;
+    }
     
-    // const authRoutes = ['/login', '/register'];
-    // const publicRoutes = ['/', '/user', ...authRoutes]; // Added /user to public routes
-    // const isAuthRoute = authRoutes.includes(pathname);
-    // const isPublicRoute = publicRoutes.includes(pathname);
+    const authRoutes = ['/login'];
+    const publicRoutes = ['/', '/user', ...authRoutes];
+    const isAuthRoute = authRoutes.includes(pathname);
+    const isPublicRoute = publicRoutes.includes(pathname);
     
-    // // Handle redirects with a small delay to prevent immediate redirects
-    // setTimeout(() => {
-    //   // Only redirect authenticated users away from auth routes
-    //   if (user && isAuthRoute) {
-    //     // Redirect authenticated users away from auth routes
-    //     const redirectPath = roleRedirects[user.role as keyof typeof roleRedirects] || roleRedirects.default;
-    //     router.push(redirectPath);
-    //   } else if (!user && !isPublicRoute) {
-    //     // Only redirect unauthenticated users from protected routes
-    //     router.push('/login');
-    //   }
-    // }, 500);
+    // Handle redirects with a small delay to prevent immediate redirects
+    setTimeout(() => {
+      // Only redirect authenticated users away from auth routes
+      if (user && isAuthRoute) {
+        // Redirect authenticated users away from auth routes
+        const redirectPath = roleRedirects[user.role as keyof typeof roleRedirects] || roleRedirects.default;
+        router.push(redirectPath);
+      } else if (!user && !isPublicRoute) {
+        // Only redirect unauthenticated users from protected routes
+        router.push('/login');
+      }
+    }, 500);
   }, [user, pathname, isInitialized, router]);
+
+  // Verify token with backend
+  const verifyToken = async (token: string): Promise<boolean> => {
+    try {
+      // Try external API first
+      const externalResponse = await axiosInstance.get('/auth/profile');
+      return true;
+    } catch (error) {
+      console.error('Token verification error:', error);
+      return false;
+    }
+  };
+
+  // Refresh user data from backend
+  const refreshUser = async (): Promise<void> => {
+    try {
+      const response = await axiosInstance.get('/auth/profile');
+      const userData = response.data.data;
+      setUser(userData);
+      localStorage.setItem('user', JSON.stringify(userData));
+    } catch (error) {
+      console.error('Failed to refresh user:', error);
+      logout();
+    }
+  };
   
-  // Login function
-  const login = async (email: string, password: string) => {
+  // Login function with API integration
+  const login = async (email: string, password: string, rememberMe: boolean = false): Promise<void> => {
     setIsLoading(true);
     setError(null);
     
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      const lowercasedEmail = email.toLowerCase();
-      const userRecord = sampleUsers[lowercasedEmail];
-      
-      if (!userRecord || userRecord.password !== password) {
-        throw new Error('Invalid email or password');
+      const response = await authAxiosInstance.post('/auth/login', {
+        email,
+        password,
+      });
+
+      const data = response.data;
+
+      if (data.code === 200 && data.data) {
+        const userData = data.data;
+        
+        // Save to state and localStorage
+        setUser(userData);
+        localStorage.setItem('user', JSON.stringify(userData));
+        
+        // Save token with remember me option
+        if (rememberMe) {
+          localStorage.setItem('auth-token', userData.token);
+        } else {
+          // Store token in sessionStorage for session-only storage
+          sessionStorage.setItem('auth-token', userData.token);
+        }
+        
+        // Redirect to appropriate dashboard based on role
+        const redirectPath = roleRedirects[userData.role as keyof typeof roleRedirects] || roleRedirects.default;
+        router.push(redirectPath);
+        
+        toast.success('Login successful!');
+      } else {
+        throw new Error(data.error || 'Login failed');
       }
-      
-      // Remove password before storing user
-      const { password: _, ...userWithoutPassword } = userRecord;
-      
-      // Save to state and localStorage
-      setUser(userWithoutPassword);
-      localStorage.setItem('user', JSON.stringify(userWithoutPassword));
-      
-      // Redirect to appropriate dashboard based on role
-      const redirectPath = roleRedirects[userWithoutPassword.role as keyof typeof roleRedirects] || roleRedirects.default;
-      router.push(redirectPath);
-    } catch (err) {
-      setError((err as Error).message);
+    } catch (err: any) {
+      const errorMessage = err.response?.data?.error || err.message || 'Login failed';
+      setError(errorMessage);
+      toast.error(errorMessage);
+      throw err;
     } finally {
       setIsLoading(false);
     }
   };
   
   // Demo login function
-  const loginAsDemo = async (demoId: string, role: string = 'admin') => {
+  const loginAsDemo = async (demoId: string, role: string = 'user'): Promise<void> => {
     setIsLoading(true);
     setError(null);
     
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 500));
-      
-      // Create a demo user
+      // Create a demo user based on the database schema
       const demoUser: User = {
-        id: `demo-${Date.now()}`,
-        firstName: 'Demo',
-        lastName: 'User',
-        email: `demo@${demoId}.com`,
-        role: role,
-        company: 'Demo Company',
+        user_id: Date.now(),
+        email: `demo-${demoId}@example.com`,
+        first_name: 'Demo',
+        last_name: 'User',
+        full_name: `Demo ${role.charAt(0).toUpperCase() + role.slice(1)} User`,
+        role: role as User['role'],
+        status: 'active',
+        phone_number: '+1-555-0123',
+        address: '123 Demo Street, Demo City, DC 12345',
+        client_logo: '/demo-logo.png',
+        show_popup: '0',
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        token: `demo-token-${Date.now()}`,
       };
       
       // Save to state and localStorage
       setUser(demoUser);
       localStorage.setItem('user', JSON.stringify(demoUser));
+      if (demoUser.token) {
+        localStorage.setItem('auth-token', demoUser.token);
+      }
       
       // Redirect to appropriate dashboard based on role and demo
       const redirectPath = roleRedirects[role as keyof typeof roleRedirects] || roleRedirects.default;
       router.push(`${redirectPath}?demo=${demoId}`);
+      
+      toast.success(`Logged in as ${demoUser.full_name}`);
     } catch (err) {
-      setError((err as Error).message);
+      const errorMessage = err instanceof Error ? err.message : 'Demo login failed';
+      setError(errorMessage);
+      toast.error(errorMessage);
+      throw err;
     } finally {
       setIsLoading(false);
     }
   };
   
   // Logout function
-  const logout = () => {
-    setUser(null);
-    localStorage.removeItem('user');
-    router.push('/login');
+  const logout = async (): Promise<void> => {
+    try {
+      // Get current token before clearing
+      const token = localStorage.getItem('auth-token') || sessionStorage.getItem('auth-token');
+      
+      // Clear local state immediately for better UX
+      setUser(null);
+      localStorage.removeItem('user');
+      localStorage.removeItem('auth-token');
+      sessionStorage.removeItem('auth-token');
+      
+      // Try to invalidate token on server (but don't block logout if it fails)
+      if (token) {
+        try {
+          // Try external API first
+          await axiosInstance.post('/auth/logout');
+        } catch (externalError) {
+          console.error('External logout API error:', externalError);
+          // Try local API as fallback
+          try {
+            await authAxiosInstance.post('/api/auth/logout');
+          } catch (localError) {
+            console.error('Local logout API error:', localError);
+            // Continue with logout even if both APIs fail
+          }
+        }
+      }
+      
+      // Redirect to login page
+      router.push('/login');
+      toast.success('Logged out successfully');
+      
+    } catch (error) {
+      console.error('Logout error:', error);
+      // Even if there's an error, ensure user is logged out locally
+      setUser(null);
+      localStorage.removeItem('user');
+      localStorage.removeItem('auth-token');
+      sessionStorage.removeItem('auth-token');
+      router.push('/login');
+      toast.error('Logout completed with some issues');
+    }
   };
   
   // Register function
-  const register = async (userData: Partial<User> & { password: string }) => {
+  const register = async (userData: Partial<User> & { password: string }): Promise<void> => {
     setIsLoading(true);
     setError(null);
     
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      
-      // In a real app, you would make an API call to register the user
-      
-      // For demo purposes, just simulate success
-      setIsLoading(false);
-      
-      // Redirect to login page after successful registration
-      router.push('/login');
+      const response = await authAxiosInstance.post('/auth/register', userData);
+      const data = response.data;
+
+      if (data.code === 200 && data.data) {
+        toast.success('Registration successful! Please log in.');
+        router.push('/login');
+      } else {
+        throw new Error(data.error || 'Registration failed');
+      }
     } catch (err) {
-      setError((err as Error).message);
+      const errorMessage = err instanceof Error ? err.message : 'Registration failed';
+      setError(errorMessage);
+      toast.error(errorMessage);
+      throw err;
+    } finally {
       setIsLoading(false);
     }
   };
   
   // Clear any error
-  const clearError = () => {
+  const clearError = (): void => {
     setError(null);
   };
   
@@ -239,6 +331,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     logout,
     register,
     clearError,
+    refreshUser,
   };
   
   return (

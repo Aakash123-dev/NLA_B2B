@@ -1,32 +1,62 @@
 'use client'
 
-import React, { useState, useCallback, useMemo } from 'react'
-import { useRouter } from 'next/navigation'
+import React, { useState, useCallback, useEffect } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Badge } from '@/components/ui/badge'
-import { ChevronRight, ArrowLeft, Target, Database, Store, Package, DollarSign, Calendar, TrendingUp, X, Brain } from 'lucide-react'
+import {
+  ChevronRight, ArrowLeft, Target, Database, Store,
+  Package, DollarSign, Calendar, TrendingUp, X, Brain
+} from 'lucide-react'
 import { motion } from 'framer-motion'
 import { SearchableDropdownList } from './components'
+import { SetupImportModal } from './components/SetupImportModal'
 import { TradePlanFormData, FormErrors } from '../types'
-import { databaseOptions, retailerOptions, brandOptions, productOptions, yearOptions } from '../constants'
+import { databaseOptions, yearOptions } from '../constants'
 import { validateTradePlanForm, generateMockTradePlan } from '../utils'
 import { SimpleSmartInsightsDrawer } from '@/components/common'
+import { axiosInstance, axiosPythonInstance } from '@/services/projectservices/axiosInstance'
 
 export function TpoSetupPage() {
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const project_id = Number(searchParams.get('project'))
+  const model_id = Number(searchParams.get('model'))
+  const projectName = searchParams.get('projectName') || ''
+  
   const [isSmartInsightsOpen, setIsSmartInsightsOpen] = useState(false)
+  const [isLoading, setIsLoading] = useState(false)
+  const [retailerBrandProducts, setRetailerBrandProducts] = useState<any>({})
+  const [isSetupModalOpen, setIsSetupModalOpen] = useState(false)
+  
+  // Get user_id from localStorage
+  const getUserFromStorage = () => {
+    if (typeof window !== 'undefined') {
+      const userStr = localStorage.getItem('user')
+      if (userStr) {
+        try {
+          const user = JSON.parse(userStr)
+          return user.user_id || 7 // fallback to 7 if not found
+        } catch (e) {
+          console.error('Error parsing user from localStorage:', e)
+          return 7
+        }
+      }
+    }
+    return 7 // default fallback
+  }
+  
   const [formData, setFormData] = useState<TradePlanFormData>({
     trade_plan_name: "Trade Plan 12 2025 - Real Good Foods 2",
-    project: "Real Good Foods Project",
+    project: projectName, // Set from URL parameter
     model: "Optimization Model v2.1",
     selectedDatabase: 'db1',
-    selectedRetailers: [],
-    selectedBrands: [],
-    selectedProducts: [],
+    selectedRetailers: [], // Will be single select
+    selectedBrands: [], // Will be single select
     year: 2025,
     marketShare: '',
     minRevenue: '',
@@ -39,29 +69,74 @@ export function TpoSetupPage() {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [errors, setErrors] = useState<FormErrors>({})
 
+  // API function to fetch retailers and brands data
+  const fetchRetailerBrandProductApiHandler = async () => {
+    try {
+      setIsLoading(true);
+      const api = `/insights/retailer_brands_products?project_id=${project_id}&model_id=${model_id}`;
+      const response = await axiosPythonInstance.get(api);
+
+      if (response.status === 200) {
+        setRetailerBrandProducts(response?.data?.data);
+      }
+    } catch (error) {
+      console.log('Error in fetching retailers and brands:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Get retailers and brands from API data
+  const retailers = Object.keys(retailerBrandProducts || {});
+  const brands = formData.selectedRetailers.length > 0 
+    ? Object.keys(retailerBrandProducts[formData.selectedRetailers[0]] || {})
+    : [];
+
+  // Convert to the format expected by the component
+  const retailerOptions = retailers.map(retailer => ({
+    id: retailer,
+    name: retailer
+  }));
+
+  const brandOptions = brands.map(brand => ({
+    id: brand,
+    name: brand
+  }));
+
+  // Load data on component mount
+  useEffect(() => {
+    if (project_id && model_id) {
+      fetchRetailerBrandProductApiHandler();
+    }
+  }, [project_id, model_id]);
+
+  // Update project name when URL parameter changes
+  useEffect(() => {
+    if (projectName) {
+      setFormData(prev => ({
+        ...prev,
+        project: projectName
+      }))
+    }
+  }, [projectName])
+
   const handleBackToDesignStudio = () => {
-    // Get URL parameters and preserve them when going back
     const urlParams = new URLSearchParams(window.location.search);
     const projectId = urlParams.get('project');
     const modelId = urlParams.get('model');
-    
     const params = new URLSearchParams();
     if (projectId) params.set('project', projectId);
     if (modelId) params.set('model', modelId);
-    
     router.push(`/user/design-studio?${params.toString()}`);
   }
 
   const handleBackToWelcome = () => {
-    // Get URL parameters and preserve them when going back
     const urlParams = new URLSearchParams(window.location.search);
     const projectId = urlParams.get('project');
     const modelId = urlParams.get('model');
-    
     const params = new URLSearchParams();
     if (projectId) params.set('project', projectId);
     if (modelId) params.set('model', modelId);
-    
     router.push(`/user/tpo?${params.toString()}`);
   }
 
@@ -70,8 +145,6 @@ export function TpoSetupPage() {
       ...prev,
       [field]: value
     }))
-    
-    // Clear error for this field if it exists
     setErrors(prev => {
       if (prev[field]) {
         const { [field]: _, ...newErrors } = prev
@@ -96,13 +169,13 @@ export function TpoSetupPage() {
     return items.find(item => item.id === id)?.name || id
   }, [])
 
-  // Memoized selection change handlers
-  const handleRetailersChange = useCallback((selection: string[]) => {
+  // Single select handlers for retailers and brands
+  const handleRetailerChange = useCallback((selection: string[]) => {
     setFormData(prev => ({
       ...prev,
-      selectedRetailers: selection
+      selectedRetailers: selection,
+      selectedBrands: [] // Reset brands when retailer changes
     }))
-    
     if (errors.selectedRetailers) {
       setErrors(prev => {
         const newErrors = { ...prev }
@@ -112,12 +185,11 @@ export function TpoSetupPage() {
     }
   }, [errors.selectedRetailers])
 
-  const handleBrandsChange = useCallback((selection: string[]) => {
+  const handleBrandChange = useCallback((selection: string[]) => {
     setFormData(prev => ({
       ...prev,
       selectedBrands: selection
     }))
-    
     if (errors.selectedBrands) {
       setErrors(prev => {
         const newErrors = { ...prev }
@@ -127,47 +199,99 @@ export function TpoSetupPage() {
     }
   }, [errors.selectedBrands])
 
-  const handleProductsChange = useCallback((selection: string[]) => {
-    setFormData(prev => ({
-      ...prev,
-      selectedProducts: selection
-    }))
-    
-    if (errors.selectedProducts) {
-      setErrors(prev => {
-        const newErrors = { ...prev }
-        delete newErrors.selectedProducts
-        return newErrors
-      })
-    }
-  }, [errors.selectedProducts])
+  // TPO API submission
+  const submitTpoPlan = async (planData: any) => {
+    try {
+      const user_id = getUserFromStorage()
+      
+      const payload = {
+        id: null,
+        name: planData.trade_plan_name,
+        project_id: project_id,
+        model_id: model_id,
+        user_id: user_id,
+        retailer_id: planData.selectedRetailers[0] || '',
+        brand_id: planData.selectedBrands[0] || '',
+        year: planData.year,
+        submit_type: "create",
+        // Dynamic form fields
+        market_share: planData.marketShare ? parseFloat(planData.marketShare) : null,
+        min_revenue: planData.minRevenue ? parseFloat(planData.minRevenue) : null,
+        num_weeks: planData.numWeeks ? parseInt(planData.numWeeks) : null,
+        revenue: planData.targetRevenue ? parseFloat(planData.targetRevenue) : null,
+        spend: planData.targetSpend ? parseFloat(planData.targetSpend) : null,
+        volume: planData.targetVolume ? parseFloat(planData.targetVolume) : null
+      }
 
-  const handleSubmit = async (e: React.FormEvent) => {
+      console.log('TPO API Payload:', payload)
+      console.log('Form Data:', planData)
+
+      const response = await axiosInstance.post('/events/tpo', payload)
+      
+      console.log('TPO API Response Status:', response.status)
+      console.log('TPO API Response Data:', response.data)
+      
+      // Check if response has data (successful creation)
+      if (response.data && (response.data.id || response.data.name)) {
+        console.log('TPO plan created successfully:', response.data)
+        return response.data
+      } else {
+        console.warn('API response might indicate failure:', response.data)
+        // Still return the response data even if it doesn't have expected fields
+        return response.data
+      }
+    } catch (error: any) {
+      console.error('Error creating TPO plan:', error)
+      if (error.response) {
+        console.error('Response data:', error.response.data)
+        console.error('Response status:', error.response.status)
+      }
+      // Don't throw error, just return null to indicate failure
+      return null
+    }
+  }
+
+  const handleNextClick = async (e: React.FormEvent) => {
     e.preventDefault()
-    
     const validationErrors = validateTradePlanForm(formData)
     if (Object.keys(validationErrors).length > 0) {
       setErrors(validationErrors)
       return
     }
-    
     setIsSubmitting(true)
-    
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000))
+      // Submit to TPO API first
+      const tpoResponse = await submitTpoPlan(formData)
+      console.log('TPO API Response:', tpoResponse)
       
-      // Generate mock trade plan and store in localStorage for demo
-      const tradePlan = generateMockTradePlan(formData)
-      localStorage.setItem('currentTradePlan', JSON.stringify(tradePlan))
-      
-      router.push('/user/tpo/dashboard')
+      // Open the setup modal after successful API call
+      setIsSetupModalOpen(true)
     } catch (error) {
       console.error("Error creating trade plan:", error)
+      // Still open modal even if there's an error
+      setIsSetupModalOpen(true)
     } finally {
       setIsSubmitting(false)
     }
   }
+
+  const handleSetupModalClose = () => {
+    setIsSetupModalOpen(false)
+    // Navigate to dashboard after modal is closed (whether user imported CSV or cancelled)
+    router.push('/user/tpo/dashboard')
+  }
+
+  // Check if project name is filled to enable retailer/brand selection
+  const isProjectNameFilled = formData.project && formData.project.trim() !== ''
+
+  // Get selected retailer and brand names for the modal
+  const selectedRetailer = formData.selectedRetailers.length > 0 
+    ? getItemName(retailerOptions, formData.selectedRetailers[0])
+    : ''
+
+  const selectedBrand = formData.selectedBrands.length > 0 
+    ? getItemName(brandOptions, formData.selectedBrands[0])
+    : ''
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
@@ -215,7 +339,7 @@ export function TpoSetupPage() {
 
       <div className="max-w-7xl mx-auto px-6 py-8">
         <motion.form 
-          onSubmit={handleSubmit}
+          onSubmit={handleNextClick}
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6 }}
@@ -304,6 +428,33 @@ export function TpoSetupPage() {
                 </CardContent>
               </Card>
 
+              {/* Project Name - Moved Above Selection Filters */}
+              <Card className="border border-slate-200 shadow-sm">
+                <CardHeader className="pb-4">
+                  <CardTitle className="text-lg font-semibold text-slate-800 flex items-center gap-3">
+                    <div className="p-2 bg-purple-50 rounded-lg">
+                      <Package className="w-5 h-5 text-purple-600" />
+                    </div>
+                    Project Information
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-2">
+                    <Label htmlFor="project" className="text-sm font-medium text-slate-700">
+                      Project Name
+                    </Label>
+                    <Input
+                      id="project"
+                      value={formData.project}
+                      onChange={e => handleSelectionChange('project', e.target.value)}
+                      placeholder="Enter project name"
+                      className="bg-white border-slate-300 hover:border-slate-400 transition-colors h-11"
+                      required
+                    />
+                  </div>
+                </CardContent>
+              </Card>
+
               {/* Selection Filters */}
               <Card className="border border-slate-200 shadow-sm">
                 <CardHeader className="pb-4">
@@ -312,6 +463,11 @@ export function TpoSetupPage() {
                       <Store className="w-5 h-5 text-emerald-600" />
                     </div>
                     Selection Filters
+                    {!isProjectNameFilled && (
+                      <Badge variant="secondary" className="ml-2 bg-yellow-100 text-yellow-800">
+                        Fill project name first
+                      </Badge>
+                    )}
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-6">
@@ -319,39 +475,30 @@ export function TpoSetupPage() {
                   <div className="grid grid-cols-2 gap-6">
                     <div className="space-y-3">
                       <SearchableDropdownList
-                        title="Retailers"
+                        title="Retailer"
                         items={retailerOptions}
                         selectedItems={formData.selectedRetailers}
-                        onSelectionChange={handleRetailersChange}
+                        onSelectionChange={handleRetailerChange}
                         placeholder="Search retailers..."
                         maxHeight="200px"
                         colorScheme="blue"
+                        disabled={!isProjectNameFilled}
+                        singleSelect={true}
                       />
                     </div>
                     <div className="space-y-3">
                       <SearchableDropdownList
-                        title="Brands"
+                        title="Brand"
                         items={brandOptions}
                         selectedItems={formData.selectedBrands}
-                        onSelectionChange={handleBrandsChange}
+                        onSelectionChange={handleBrandChange}
                         placeholder="Search brands..."
                         maxHeight="200px"
                         colorScheme="emerald"
+                        disabled={!isProjectNameFilled || formData.selectedRetailers.length === 0}
+                        singleSelect={true}
                       />
                     </div>
-                  </div>
-
-                  {/* Products - Full Width Below */}
-                  <div className="space-y-3">
-                    <SearchableDropdownList
-                      title="Products"
-                      items={productOptions}
-                      selectedItems={formData.selectedProducts}
-                      onSelectionChange={handleProductsChange}
-                      placeholder="Search products..."
-                      maxHeight="200px"
-                      colorScheme="purple"
-                    />
                   </div>
                 </CardContent>
               </Card>
@@ -500,80 +647,66 @@ export function TpoSetupPage() {
                     </div>
                   </div>
 
-                  {/* Retailers */}
+                  {/* Project Name */}
                   <div className="space-y-2">
                     <Label className="text-sm font-medium text-slate-700">
-                      Retailers ({formData.selectedRetailers.length})
+                      Project Name
                     </Label>
-                    <div className="p-3 bg-slate-50 rounded-lg border min-h-[60px] max-h-[120px] overflow-y-auto">
+                    <div className="p-3 bg-slate-50 rounded-lg border min-h-[48px] flex items-center">
+                      <span className="text-sm text-slate-800 font-medium">
+                        {formData.project || <span className="text-slate-500">No project specified</span>}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Retailer */}
+                  <div className="space-y-2">
+                    <Label className="text-sm font-medium text-slate-700">
+                      Retailer
+                    </Label>
+                    <div className="p-3 bg-slate-50 rounded-lg border min-h-[48px] flex items-center">
                       {formData.selectedRetailers.length > 0 ? (
-                        <div className="flex flex-wrap gap-1">
-                          {formData.selectedRetailers.map(retailerId => (
-                            <Badge 
-                              key={retailerId} 
-                              variant="secondary"
-                              className="bg-blue-100 text-blue-800 hover:bg-blue-200 text-xs cursor-pointer"
-                              onClick={() => handleRemoveSelection('selectedRetailers', retailerId)}
-                            >
-                              {getItemName(retailerOptions, retailerId)}
-                              <X className="w-3 h-3 ml-1" />
-                            </Badge>
-                          ))}
+                        <div className="flex items-center justify-between w-full">
+                          <span className="text-sm text-slate-800 font-medium">
+                            {getItemName(retailerOptions, formData.selectedRetailers[0])}
+                          </span>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleRemoveSelection('selectedRetailers', formData.selectedRetailers[0])}
+                            className="h-6 w-6 p-0 text-slate-500 hover:text-slate-700"
+                          >
+                            <X className="w-3 h-3" />
+                          </Button>
                         </div>
                       ) : (
-                        <span className="text-sm text-slate-500">No retailers selected</span>
+                        <span className="text-sm text-slate-500">No retailer selected</span>
                       )}
                     </div>
                   </div>
 
-                  {/* Brands */}
+                  {/* Brand */}
                   <div className="space-y-2">
                     <Label className="text-sm font-medium text-slate-700">
-                      Brands ({formData.selectedBrands.length})
+                      Brand
                     </Label>
-                    <div className="p-3 bg-slate-50 rounded-lg border min-h-[60px] max-h-[120px] overflow-y-auto">
+                    <div className="p-3 bg-slate-50 rounded-lg border min-h-[48px] flex items-center">
                       {formData.selectedBrands.length > 0 ? (
-                        <div className="flex flex-wrap gap-1">
-                          {formData.selectedBrands.map(brandId => (
-                            <Badge 
-                              key={brandId} 
-                              variant="secondary"
-                              className="bg-emerald-100 text-emerald-800 hover:bg-emerald-200 text-xs cursor-pointer"
-                              onClick={() => handleRemoveSelection('selectedBrands', brandId)}
-                            >
-                              {getItemName(brandOptions, brandId)}
-                              <X className="w-3 h-3 ml-1" />
-                            </Badge>
-                          ))}
+                        <div className="flex items-center justify-between w-full">
+                          <span className="text-sm text-slate-800 font-medium">
+                            {getItemName(brandOptions, formData.selectedBrands[0])}
+                          </span>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleRemoveSelection('selectedBrands', formData.selectedBrands[0])}
+                            className="h-6 w-6 p-0 text-slate-500 hover:text-slate-700"
+                          >
+                            <X className="w-3 h-3" />
+                          </Button>
                         </div>
                       ) : (
-                        <span className="text-sm text-slate-500">No brands selected</span>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Products */}
-                  <div className="space-y-2">
-                    <Label className="text-sm font-medium text-slate-700">
-                      Products ({formData.selectedProducts.length})
-                    </Label>
-                    <div className="p-3 bg-slate-50 rounded-lg border min-h-[60px] max-h-[150px] overflow-y-auto">
-                      {formData.selectedProducts.length > 0 ? (
-                        <div className="flex flex-wrap gap-1">
-                          {formData.selectedProducts.map(productId => (
-                            <Badge 
-                              key={productId} 
-                              variant="secondary"
-                              className="bg-purple-100 text-purple-800 hover:bg-purple-200 text-xs cursor-pointer"
-                              onClick={() => handleRemoveSelection('selectedProducts', productId)}
-                            >
-                              {getItemName(productOptions, productId)}
-                              <X className="w-3 h-3 ml-1" />
-                            </Badge>
-                          ))}
-                        </div>
-                      ) : (
-                        <span className="text-sm text-slate-500">No products selected</span>
+                        <span className="text-sm text-slate-500">No brand selected</span>
                       )}
                     </div>
                   </div>
@@ -621,12 +754,12 @@ export function TpoSetupPage() {
                     </div>
                   </div>
 
-                  {/* Submit Button */}
+                  {/* Next Button */}
                   <div className="pt-4">
                     <Button 
                       type="submit" 
-                      disabled={isSubmitting}
-                      className="w-full bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white font-medium py-3 rounded-lg shadow-lg hover:shadow-xl transition-all duration-200"
+                      disabled={isSubmitting || !isProjectNameFilled}
+                      className="w-full bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white font-medium py-3 rounded-lg shadow-lg hover:shadow-xl transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       {isSubmitting ? (
                         <div className="flex items-center gap-2">
@@ -635,19 +768,26 @@ export function TpoSetupPage() {
                         </div>
                       ) : (
                         <div className="flex items-center gap-2">
-                          Create Trade Plan
+                          Next
                           <ChevronRight className="w-4 h-4" />
                         </div>
                       )}
                     </Button>
                   </div>
-
                 </CardContent>
               </Card>
             </div>
           </div>
         </motion.form>
       </div>
+
+      {/* Setup Import Modal */}
+      <SetupImportModal
+        isOpen={isSetupModalOpen}
+        onClose={handleSetupModalClose}
+        retailer={selectedRetailer}
+        brand={selectedBrand}
+      />
 
       {/* Smart Insights Drawer */}
       <SimpleSmartInsightsDrawer 

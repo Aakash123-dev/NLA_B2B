@@ -79,7 +79,7 @@ export const InsightsList: React.FC<InsightsListProps> = ({
                     ? 'bg-green-100 text-green-800'
                     : insight.type === 'promo'
                       ? 'bg-purple-100 text-purple-800'
-                      : insight.type === 'strat'
+                      : insight.type === 'start'
                         ? 'bg-blue-100 text-blue-800'
                         : 'bg-orange-100 text-orange-800'
                 }`}

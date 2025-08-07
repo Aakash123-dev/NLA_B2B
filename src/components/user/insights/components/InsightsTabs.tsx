@@ -1,19 +1,18 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect } from "react";
 import { useSearchParams } from "next/navigation";
 import { Brain } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useInsightsContext } from "../contexts";
+import { useDispatch, useSelector } from "react-redux";
+import { AppDispatch, RootState } from "@/store";
+import { getQuestionTypes } from "@/store/slices/questionTypesSlices";
 
 interface InsightsTabsProps {
 	selectedTab: string;
 	setSelectedTab: (tab: string) => void;
 	setIsSmartInsightsOpen: (open: boolean) => void;
-}
-
-interface TabType {
-	type: string;
 }
 
 // Optional: Human-readable names for tabs
@@ -31,46 +30,29 @@ export const InsightsTabs: React.FC<InsightsTabsProps> = ({
 	setIsSmartInsightsOpen,
 }) => {
 	const { state } = useInsightsContext();
-	let modelIdFromUrl = null;
+	const dispatch = useDispatch<AppDispatch>();
 	
 	// Safely get URL parameters if available
+	let modelIdFromUrl = null;
 	try {
 		const searchParams = useSearchParams();
 		modelIdFromUrl = searchParams.get("model");
 	} catch (error) {
-		// useSearchParams might not work in all contexts, use fallback
 		console.log("useSearchParams not available, using context modelId");
 	}
 	
 	const modelId = modelIdFromUrl;
 
-	const [tabs, setTabs] = useState<TabType[]>([]);
+	// Get question types from Redux state
+	const { tabs, isLoading, error } = useSelector(
+		(state: RootState) => state.questionTypes
+	);
 
 	useEffect(() => {
 		if (!modelId) return;
-		const token =
-			"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjp7ImlkIjo3LCJlbWFpbCI6InRlc3RpbmdAbmxhLmNvbSIsInN0YXR1cyI6ImFjdGl2ZSIsInJvbGUiOiJ1c2VyIiwic2hvd19wb3B1cCI6MSwicGFzc3dvcmQiOiIkMmEkMTAkeW9HSi5WU3hRck1kWGpIc0NHMENWLnhCUWxBSlppWmdCaFZ5UGZCVlIyaGVlREZHUVcyclMiLCJjbGllbnRfZmlyc3RfbmFtZSI6IlRlc3RpbmciLCJjbGllbnRfbGFzdF9uYW1lIjoiTmFtZTEiLCJmdWxsX25hbWUiOm51bGwsImFkZHJlc3MiOiJqYWhza2pkbiIsInBob25lX251bWJlciI6IjIzMjEzMzQzIiwiY2xpZW50X2xvZ28iOm51bGwsImNyZWF0ZWRfYnkiOm51bGwsImNyZWF0ZWRBdCI6IjIwMjItMTItMDdUMjM6NDQ6MDIuMDAwWiIsInVwZGF0ZWRBdCI6IjIwMjMtMDQtMThUMTc6Mjk6NDMuMDAwWiJ9LCJpYXQiOjE3NTI0NjcxMTIsImV4cCI6MTc1NTA1OTExMn0.2Avb2uW4QceaXMVPlahRlKttk1b7E1GpvgcKOAlXMbE";
-
-		fetch(
-			`https://nla-node-backend-u3zputq5qq-uc.a.run.app/api/v1/insights/question-types/${modelId}`,
-			{
-				method: "GET",
-				headers: {
-					"Content-Type": "application/json",
-					Authorization: `Bearer ${token}`,
-				},
-			}
-		)
-			.then((res) => res.json())
-			.then((json) => {
-				if (Array.isArray(json.data)) {
-					setTabs(json.data);
-				}
-			})
-			.catch((err) => {
-				console.error("Error fetching question types:", err);
-			});
-	}, [modelId]);
+	
+		dispatch(getQuestionTypes(modelId.toString()));
+	}, [dispatch, modelId]);
 
 	return (
 		<div className="w-full px-6 lg:px-12 py-4 bg-white shadow-sm border-b border-gray-200">
@@ -89,23 +71,32 @@ export const InsightsTabs: React.FC<InsightsTabsProps> = ({
 					</button>
 
 					{/* Render API-based tabs */}
-					{tabs.map((tab, index) => {
-						const label = labelMap[tab.type] || tab.type;
+					{isLoading ? (
+						<div className="flex items-center gap-2">
+							<div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-500"></div>
+							<span className="text-sm text-gray-500">Loading tabs...</span>
+						</div>
+					) : error ? (
+						<div className="text-sm text-red-500">Error loading tabs</div>
+					) : (
+						tabs.map((tab, index) => {
+							const label = labelMap[tab.type] || tab.type;
 
-						return (
-							<button
-								key={index}
-								onClick={() => setSelectedTab(tab.type)}
-								className={`py-2 px-4 rounded-full font-medium text-sm transition-all duration-300 ${
-									selectedTab === tab.type
-										? "bg-gradient-to-r from-blue-500 to-indigo-600 text-white shadow-md hover:shadow-lg transform hover:-translate-y-0.5"
-										: "bg-slate-100 text-slate-700 hover:bg-slate-200 hover:text-slate-900"
-								}`}
-							>
-								{label}
-							</button>
-						);
-					})}
+							return (
+								<button
+									key={index}
+									onClick={() => setSelectedTab(tab.type)}
+									className={`py-2 px-4 rounded-full font-medium text-sm transition-all duration-300 ${
+										selectedTab === tab.type
+											? "bg-gradient-to-r from-blue-500 to-indigo-600 text-white shadow-md hover:shadow-lg transform hover:-translate-y-0.5"
+											: "bg-slate-100 text-slate-700 hover:bg-slate-200 hover:text-slate-900"
+									}`}
+								>
+									{label}
+								</button>
+							);
+						})
+					)}
 				</div>
 
 				<div className="px-4">

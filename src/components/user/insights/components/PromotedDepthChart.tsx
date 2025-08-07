@@ -93,7 +93,7 @@ const PromotedDepthChart: React.FC = () => {
     },
     tooltip: {
       x: {
-        formatter: function (_value: string, { dataPointIndex }: any) {
+        formatter: function (_value: number, { dataPointIndex }: any) {
           return data.data.categories[dataPointIndex] || '';
         },
       },
@@ -103,7 +103,7 @@ const PromotedDepthChart: React.FC = () => {
     },
     legend: {
       show: true,
-      position: 'top',
+      position: 'top' as const,
     },
     xaxis: {
       categories: data.data.categories,
@@ -150,11 +150,11 @@ const PromotedDepthChart: React.FC = () => {
     dataLabels: { enabled: false },
     markers: {
       size: 5,
-      shape: 'circle',
+      shape: 'circle' as const,
       hover: { size: 6 },
     },
     stroke: {
-      curve: 'straight',
+      curve: 'straight' as const,
       width: 4,
     },
     colors: ['#eb974e', '#2c99f4'],

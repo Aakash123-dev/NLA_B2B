@@ -13,19 +13,22 @@ import {
 } from '@/components/user/pricing/config/constants';
 
 interface ProductConfigurationSectionProps {
-  formData: {
-    selectedRetailer: string;
-    selectedBrand: string;
-    selectedProduct: string;
-    uploadedFile: File | null;
-  };
   onSelectionChange: (field: string, selection: string) => void;
   onInputChange: (field: string, value: any) => void;
   onDownloadTemplate: () => void;
+  retailers: string[];
+  brands: string[];
+  products: any[];
+  selectedRetailer: string;
+  selectedBrand: string;
+  selectedProduct: string;
+  handleRetailerChange: (value: string) => void;
+  handleBrandChange: (value: string) => void;
+  handleProductChange: (value: string) => void;
+  generatePromoPPT: () => void;
 }
 
 export function ProductConfigurationSection({
-  formData,
   onSelectionChange,
   onInputChange,
   onDownloadTemplate,
@@ -38,6 +41,8 @@ export function ProductConfigurationSection({
   handleRetailerChange,
   handleBrandChange,
   handleProductChange,
+  generatePromoPPT,
+ 
 }: ProductConfigurationSectionProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -127,7 +132,7 @@ export function ProductConfigurationSection({
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={onDownloadTemplate}
+                  onClick={generatePromoPPT}
                   className="border-blue-200 text-blue-700 transition-all duration-200 hover:border-blue-300 hover:bg-blue-50"
                 >
                   <Download className="mr-2 h-4 w-4" />
@@ -161,7 +166,7 @@ export function ProductConfigurationSection({
                         <Upload className="mr-2 h-4 w-4" />
                         Choose File
                       </Button>
-                      <span className="text-sm text-slate-600">
+                      {/* <span className="text-sm text-slate-600">
                         {formData.uploadedFile ? (
                           <div className="flex items-center gap-2">
                             <div className="h-2 w-2 rounded-full bg-emerald-500"></div>
@@ -172,21 +177,21 @@ export function ProductConfigurationSection({
                             No file selected
                           </span>
                         )}
-                      </span>
+                      </span> */}
                     </div>
                     <p className="mt-1 text-xs text-slate-500">
                       Supports CSV, Excel files (.csv, .xlsx, .xls)
                     </p>
                   </div>
                 </div>
-                <Button
+                {/* <Button
                   size="sm"
                   disabled={!formData.uploadedFile}
                   className="bg-emerald-600 text-white transition-all duration-200 hover:bg-emerald-700 disabled:bg-slate-300 disabled:text-slate-500"
                 >
                   <Sparkles className="mr-2 h-4 w-4" />
                   Process Data
-                </Button>
+                </Button> */}
               </div>
             </div>
           </div>
