@@ -15,13 +15,14 @@ import {
 import { motion } from 'framer-motion'
 import { SearchableDropdownList } from './components'
 import { SetupImportModal } from './components/SetupImportModal'
-import { TradePlanFormData, FormErrors } from '../types'
+import { TradePlanFormData } from '../types'
 import { databaseOptions, yearOptions } from '../constants'
 import { validateTradePlanForm, generateMockTradePlan } from '../utils'
 import { SimpleSmartInsightsDrawer } from '@/components/common'
 import { axiosInstance, axiosPythonInstance } from '@/services/projectservices/axiosInstance'
 
 export function TpoSetupPage() {
+  type FormErrors = Partial<Record<keyof TradePlanFormData, string>>
   const router = useRouter()
   const searchParams = useSearchParams()
   const project_id = Number(searchParams.get('project'))
@@ -32,6 +33,8 @@ export function TpoSetupPage() {
   const [isLoading, setIsLoading] = useState(false)
   const [retailerBrandProducts, setRetailerBrandProducts] = useState<any>({})
   const [isSetupModalOpen, setIsSetupModalOpen] = useState(false)
+  const [tpoData, setTpoData] = useState<any>(null);
+  const [tpoId, setTpoId] = useState(null)
   
   // Get user_id from localStorage
   const getUserFromStorage = () => {
@@ -120,6 +123,33 @@ export function TpoSetupPage() {
     }
   }, [projectName])
 
+  // Fetch TPO data and hydrate target values once an event_tpo_id is available
+  useEffect(() => {
+    const fetchTpoData = async () => {
+      try {
+        const id = tpoData?.id
+        if (!id) return
+
+        const response = await axiosInstance.get(`/events/tpo/${id}`)
+        const data = response?.data
+
+        setTpoData(data)
+
+        // Map API values to existing form fields
+        setFormData(prev => ({
+          ...prev,
+          targetVolume: data?.volume != null ? String(data.volume) : prev.targetVolume,
+          targetSpend: data?.spend != null ? String(data.spend) : prev.targetSpend,
+          targetRevenue: data?.revenue != null ? String(data.revenue) : prev.targetRevenue,
+        }))
+      } catch (error) {
+        console.log('Error fetching TPO data:', error)
+      }
+    }
+
+    fetchTpoData()
+  }, [tpoData?.id])
+
   const handleBackToDesignStudio = () => {
     const urlParams = new URLSearchParams(window.location.search);
     const projectId = urlParams.get('project');
@@ -145,7 +175,7 @@ export function TpoSetupPage() {
       ...prev,
       [field]: value
     }))
-    setErrors(prev => {
+    setErrors((prev: FormErrors) => {
       if (prev[field]) {
         const { [field]: _, ...newErrors } = prev
         return newErrors
@@ -177,7 +207,7 @@ export function TpoSetupPage() {
       selectedBrands: [] // Reset brands when retailer changes
     }))
     if (errors.selectedRetailers) {
-      setErrors(prev => {
+      setErrors((prev: FormErrors) => {
         const newErrors = { ...prev }
         delete newErrors.selectedRetailers
         return newErrors
@@ -191,7 +221,7 @@ export function TpoSetupPage() {
       selectedBrands: selection
     }))
     if (errors.selectedBrands) {
-      setErrors(prev => {
+      setErrors((prev: FormErrors) => {
         const newErrors = { ...prev }
         delete newErrors.selectedBrands
         return newErrors
@@ -223,17 +253,12 @@ export function TpoSetupPage() {
         volume: planData.targetVolume ? parseFloat(planData.targetVolume) : null
       }
 
-      console.log('TPO API Payload:', payload)
-      console.log('Form Data:', planData)
-
       const response = await axiosInstance.post('/events/tpo', payload)
-      
-      console.log('TPO API Response Status:', response.status)
-      console.log('TPO API Response Data:', response.data)
       
       // Check if response has data (successful creation)
       if (response.data && (response.data.id || response.data.name)) {
         console.log('TPO plan created successfully:', response.data)
+        setTpoId(response.data.id);
         return response.data
       } else {
         console.warn('API response might indicate failure:', response.data)
@@ -251,6 +276,8 @@ export function TpoSetupPage() {
     }
   }
 
+  console.log(tpoId, "AllTpoId")
+
   const handleNextClick = async (e: React.FormEvent) => {
     e.preventDefault()
     const validationErrors = validateTradePlanForm(formData)
@@ -263,6 +290,9 @@ export function TpoSetupPage() {
       // Submit to TPO API first
       const tpoResponse = await submitTpoPlan(formData)
       console.log('TPO API Response:', tpoResponse)
+      
+      // Save created TPO data for modal context
+     
       
       // Open the setup modal after successful API call
       setIsSetupModalOpen(true)
@@ -277,8 +307,12 @@ export function TpoSetupPage() {
 
   const handleSetupModalClose = () => {
     setIsSetupModalOpen(false)
-    // Navigate to dashboard after modal is closed (whether user imported CSV or cancelled)
-    router.push('/user/tpo/dashboard')
+    // Navigate to dashboard with identifiers in the URL
+    const params = new URLSearchParams()
+    if (project_id) params.set('project', String(project_id))
+    if (model_id) params.set('model', String(model_id))
+    if (tpoId) params.set('tpoId', String(tpoId))
+    router.push(`/user/tpo/dashboard?${params.toString()}`)
   }
 
   // Check if project name is filled to enable retailer/brand selection
@@ -292,6 +326,57 @@ export function TpoSetupPage() {
   const selectedBrand = formData.selectedBrands.length > 0 
     ? getItemName(brandOptions, formData.selectedBrands[0])
     : ''
+
+    const [fetchImportedEvents, setFetchImportedEvents] = useState(false);
+
+    const createImportedEvent = async(event: any) => {
+      try {
+          const user_id = getUserFromStorage()
+          const eventData = {
+            ...event,
+            user_id,
+            event_tpo_id: event.event_tpo_id ?? tpoId,
+            status: (event.status || 'DRAFT').toUpperCase(),
+          }
+          const response = await axiosInstance.post(`/events`, eventData)
+          return response.data || []
+      } catch (error) {
+          // @ts-ignore
+          console.error('[TpoSetupPage] Create event failed:', error?.response?.status, error?.response?.data)
+          throw error
+      }
+  }
+
+    const handleImportEvents = async (importedEvents: any[]) => {
+      try {
+        // sequential to preserve order; can be batched if backend supports
+        for (const event of importedEvents) {
+          await createImportedEvent(event)
+        }
+        setFetchImportedEvents(true)
+      } catch (error) {
+        console.error('[TpoSetupPage] Failed to import events:', error)
+        throw error
+      }
+    }
+
+  useEffect(() => {
+    // fetch tpo data
+    const fetchTpoData = async () => {
+        try {
+         
+            const response = await axiosInstance.get(`/events/tpo/${tpoId}`);
+            setTpoData(response?.data);
+        } catch (error) {
+            console.log("Error fetching TPO data:", error);
+        }
+    }
+
+    // fetchProjects();
+    fetchTpoData();
+}, [tpoId]);
+
+console.log(tpoData, "AllTpoData");
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
@@ -785,8 +870,10 @@ export function TpoSetupPage() {
       <SetupImportModal
         isOpen={isSetupModalOpen}
         onClose={handleSetupModalClose}
-        retailer={selectedRetailer}
-        brand={selectedBrand}
+        onImport={handleImportEvents}
+        retailerBrandProducts={retailerBrandProducts}
+        event_tpo_id={tpoId}
+        tpoData={tpoData}
       />
 
       {/* Smart Insights Drawer */}

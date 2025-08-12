@@ -61,7 +61,8 @@ import globalFilters from './slices/globalFilterSlice';
 import filterSlice from './slices/filterSlices';
 import questionSlice from './slices/questionSlice';
 import priceSimulationSlice from './slices/priceSimulationSlice';
-import questionTypesSlice from './slices/questionTypesSlices'
+import questionTypesSlice from './slices/questionTypesSlices';
+import productDataSlice from "./slices/productData/productDataReducer";
 
 // import authSlice from './slices/authSlice';
 // import userSlice from './slices/userSlice';
@@ -86,7 +87,8 @@ const rootReducer = combineReducers({
   filters: filterSlice,
   question: questionSlice,
   priceSimulation: priceSimulationSlice,
-  questionTypes: questionTypesSlice
+  questionTypes: questionTypesSlice,
+  productDataReducer:productDataSlice
 });
 
 const persistConfig = {

@@ -7,20 +7,25 @@ import { Label } from '@/components/ui/label'
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
 import { Upload, Download, FileText, AlertCircle, CheckCircle, X } from 'lucide-react'
 import { generateCSVTemplate } from '../../utils'
+import Papa from 'papaparse'
 
 interface SetupImportModalProps {
   isOpen: boolean
   onClose: () => void
-  retailer: string
-  brand: string
+  onImport: (events: any[]) => Promise<void>
+  retailerBrandProducts: any
+  event_tpo_id?: any
+  tpoData?: any
 }
 
-export function SetupImportModal({ isOpen, onClose, retailer, brand }: SetupImportModalProps) {
+export function SetupImportModal({ isOpen, onClose, onImport, retailerBrandProducts, event_tpo_id, tpoData }: SetupImportModalProps) {
   const [importType, setImportType] = useState<'basic' | 'advanced'>('basic')
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
   const [isUploading, setIsUploading] = useState(false)
   const [uploadSuccess, setUploadSuccess] = useState(false)
   const [uploadError, setUploadError] = useState<string>('')
+  const [previewData, setPreviewData] = useState<any[]>([])
+  const [validationErrors, setValidationErrors] = useState<string[]>([])
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -44,6 +49,37 @@ export function SetupImportModal({ isOpen, onClose, retailer, brand }: SetupImpo
     }
   }
 
+  const parseCsvFile = async (file: File) => {
+    return new Promise<{ events: any[]; errors: string[] }>((resolve) => {
+      Papa.parse(file, {
+        header: true,
+        skipEmptyLines: true,
+        complete: (results) => {
+          const rows = Array.isArray(results.data) ? (results.data as any[]) : []
+          const errors: string[] = []
+          const events = rows.map((row, idx) => {
+            const start_date = row.start_date || row.startDate
+            const end_date = row.end_date || row.endDate
+            const productId = row.productId || row.product
+
+            if (!start_date) errors.push(`Row ${idx + 1}: start_date is required`)
+            if (!end_date) errors.push(`Row ${idx + 1}: end_date is required`)
+            if (!productId) errors.push(`Row ${idx + 1}: productId is required`)
+
+            return {
+              ...row,
+              event_tpo_id: event_tpo_id ?? row.event_tpo_id,
+              retailer_id: tpoData?.retailer_id ?? row.retailer_id,
+              brand_id: tpoData?.brand_id ?? row.brand_id,
+              status: (row.status || 'draft')?.toString()?.toUpperCase(),
+            }
+          })
+          resolve({ events, errors })
+        },
+      })
+    })
+  }
+
   const handleUpload = async () => {
     if (!selectedFile) {
       setUploadError('Please select a file to upload')
@@ -54,22 +90,33 @@ export function SetupImportModal({ isOpen, onClose, retailer, brand }: SetupImpo
     setUploadError('')
 
     try {
-      // Here you would typically upload the file to your API
-      // For now, we'll simulate a successful upload
-      await new Promise(resolve => setTimeout(resolve, 2000))
-      
-      console.log('Uploading file:', selectedFile.name)
-      console.log('Import type:', importType)
-      console.log('Retailer:', retailer)
-      console.log('Brand:', brand)
-      
+      console.debug('[SetupImportModal] Starting upload parse...')
+      const { events, errors } = await parseCsvFile(selectedFile)
+      console.debug('[SetupImportModal] Parsed events:', events?.length || 0)
+      console.debug('[SetupImportModal] Validation errors:', errors?.length || 0)
+      setPreviewData(events)
+      setValidationErrors(errors)
+
+      // Proceed with valid rows even if some validation errors exist
+      const validEvents = events.filter((row: any) => {
+        const hasDates = (row.start_date || row.startDate) && (row.end_date || row.endDate)
+        const hasProduct = row.productId || row.product
+        return hasDates && hasProduct
+      })
+
+      if (validEvents.length === 0) {
+        setUploadError('No valid rows to import. Please check your CSV file.')
+        setIsUploading(false)
+        return
+      }
+
+      console.debug('[SetupImportModal] Calling onImport with valid rows:', validEvents.length)
+      await onImport(validEvents)
+      console.debug('[SetupImportModal] onImport completed')
       setUploadSuccess(true)
-      
-      // Auto-close after success
       setTimeout(() => {
         handleClose()
-      }, 1500)
-      
+      }, 800)
     } catch (error) {
       setUploadError('Upload failed. Please try again.')
       console.error('Upload error:', error)
@@ -79,16 +126,36 @@ export function SetupImportModal({ isOpen, onClose, retailer, brand }: SetupImpo
   }
 
   const handleDownloadTemplate = () => {
-    const template = generateCSVTemplate(importType, retailer)
-    const filename = `${importType}_events_template_${retailer.toLowerCase().replace(/\s+/g, '_')}.csv`
-    
-    const blob = new Blob([template], { type: 'text/csv' })
-    const url = URL.createObjectURL(blob)
-    const link = document.createElement('a')
-    link.href = url
-    link.download = filename
-    link.click()
-    URL.revokeObjectURL(url)
+    // If basic, use simple sample template
+    if (importType === 'basic') {
+      downloadSampleTemplate()
+      return
+    }
+
+    // Advanced template: infer retailer/brand products directly
+    const retailerId = tpoData?.retailer_id
+    const brandId = tpoData?.brand_id
+
+    if (!retailerId) {
+      setUploadError('Retailer not found for this TPO. Please create the TPO with a retailer.')
+      return
+    }
+
+    // Resolve product list for retailer (+ optional brand scope)
+    let products: any[] = []
+    try {
+      if (brandId && retailerBrandProducts?.[retailerId]?.[brandId]) {
+        products = retailerBrandProducts[retailerId][brandId]
+      } else if (retailerBrandProducts?.[retailerId]) {
+        // Flatten all products under retailer
+        const brandMap = retailerBrandProducts[retailerId]
+        products = Object.keys(brandMap).flatMap((b) => brandMap[b] || [])
+      }
+    } catch (e) {
+      // fallback to empty products
+    }
+
+    downloadAdvancedTemplate(products, retailerId, brandId || '')
   }
 
   const handleClose = () => {
@@ -97,6 +164,8 @@ export function SetupImportModal({ isOpen, onClose, retailer, brand }: SetupImpo
       setUploadError('')
       setUploadSuccess(false)
       setImportType('basic')
+      setPreviewData([])
+      setValidationErrors([])
       onClose()
     }
   }
@@ -119,6 +188,240 @@ export function SetupImportModal({ isOpen, onClose, retailer, brand }: SetupImpo
       }
     }
   }
+
+  const downloadSampleTemplate = () => {
+    // Create sample data with two products for the same event
+    const template = [
+        {
+            eventId: 'event1', // Same eventId to group products under one event
+            title: 'Summer Sale 2024',
+            description: 'Summer promotional campaign',
+            start_date: '2024-06-01',
+            end_date: '2024-06-30',
+            status: 'draft',
+            color: '#4F46E5',
+            channels: 'Online,Retail',
+            ppg_name: 'P1',
+            // Product 1 data
+            productId: 'Completely Fresh Foods Jack Daniels Honey Liqueur Bbq Pulled Pork Entree 16OZ 081166302903-JACK DANIELS',
+            promoPrice: '7.49',
+            tprDist: '85',
+            doDist: '45',
+            foDist: '35',
+            fdDist: '25',
+            listPrice: '6.99',
+            spoils: '0.10',
+            cogs: '3.00',
+            edlpPerUnitRate: '0.25',
+            promoPerUnitRate: '0.50',
+            vcm: '2.50',
+            fixedFee: '1000',
+        },
+        {
+            eventId: 'event2', // Same eventId to group products under one event
+            title: 'Summer Sale 2024',
+            description: 'Summer promotional campaign 2',
+            start_date: '2024-07-05',
+            end_date: '2024-07-30',
+            status: 'draft',
+            color: '#4F46E5',
+            channels: 'Online,Retail',
+            ppg_name: 'P1',
+            // Product 1 data
+            productId: 'Completely Fresh Foods Jack Daniels Honey Liqueur Bbq Pulled Pork Entree 16OZ 081166302903-JACK DANIELS',
+            promoPrice: '7.49',
+            tprDist: '85',
+            doDist: '45',
+            foDist: '35',
+            fdDist: '25',
+            listPrice: '6.99',
+            spoils: '0.10',
+            cogs: '3.00',
+            edlpPerUnitRate: '0.25',
+            promoPerUnitRate: '0.50',
+            vcm: '2.50',
+            fixedFee: '1000',
+        },
+        {
+            eventId: 'event3', // Same eventId to group products under one event
+            title: 'Summer Sale 2024',
+            description: 'Summer promotional campaign 3',
+            start_date: '2024-08-05',
+            end_date: '2024-08-30',
+            status: 'draft',
+            color: '#4F46E5',
+            channels: 'Online,Retail',
+            retailer_id: 'ALBSCO Jewel Div TA',
+            brand_id: 'JACK DANIELS',
+            // budget: '10000',
+            ppg_name: 'P1',
+            // Product 1 data
+            productId: 'Completely Fresh Foods Jack Daniels Honey Liqueur Bbq Pulled Pork Entree 16OZ 081166302903-JACK DANIELS',
+            promoPrice: '7.49',
+            tprDist: '85',
+            doDist: '45',
+            foDist: '35',
+            fdDist: '25',
+            listPrice: '6.99',
+            spoils: '0.10',
+            cogs: '3.00',
+            edlpPerUnitRate: '0.25',
+            promoPerUnitRate: '0.50',
+            vcm: '2.50',
+            fixedFee: '1000',
+        },
+        {
+            eventId: 'event4', // Same eventId to group products under one event
+            title: 'Summer Sale 2024',
+            description: 'Summer promotional campaign 4',
+            start_date: '2024-09-05',
+            end_date: '2024-09-30',
+            status: 'draft',
+            color: '#4F46E5',
+            channels: 'Online,Retail',
+            retailer_id: 'ALBSCO Jewel Div TA',
+            brand_id: 'JACK DANIELS',
+            // budget: '10000',
+            ppg_name: 'P1',
+            productId: 'Completely Fresh Foods Jack Daniels Honey Liqueur Bbq Pulled Pork Entree 16OZ 081166302903-JACK DANIELS',
+            promoPrice: '7.49',
+            tprDist: '85',
+            doDist: '45',
+            foDist: '35',
+            fdDist: '25',
+            listPrice: '6.99',
+            spoils: '0.10',
+            cogs: '3.00',
+            edlpPerUnitRate: '0.25',
+            promoPerUnitRate: '0.50',
+            vcm: '2.50',
+            fixedFee: '1000',
+        },
+        {
+            eventId: 'event4', // Same eventId to group products under one event
+            title: 'Summer Sale 2024',
+            description: 'Summer promotional campaign 4',
+            start_date: '2024-09-05',
+            end_date: '2024-09-30',
+            status: 'draft',
+            color: '#4F46E5',
+            channels: 'Online,Retail',
+            retailer_id: 'ALBSCO Jewel Div TA',
+            brand_id: 'JACK DANIELS',
+            // budget: '10000',
+            ppg_name: 'P1',
+            productId: 'Completely Fresh Foods Jack Daniels Old No 7 Brand Bbqck Pulled Chicken Entree 16OZ 089533400108-JACK DANIELS',
+            promoPrice: '7.49',
+            tprDist: '85',
+            doDist: '45',
+            foDist: '35',
+            fdDist: '25',
+            listPrice: '6.99',
+            spoils: '0.10',
+            cogs: '3.00',
+            edlpPerUnitRate: '0.25',
+            promoPerUnitRate: '0.50',
+            vcm: '2.50',
+            fixedFee: '1000',
+        },
+    ]
+
+    const csv = Papa.unparse(template)
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
+    const link = document.createElement('a')
+    const url = URL.createObjectURL(blob)
+
+    link.setAttribute('href', url)
+    link.setAttribute('download', 'event_import_template.csv')
+    link.style.visibility = 'hidden'
+
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+}
+
+const generateSampleData = (products: string[], retailerId: string, brandId: string) => {
+    const eventId = `event${Math.floor(Math.random() * 1000)}`;
+
+    return products.map((product: string) => ({
+        eventId, // Same eventId to group products under one event
+        title: 'New Promotion Campaign',
+        description: 'Sample promotional campaign',
+        start_date: '', // Leave empty for template
+        end_date: '', // Leave empty for template
+        status: 'draft',
+        color: '#4F46E5',
+        channels: 'Online,Retail',
+        ppg_name: 'P1',
+        productId: product,
+        promoPrice: '', // Leave empty for template
+        tprDist: '', // Leave empty for template
+        doDist: '', // Leave empty for template
+        foDist: '', // Leave empty for template
+        fdDist: '', // Leave empty for template
+        listPrice: '', // Leave empty for template
+        spoils: '', // Leave empty for template
+        cogs: '', // Leave empty for template
+        edlpPerUnitRate: '', // Leave empty for template
+        promoPerUnitRate: '', // Leave empty for template
+        vcm: '', // Leave empty for template
+        fixedFee: '', // Leave empty for template
+    }));
+};
+
+ const downloadAdvancedTemplate = async (products: any[], retailerId: string, brandId: string) => {
+    const data = generateSampleData(products, retailerId, brandId);
+
+    // Convert to CSV
+    const headers = [
+        'eventId',
+        'title',
+        'description',
+        'start_date',
+        'end_date',
+        'status',
+        'color',
+        'channels',
+        'ppg_name',
+        'productId',
+        'promoPrice',
+        'tprDist',
+        'doDist',
+        'foDist',
+        'fdDist',
+        'listPrice',
+        'spoils',
+        'cogs',
+        'basePrice',
+        'edlpPerUnitRate',
+        'promoPerUnitRate',
+        'vcm',
+        'fixedFee'
+    ];
+
+    const csvContent = [
+        headers.join(','),
+        ...data.map((row: any) =>
+            headers.map(header =>
+                // Wrap values in quotes if they contain commas
+                typeof row[header] === 'string' && row[header].includes(',')
+                    ? `"${row[header]}"`
+                    : row[header] || ''
+            ).join(',')
+        )
+    ].join('\n');
+
+    // Create and download the file
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    link.setAttribute('href', url);
+    link.setAttribute('download', `event_template_${retailerId}_${brandId}.csv`);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+};
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>

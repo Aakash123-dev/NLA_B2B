@@ -6,15 +6,29 @@ import { Button } from '@/components/ui/button'
 import { ArrowLeft, FileText, Upload, Plus, Building, Brain } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { CreateEventModal } from './CreateEventModal'
-import { SetupImportModal } from '../../setup/components/SetupImportModal'
+import { SetupImportModal } from './SetupImportModal'
 import { TradePlan } from '../../types'
 
 interface DashboardHeaderProps {
   tradePlan: TradePlan
   onOpenSmartInsights?: () => void
+  // For CreateEventModal
+  products?: string[]
+  getProductsForBrand?: (retailerId: string, brandId: string) => string[]
+  tpoData?: any
+  productData?: any[]
 }
 
-export function DashboardHeader({ tradePlan, onOpenSmartInsights }: DashboardHeaderProps) {
+export function DashboardHeader({ tradePlan, onOpenSmartInsights,  onSave,
+  initialEvent,
+  startDate,
+  productData,
+  products,
+  getProductsForBrand,
+  tpoData,
+  currentYear,
+  events,
+  isSubmitting }: DashboardHeaderProps) {
   const router = useRouter()
   const [showCreateEvent, setShowCreateEvent] = useState(false)
   const [showImport, setShowImport] = useState(false)
@@ -123,8 +137,16 @@ export function DashboardHeader({ tradePlan, onOpenSmartInsights }: DashboardHea
       <CreateEventModal
         isOpen={showCreateEvent}
         onClose={() => setShowCreateEvent(false)}
-        onEventCreated={handleEventCreated}
-        tradePlanId={tradePlan.id}
+        onSave ={onSave}
+        initialEvent = {initialEvent}
+        startDate = {startDate}
+        productData={productData}
+        products={products}
+        getProductsForBrand={getProductsForBrand}
+        tpoData={tpoData}
+        currentYear = {currentYear}
+        events = {events}
+        isSubmitting ={isSubmitting}
       />
 
       <SetupImportModal

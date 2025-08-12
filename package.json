@@ -51,6 +51,7 @@
     "@tremor/react": "^3.18.7",
     "@types/react-paginate": "^7.1.4",
     "@xyflow/react": "^12.3.4",
+    "antd": "^5.27.0",
     "apexcharts": "^4.0.0",
     "axios": "^1.7.9",
     "bcryptjs": "^2.4.3",
