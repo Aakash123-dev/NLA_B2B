@@ -1,27 +1,173 @@
 'use client'
 
 import React, { useState, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { ArrowLeft, FileText, Upload, Plus, Filter, SlidersHorizontal, Building, Target, Globe, Package, Users, ShoppingCart, Barcode } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { DashboardHeader } from './components/DashboardHeader'
 import { MetricsGrid } from './components/MetricsGrid'
-import { CalendarGrid } from './components/CalendarGrid'
+// import { CalendarGrid } from './components/CalendarGrid'
+import Calendar from './components/calendar/Calendar'
 import { SidePanel } from './components/SidePanel'
 import { TradePlan } from '../types'
 import { SharedSmartInsightsDrawer } from '@/components/common'
+import { useEvents } from '@/hooks/useEvents'
+import { useRetailerBrandData } from '@/hooks/useRetailerBrandData'
+import { axiosInstance } from '@/services/projectservices/axiosInstance'
+import { fetchProductData } from '@/store/slices/productData/productDataAction'
+import { useDispatch } from 'react-redux'
+import { useSelector } from 'react-redux'
+import { getYearCalendarData } from '@/utils/dateUtils'
+import { message, Spin } from 'antd'
 
 export function TpoDashboardPage() {
+  const { events, createEvent, updateEvent, deleteEvent, refreshEvents } = useEvents()
   const router = useRouter()
   const [tradePlan, setTradePlan] = useState<TradePlan | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [isSmartInsightsOpen, setIsSmartInsightsOpen] = useState(false)
+  const searchParams = useSearchParams();
+  const project_id = searchParams.get('project');
+  const model_id = searchParams.get('model');
+  const event_tpo_id = searchParams.get('tpoId')
+  const [tpoData, setTpoData] = useState(null);
+  const [targetValues, setTargetValues] = useState({
+		volume: 0,
+		spend: 0,
+		revenue: 0,
+	});
+  const [selectedDate, setSelectedDate] = useState<Date | undefined>()
+  const [selectedProducts, setSelectedProducts] = useState([]);
+  const [selectedEvent, setSelectedEvent] = useState<any | undefined>()
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [fetchImportedEvents, setFetchImportedEvents] = useState(false)
+
+  const dispatch = useDispatch();
+  const { data: productDataRedux, loading: isLoadingRedux } = useSelector(
+    (state: any) => state.productDataReducer
+  );
+
+
+  const { retailerBrandProducts, getProductsForBrand} =
+    useRetailerBrandData(project_id, model_id);
+
+    useEffect(() => {
+      // fetch tpo data
+      const fetchTpoData = async () => {
+        try {
+          const api = `/events/tpo/${event_tpo_id}`;
+     
+          const response = await axiosInstance.get(api);
+          setTpoData(response?.data);
+          setTargetValues({
+            volume: response?.data?.volume || 0,
+            spend: response?.data?.spend || 0,
+            revenue: response?.data?.revenue || 0,
+          });
+        } catch (error) {
+          console.log("Error fetching TPO data:", error);
+        }
+      };
+  
+      // fetchProjects();
+      fetchTpoData();
+    }, []);
+
+
+    const [currentYear, setCurrentYear] = useState<number>(Number((tpoData as any)?.year))
+    const weeks = getYearCalendarData(currentYear);
+    const safeTpoData = tpoData as any;
 
   useEffect(() => {
     loadTradePlan()
   }, [])
+
+  const fetchProductDataHandler = async (products: any) => {
+		try {
+      // @ts-ignore thunk
+      await (dispatch as any)(
+        fetchProductData(
+          products,
+          (tpoData as any)?.project_id,
+          (tpoData as any)?.model_id,
+          (tpoData as any)?.retailer_id
+        )
+      );
+		} catch (error) {
+			console.log("Error in fetching promo event simulation data: ", error);
+		}
+	};
+
+  useEffect(() => {
+    if (
+      (tpoData as any)?.retailer_id &&
+      (tpoData as any)?.brand_id &&
+      (retailerBrandProducts as any)[(tpoData as any).retailer_id]
+    ) {
+          const products = getProductsForBrand(
+        (tpoData as any).retailer_id,
+        (tpoData as any).brand_id
+			);
+			setSelectedProducts(products);
+			if (products.length > 0) {
+        fetchProductDataHandler(products);
+			}
+		}
+	}, [tpoData, retailerBrandProducts]);
+
+  useEffect(() => {
+  if ((tpoData as any)?.retailer_id && selectedProducts.length > 0) {
+			fetchProductDataHandler(selectedProducts);
+		}
+	}, [selectedProducts]);
+
+  const handleSaveEvent = async (eventData: any) => {
+    try {
+        console.log({ eventData })
+        setIsSubmitting(true)
+    if ((selectedEvent as any)?.id) {
+        await updateEvent({ ...eventData, id: (selectedEvent as any).id })
+        } else {
+            await createEvent(eventData)
+        }
+    await refreshEvents((tpoData as any).id)
+        setSelectedEvent(undefined)
+        setSelectedDate(undefined)
+    } catch (error) {
+        console.error('Failed to save event:', error)
+        message.error('Failed to save event')
+    } finally {
+        setIsSubmitting(false)
+    }
+}
+
+  const handleEditEvent = (event: any) => {
+    setSelectedEvent(event)
+    setSelectedDate(undefined)
+}
+
+const handleCopyEvent = (event: any) => {
+  setSelectedEvent({
+      ...event,
+      id: '',
+      title: `Copy of ${event.title}`,
+  })
+}
+
+  const handleDeleteEventWrapper = async (eventId: string) => {
+  try {
+      const res = await deleteEvent(eventId as any);
+      if (res) {
+          message.success('Event deleted')
+      } else {
+          message.error('Failed to delete event')
+      }
+  } catch (error) {
+      console.error('Failed to delete event:', error)
+  }
+}
 
   const loadTradePlan = async () => {
     try {
@@ -36,6 +182,110 @@ export function TpoDashboardPage() {
       setIsLoading(false)
     }
   }
+
+
+  const handleAddEvent = (date: Date, product?: any) => {
+  setSelectedDate(date)
+  setSelectedEvent({
+      id: '',
+      title: '',
+      description: '',
+      start_date: date,
+      end_date: date,
+      color: '',
+      status: 'DRAFT',
+      channels: [],
+      event_tpo_id: (tpoData as any)?.id || '',
+      ppg_name: '',
+      planned: product ? [{
+          productId: product.id,
+          productName: product.name,
+          financialData: {
+              basePrice: product.basePrice,
+              basePriceElasticity: product.basePriceElasticity,
+              originalBasePrice: product.basePrice,
+              originalTotalUnits: product.totalUnits,
+              promoPrice: 0,
+              discount: 0,
+              units: product.totalUnits,
+              totalUnits: product.totalUnits,
+              tprDist: 0,
+              doDist: 0,
+              foDist: 0,
+              fdDist: 0,
+              listPrice: 0,
+              spoils: 0,
+              cogs: 0,
+              edlpPerUnitRate: 0,
+              promoPerUnitRate: 0,
+              vcm: 0,
+              fixedFee: 0,
+              increamentalUnits: 0,
+              promoPriceElasticity: product.promoPriceElasticity,
+              featureEffect: product.featureEffect,
+              displayEffect: product.displayEffect,
+              featureAndDisplayEffect: product.featureAndDisplayEffect
+          }
+      }] : [],
+      actual: product ? [{
+          productId: product.id,
+          productName: product.name,
+          financialData: {
+              basePrice: product.basePrice,
+              basePriceElasticity: product.basePriceElasticity,
+              originalBasePrice: product.basePrice,
+              originalTotalUnits: product.totalUnits,
+              promoPrice: 0,
+              discount: 0,
+              units: product.totalUnits,
+              totalUnits: product.totalUnits,
+              tprDist: 0,
+              doDist: 0,
+              foDist: 0,
+              fdDist: 0,
+              listPrice: 0,
+              spoils: 0,
+              cogs: 0,
+              edlpPerUnitRate: 0,
+              promoPerUnitRate: 0,
+              vcm: 0,
+              fixedFee: 0,
+              increamentalUnits: 0,
+              promoPriceElasticity: product.promoPriceElasticity,
+              featureEffect: product.featureEffect,
+              displayEffect: product.displayEffect,
+              featureAndDisplayEffect: product.featureAndDisplayEffect
+          }
+      }] : []
+  })
+  // Open create modal is managed by header; keep selection here for future use
+}
+
+const handleEventUpdate = async (updatedEvent: any) => {
+  console.log('Calendar updatedEvent', updatedEvent)
+  await refreshEvents((tpoData as any).id)
+}
+
+const handleDragEnd = async (event: any, weeksDelta: number) => {
+  try {
+    const startDate = new Date(event.start_date)
+    const endDate = new Date(event.end_date)
+    if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) return
+
+    const daysDelta = weeksDelta * 7
+    const newStartDate = new Date(startDate)
+    newStartDate.setDate(startDate.getDate() + daysDelta)
+    const newEndDate = new Date(endDate)
+    newEndDate.setDate(endDate.getDate() + daysDelta)
+
+    await updateEvent({ ...event, start_date: newStartDate, end_date: newEndDate })
+    await refreshEvents((tpoData as any)?.id)
+  } catch (error) {
+    console.error('Failed to update event position:', error)
+  }
+}
+
+console.log(productDataRedux, "ProdutDataReduxSotre")
 
   if (isLoading) {
     return (
@@ -82,6 +332,19 @@ export function TpoDashboardPage() {
       <DashboardHeader 
         tradePlan={tradePlan} 
         onOpenSmartInsights={() => setIsSmartInsightsOpen(true)}
+        onSave ={handleSaveEvent}
+        initialEvent = {selectedEvent}
+        startDate = {selectedDate}
+        productData={productDataRedux}
+        products={getProductsForBrand(
+          tpoData?.retailer_id,
+          tpoData?.brand_id
+        )}
+        getProductsForBrand={getProductsForBrand}
+        tpoData={tpoData}
+        currentYear = {currentYear}
+        events = {events}
+        isSubmitting ={isSubmitting}
       />
 
       {/* Main Content */}
@@ -192,8 +455,31 @@ export function TpoDashboardPage() {
             </div>
           </div>
 
-          {/* Full width calendar */}
-          <CalendarGrid />
+          {/* Full width calendar - latest design */}
+          {!!tpoData && (
+            <Calendar
+              tpoData={safeTpoData}
+              productData={productDataRedux || []}
+              fetchImportedEvents={fetchImportedEvents}
+              setFetchImportedEvents={setFetchImportedEvents}
+              targetValues={targetValues}
+              isLoading={isLoadingRedux}
+              isCreateEventModalOpen={false}
+              setIsCreateEventModalOpen={() => {}}
+              products={getProductsForBrand(
+                (safeTpoData?.retailer_id as string) ?? '',
+                (safeTpoData?.brand_id as string) ?? ''
+              )}
+              getProductsForBrand={getProductsForBrand}
+              availableYears={[]}
+              onAddEvent={handleAddEvent}
+              onEditEvent={handleEditEvent as any}
+              onCopyEvent={handleCopyEvent as any}
+              onDeleteEventWrapper={handleDeleteEventWrapper as any}
+              onEventUpdate={handleEventUpdate as any}
+              onDragEnd={handleDragEnd as any}
+            />
+          )}
         </motion.div>
       </div>
       
