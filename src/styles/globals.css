@@ -359,3 +359,13 @@ body > [data-radix-portal] {
 .custom-scrollbar::-webkit-scrollbar-corner {
   background: #f3f4f6;
 }
+
+/* Hide scrollbar completely */
+.scrollbar-none {
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;  /* Firefox */
+}
+
+.scrollbar-none::-webkit-scrollbar {
+  display: none;  /* Chrome, Safari and Opera */
+}
