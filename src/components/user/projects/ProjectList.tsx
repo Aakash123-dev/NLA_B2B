@@ -20,6 +20,7 @@ export default function ProjectList({
 }: ProjectListProps) {
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-8">
+      {/* Dynamic Project Cards */}
       {projects.map((project) => (
         <ProjectCard
           key={project.id}

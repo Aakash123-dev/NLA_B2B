@@ -58,7 +58,9 @@ export default function ProjectHeader({
 						<div className="relative group">
 							<div className="absolute inset-0 bg-gradient-to-r from-blue-200/50 to-indigo-200/50 rounded-xl blur opacity-30 group-hover:opacity-70 transition-opacity duration-300"></div>
 							<div className="relative">
-								<Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-indigo-400 group-hover:text-indigo-600 transition-colors duration-200" />
+								<div className="absolute left-4 top-1/2 -translate-y-1/2 z-10">
+									<Search className="h-4 w-4 text-slate-800 group-hover:text-black transition-colors duration-200 stroke-2" />
+								</div>
 								<input
 									type="text"
 									value={searchQuery}
@@ -74,7 +76,7 @@ export default function ProjectHeader({
 							<Button 
 								variant="outline" 
 								size="sm" 
-								className="gap-2 bg-gradient-to-r from-indigo-50 to-violet-100 border-indigo-200 text-indigo-700 hover:from-indigo-100 hover:to-violet-200 hover:border-indigo-300 hover:text-indigo-800 transition-all duration-200 shadow-sm hover:shadow-md hover:-translate-y-0.5 transform rounded-full px-5"
+								className="gap-2 bg-gradient-to-r from-indigo-50 to-violet-100 border-2 border-indigo-300 text-indigo-700 hover:from-indigo-100 hover:to-violet-200 hover:border-indigo-400 hover:text-indigo-800 transition-all duration-200 shadow-sm hover:shadow-md hover:-translate-y-0.5 transform rounded-full px-5 font-medium"
 								onClick={onOpenSmartInsights}
 							>
 								<Brain className="w-4 h-4" />

@@ -25,7 +25,7 @@ export default function ProjectFilterBar({
 					<DropdownMenuTrigger asChild>
 						<Button
 							variant="outline"
-							className="bg-white  hover:bg-slate-50  text-slate-700 px-6 py-2.5 rounded-2xl shadow-sm font-medium transition-all duration-300 flex items-center gap-2"
+							className="bg-white hover:bg-slate-50 text-slate-700 px-6 py-2.5 rounded-2xl shadow-sm font-medium transition-all duration-300 flex items-center gap-2 border-2 border-slate-200 hover:border-slate-300"
 						>
 							{selectedFilter === "All Projects" && (
 								<div className="h-5 w-5 rounded-md bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center">
@@ -91,7 +91,7 @@ export default function ProjectFilterBar({
 					</DropdownMenuTrigger>
 					<DropdownMenuContent
 						align="start"
-						className="w-52 bg-white shadow-xl border border-slate-200 rounded-xl p-2"
+						className="w-52 bg-white shadow-xl border-2 border-slate-200 rounded-xl p-2"
 					>
 						<DropdownMenuItem
 							onClick={() => setSelectedFilter("All Projects")}
@@ -181,7 +181,7 @@ export default function ProjectFilterBar({
 
 			<div className="flex items-center gap-3 text-sm text-slate-600">
 				<span className="font-medium">Sort by:</span>
-				<select className="border border-slate-200 rounded-xl px-8 py-2 bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 cursor-pointer font-medium text-slate-800 shadow-sm transition-all duration-300">
+				<select className="border-2 border-slate-200 hover:border-slate-300 rounded-xl px-8 py-2 bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 cursor-pointer font-medium text-slate-800 shadow-sm transition-all duration-300">
 					<option>Last Updated</option>
 					<option>Date Created</option>
 				</select>
