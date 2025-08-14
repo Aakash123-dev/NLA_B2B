@@ -2,7 +2,6 @@
 
 import React from 'react'
 import { motion } from 'framer-motion'
-import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { 
   Edit, 
@@ -19,7 +18,18 @@ interface SidePanelProps {
   tradePlan: TradePlan
 }
 
-export function SidePanel({ tradePlan }: SidePanelProps) {
+export function SidePanel({ tradePlan, setTempTargets, setIsEditingTargets, targetValues }: SidePanelProps) {
+  const toNumber = (value: any): number => {
+    if (typeof value === 'number' && Number.isFinite(value)) return value
+    if (typeof value === 'string') {
+      const parsed = parseFloat(value.replace(/,/g, ''))
+      return Number.isFinite(parsed) ? parsed : 0
+    }
+    const n = Number(value)
+    return Number.isFinite(n) ? n : 0
+  }
+  const formatNumber = (value: any) => toNumber(value).toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })
+  const formatCurrency = (value: any) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(toNumber(value))
   return (
     <motion.div
       initial={{ opacity: 0, x: 20 }}
@@ -45,13 +55,14 @@ export function SidePanel({ tradePlan }: SidePanelProps) {
                 </div>
                 Target Volume
               </div>
-              <Edit className="w-4 h-4 text-slate-400 hover:text-slate-600 transition-colors cursor-pointer" />
+              <Edit onClick={ () => {
+                setTempTargets(targetValues);
+                setIsEditingTargets(true);
+              }} className="w-4 h-4 text-slate-400 hover:text-slate-600 transition-colors cursor-pointer" />
             </Label>
-            <Input
-              type="number"
-              defaultValue={tradePlan.target_volume || 0}
-              className="h-12 rounded-xl border-2 border-white/20 bg-white/60 backdrop-blur-sm focus:border-blue-500/50 focus:bg-white/80 transition-all duration-200 shadow-sm"
-            />
+            <div className="h-12 rounded-xl border-2 border-white/20 bg-white/60 backdrop-blur-sm transition-all duration-200 shadow-sm px-3 flex items-center text-slate-900">
+              {targetValues.volume || 0}
+            </div>
           </div>
           
           <div className="space-y-3">
@@ -62,13 +73,11 @@ export function SidePanel({ tradePlan }: SidePanelProps) {
                 </div>
                 Target Spend
               </div>
-              <Edit className="w-4 h-4 text-slate-400 hover:text-slate-600 transition-colors cursor-pointer" />
+              {/* <Edit className="w-4 h-4 text-slate-400 hover:text-slate-600 transition-colors cursor-pointer" /> */}
             </Label>
-            <Input
-              type="number"
-              defaultValue={tradePlan.target_spend || 0}
-              className="h-12 rounded-xl border-2 border-white/20 bg-white/60 backdrop-blur-sm focus:border-emerald-500/50 focus:bg-white/80 transition-all duration-200 shadow-sm"
-            />
+            <div className="h-12 rounded-xl border-2 border-white/20 bg-white/60 backdrop-blur-sm transition-all duration-200 shadow-sm px-3 flex items-center text-slate-900">
+              ${targetValues?.spend || 0}
+            </div>
           </div>
           
           <div className="space-y-3">
@@ -79,13 +88,11 @@ export function SidePanel({ tradePlan }: SidePanelProps) {
                 </div>
                 Target Revenue
               </div>
-              <Edit className="w-4 h-4 text-slate-400 hover:text-slate-600 transition-colors cursor-pointer" />
+              {/* <Edit className="w-4 h-4 text-slate-400 hover:text-slate-600 transition-colors cursor-pointer" /> */}
             </Label>
-            <Input
-              type="number"
-              defaultValue={tradePlan.target_revenue || 0}
-              className="h-12 rounded-xl border-2 border-white/20 bg-white/60 backdrop-blur-sm focus:border-purple-500/50 focus:bg-white/80 transition-all duration-200 shadow-sm"
-            />
+            <div className="h-12 rounded-xl border-2 border-white/20 bg-white/60 backdrop-blur-sm transition-all duration-200 shadow-sm px-3 flex items-center text-slate-900">
+              ${targetValues?.revenue || 0}
+            </div>
           </div>
         </div>
       </div>

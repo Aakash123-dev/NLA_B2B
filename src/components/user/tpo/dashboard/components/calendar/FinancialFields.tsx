@@ -88,6 +88,7 @@ const FinancialFields: React.FC<FinancialFieldsProps> = ({
     readonly = false,
     onFocus
 }) => {
+  console.log(financialData, "FinancialData")
     // Helper function to safely parse numeric values, treating empty/null as 0
     const safeParseFloat = (value: number | null | undefined) => {
         if (!value || value === null || value === undefined) return 0;

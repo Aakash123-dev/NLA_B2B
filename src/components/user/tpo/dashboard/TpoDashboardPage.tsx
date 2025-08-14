@@ -1,5 +1,4 @@
 'use client'
-
 import React, { useState, useEffect } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { Button } from '@/components/ui/button'
@@ -19,39 +18,52 @@ import { axiosInstance } from '@/services/projectservices/axiosInstance'
 import { fetchProductData } from '@/store/slices/productData/productDataAction'
 import { useDispatch } from 'react-redux'
 import { useSelector } from 'react-redux'
-import { getYearCalendarData } from '@/utils/dateUtils'
-import { message, Spin } from 'antd'
+import { getYearCalendarData, toJsDate } from '@/utils/dateUtils'
+import { Spin } from 'antd'
+import toast from 'react-hot-toast'
+import { calculateWidgetValues } from '@/utils/widgetCalculations'
+import { Event } from '@/types/event'
+import { TargetUpdate } from './TargetUpdated'
+
+const getTpoStorageKey = (projectId, modelId, eventTpoId) => {
+	return `tpo_state_${projectId}_${modelId}_${eventTpoId}`;
+};
+
+const getTpoStoredState = (projectId, modelId, eventTpoId) => {
+	const key = getTpoStorageKey(projectId, modelId, eventTpoId);
+	const stored = localStorage.getItem(key);
+	return stored ? JSON.parse(stored) : null;
+};
+
+const saveTpoState = (projectId, modelId, eventTpoId, state) => {
+	const key = getTpoStorageKey(projectId, modelId, eventTpoId);
+	localStorage.setItem(key, JSON.stringify(state));
+};
 
 export function TpoDashboardPage() {
-  const { events, createEvent, updateEvent, deleteEvent, refreshEvents } = useEvents()
   const router = useRouter()
   const [tradePlan, setTradePlan] = useState<TradePlan | null>(null)
-  const [isLoading, setIsLoading] = useState(true)
   const [isSmartInsightsOpen, setIsSmartInsightsOpen] = useState(false)
   const searchParams = useSearchParams();
+  const [selectedEvent, setSelectedEvent] = useState<Event | undefined>()
+  const [fetchImportedEvents, setFetchImportedEvents] = useState(false);
+
   const project_id = searchParams.get('project');
   const model_id = searchParams.get('model');
   const event_tpo_id = searchParams.get('tpoId')
   const [tpoData, setTpoData] = useState(null);
-  const [targetValues, setTargetValues] = useState({
-		volume: 0,
-		spend: 0,
-		revenue: 0,
-	});
-  const [selectedDate, setSelectedDate] = useState<Date | undefined>()
-  const [selectedProducts, setSelectedProducts] = useState([]);
-  const [selectedEvent, setSelectedEvent] = useState<any | undefined>()
-  const [isSubmitting, setIsSubmitting] = useState(false)
-  const [fetchImportedEvents, setFetchImportedEvents] = useState(false)
+
+  const { retailerBrandProducts, getProductsForBrand, isLoading } =
+		useRetailerBrandData(project_id, model_id);
+
+    const [selectedProducts, setSelectedProducts] = useState([]);
+    const [isAllProductSelected, setIsAllProductSelected] = useState(false);
 
   const dispatch = useDispatch();
   const { data: productDataRedux, loading: isLoadingRedux } = useSelector(
     (state: any) => state.productDataReducer
   );
 
-
-  const { retailerBrandProducts, getProductsForBrand} =
-    useRetailerBrandData(project_id, model_id);
 
     useEffect(() => {
       // fetch tpo data
@@ -76,115 +88,161 @@ export function TpoDashboardPage() {
     }, []);
 
 
+    useEffect(() => {
+      if (
+        tpoData?.retailer_id &&
+        tpoData?.brand_id &&
+        retailerBrandProducts[tpoData.retailer_id]
+      ) {
+        const products = getProductsForBrand(
+          tpoData.retailer_id,
+          tpoData.brand_id
+        );
+        setSelectedProducts(products);
+        if (products.length > 0) {
+          fetchProductDataHandler(products, tpoData.retailer_id);
+        }
+      }
+    }, [tpoData, retailerBrandProducts]);
+
+    const handleProductsChange = (values) => {
+      if (values && values.length && values.includes("select-all")) {
+        const availableProducts =
+          getProductsForBrand(tpoData.retailer_id, tpoData.brand_id) || [];
+        if (values.length === availableProducts.length + 1) {
+          setIsAllProductSelected(false);
+          return setSelectedProducts([]);
+        }
+        setIsAllProductSelected(true);
+        return setSelectedProducts(availableProducts);
+      }
+  
+      const availableProducts =
+        getProductsForBrand(tpoData.retailer_id, tpoData.brand_id) || [];
+      if (values.length === availableProducts.length) {
+        setIsAllProductSelected(true);
+      }
+  
+      setSelectedProducts(values);
+  
+      // Save the updated state
+      const currentState =
+        getTpoStoredState(project_id, model_id, event_tpo_id) || {};
+      const newState = {
+        ...currentState,
+        products: values,
+      };
+      saveTpoState(project_id, model_id, event_tpo_id, newState);
+    };
+
+    const fetchProductDataHandler = async (products) => {
+      try {
+        await dispatch(
+          fetchProductData(
+            products,
+            tpoData?.project_id,
+            tpoData?.model_id,
+            tpoData?.retailer_id
+          )
+        );
+      } catch (error) {
+        console.log("Error in fetching promo event simulation data: ", error);
+      }
+    };
+
+    useEffect(() => {
+      if (tpoData?.retailer_id && selectedProducts.length > 0) {
+        fetchProductDataHandler(selectedProducts);
+      }
+    }, [selectedProducts]);
+
+    useEffect(() => {
+      if (tpoData) {
+        setTargetValues({
+          volume: tpoData.volume || 0,
+          spend: tpoData.spend || 0,
+          revenue: tpoData.revenue || 0,
+        });
+      }
+    }, [tpoData]);
+
+    const [isCreateEventModalOpen, setIsCreateEventModalOpen] = useState(false);
+	const [isEditingTargets, setIsEditingTargets] = useState(false);
+	const [targetValues, setTargetValues] = useState({
+		volume: 0,
+		spend: 0,
+		revenue: 0,
+	});
+	const [tempTargets, setTempTargets] = useState({});
+	const [availableYears, setAvailableYears] = useState([]);
+
+  useEffect(() => {
+		const fetchAvailableYears = async () => {
+			try {
+				const api = `/events/tpo/available-years`;
+				const config = {
+					params: {
+						project_id,
+						model_id,
+						retailer_id: tpoData?.retailer_id,
+						brand_id: tpoData?.brand_id,
+						year: tpoData.year,
+					},
+				};
+				const response = await axiosInstance.get(api, config);
+				setAvailableYears(response.data);
+			} catch (error) {
+				console.error("Error fetching available years:", error);
+			}
+		};
+
+		if (tpoData?.retailer_id && tpoData?.brand_id) {
+			fetchAvailableYears();
+		}
+	}, [tpoData]);
+
+
+  const { events, createEvent, updateEvent, deleteEvent, refreshEvents } = useEvents()
+  const [isModalOpen, setIsModalOpen] = useState(false)
+  const [selectedDate, setSelectedDate] = useState<Date | undefined>()
+  const [isSubmitting, setIsSubmitting] = useState(false)
     const [currentYear, setCurrentYear] = useState<number>(Number((tpoData as any)?.year))
-    const weeks = getYearCalendarData(currentYear);
     const safeTpoData = tpoData as any;
 
-  useEffect(() => {
-    loadTradePlan()
-  }, [])
+    const [widgetValues, setWidgetValues] = useState(calculateWidgetValues(events, targetValues.spend, Number(tpoData?.year)))
+    const [isCopyModalOpen, setIsCopyModalOpen] = useState(false);
 
-  const fetchProductDataHandler = async (products: any) => {
-		try {
-      // @ts-ignore thunk
-      await (dispatch as any)(
-        fetchProductData(
-          products,
-          (tpoData as any)?.project_id,
-          (tpoData as any)?.model_id,
-          (tpoData as any)?.retailer_id
-        )
-      );
-		} catch (error) {
-			console.log("Error in fetching promo event simulation data: ", error);
-		}
-	};
+    useEffect(() => {
+      setCurrentYear(Number(tpoData?.year))
+      refreshEvents(tpoData?.id)
+      setWidgetValues(calculateWidgetValues(events, targetValues.spend, Number(tpoData?.year)))
+  }, [tpoData])
 
   useEffect(() => {
-    if (
-      (tpoData as any)?.retailer_id &&
-      (tpoData as any)?.brand_id &&
-      (retailerBrandProducts as any)[(tpoData as any).retailer_id]
-    ) {
-          const products = getProductsForBrand(
-        (tpoData as any).retailer_id,
-        (tpoData as any).brand_id
-			);
-			setSelectedProducts(products);
-			if (products.length > 0) {
-        fetchProductDataHandler(products);
-			}
-		}
-	}, [tpoData, retailerBrandProducts]);
+      setWidgetValues(calculateWidgetValues(events, targetValues.spend, Number(tpoData?.year)))
+  }, [events, targetValues.spend]);
 
-  useEffect(() => {
-  if ((tpoData as any)?.retailer_id && selectedProducts.length > 0) {
-			fetchProductDataHandler(selectedProducts);
-		}
-	}, [selectedProducts]);
-
-  const handleSaveEvent = async (eventData: any) => {
-    try {
-        console.log({ eventData })
-        setIsSubmitting(true)
-    if ((selectedEvent as any)?.id) {
-        await updateEvent({ ...eventData, id: (selectedEvent as any).id })
-        } else {
-            await createEvent(eventData)
-        }
-    await refreshEvents((tpoData as any).id)
-        setSelectedEvent(undefined)
-        setSelectedDate(undefined)
-    } catch (error) {
-        console.error('Failed to save event:', error)
-        message.error('Failed to save event')
-    } finally {
-        setIsSubmitting(false)
+  const handlePrevYear = () => {
+    const eventTPO = availableYears.find(year => Number(year?.year) === Number(currentYear) - 1)
+    if (eventTPO) {
+        setCurrentYear(Number(eventTPO?.year))
+        refreshEvents(eventTPO.id)
     }
 }
-
-  const handleEditEvent = (event: any) => {
-    setSelectedEvent(event)
-    setSelectedDate(undefined)
-}
-
-const handleCopyEvent = (event: any) => {
-  setSelectedEvent({
-      ...event,
-      id: '',
-      title: `Copy of ${event.title}`,
-  })
-}
-
-  const handleDeleteEventWrapper = async (eventId: string) => {
-  try {
-      const res = await deleteEvent(eventId as any);
-      if (res) {
-          message.success('Event deleted')
-      } else {
-          message.error('Failed to delete event')
-      }
-  } catch (error) {
-      console.error('Failed to delete event:', error)
-  }
-}
-
-  const loadTradePlan = async () => {
-    try {
-      // Load from localStorage for demo
-      const storedPlan = localStorage.getItem('currentTradePlan')
-      if (storedPlan) {
-        setTradePlan(JSON.parse(storedPlan))
-      }
-    } catch (error) {
-      console.error("Error loading trade plan:", error)
-    } finally {
-      setIsLoading(false)
+const handleNextYear = () => {
+    const eventTPO = availableYears.find(year => Number(year.year) === Number(currentYear) + 1)
+    if (eventTPO) {
+        setCurrentYear(Number(eventTPO.year))
+        refreshEvents(eventTPO.id)
     }
   }
 
+const handleEventUpdate = async (updatedEvent: Event) => {
+  console.log('Calendar updatedEvent', updatedEvent)
+  await refreshEvents(tpoData.id)
+}
 
-  const handleAddEvent = (date: Date, product?: any) => {
+const handleAddEvent = (date: Date, product?: any) => {
   setSelectedDate(date)
   setSelectedEvent({
       id: '',
@@ -195,7 +253,7 @@ const handleCopyEvent = (event: any) => {
       color: '',
       status: 'DRAFT',
       channels: [],
-      event_tpo_id: (tpoData as any)?.id || '',
+      event_tpo_id: tpoData?.id || '',
       ppg_name: '',
       planned: product ? [{
           productId: product.id,
@@ -258,34 +316,157 @@ const handleCopyEvent = (event: any) => {
           }
       }] : []
   })
-  // Open create modal is managed by header; keep selection here for future use
+  setIsModalOpen(true)
 }
 
-const handleEventUpdate = async (updatedEvent: any) => {
-  console.log('Calendar updatedEvent', updatedEvent)
-  await refreshEvents((tpoData as any).id)
+const handleEditEvent = (event: Event) => {
+  setSelectedEvent(event)
+  setSelectedDate(undefined)
+  setIsModalOpen(true)
 }
 
-const handleDragEnd = async (event: any, weeksDelta: number) => {
+  useEffect(() => {
+    loadTradePlan()
+  }, [])
+
+  useEffect(() => {
+    if (fetchImportedEvents) {
+        refreshEvents(tpoData.id)
+    }
+}, [fetchImportedEvents])
+
+const handleCopyEvent = (event: any) => {
+  setSelectedEvent({
+      ...event,
+      id: '',
+      title: `Copy of ${event.title}`,
+  })
+  setIsModalOpen(true)
+}
+
+const handleDragEnd = async (event: Event, weeksDelta: number) => {
   try {
-    const startDate = new Date(event.start_date)
-    const endDate = new Date(event.end_date)
-    if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) return
+      // Use the safer toJsDate utility function to handle different date formats
+      const startDate = toJsDate(event.start_date);
+      const endDate = toJsDate(event.end_date);
 
-    const daysDelta = weeksDelta * 7
-    const newStartDate = new Date(startDate)
-    newStartDate.setDate(startDate.getDate() + daysDelta)
-    const newEndDate = new Date(endDate)
-    newEndDate.setDate(endDate.getDate() + daysDelta)
+      if (!startDate) {
+          console.error('Invalid start date:', event.start_date);
+          toast.error('Could not update event: Invalid start date')
+          return;
+      }
 
-    await updateEvent({ ...event, start_date: newStartDate, end_date: newEndDate })
-    await refreshEvents((tpoData as any)?.id)
+      if (!endDate) {
+          console.error('Invalid end date:', event.end_date);
+          toast.error('Could not update event: Invalid end date')
+          return;
+      }
+      // Calculate exact day delta instead of just weeksDelta
+      const daysDelta = weeksDelta * 7;
+
+      // Update dates by adding the exact number of days
+      const newStartDate = new Date(startDate);
+      newStartDate.setDate(startDate.getDate() + daysDelta);
+
+      const newEndDate = new Date(endDate);
+      newEndDate.setDate(endDate.getDate() + daysDelta);
+
+      // Optimistic update
+      const updatedEvent = {
+          ...event,
+          start_date: newStartDate,
+          end_date: newEndDate,
+      };
+
+      // Show loading message
+      const loadingToastId = toast.loading('Updating event...')
+
+      await updateEvent(updatedEvent);
+
+      // Success feedback
+      toast.success('Event updated successfully', { id: loadingToastId })
+      await refreshEvents(tpoData.id);
   } catch (error) {
-    console.error('Failed to update event position:', error)
+      console.error('Failed to update event position:', error);
+      toast.error(`Failed to update event: ${error instanceof Error ? error.message : 'Unknown error'}`)
   }
 }
 
-console.log(productDataRedux, "ProdutDataReduxSotre")
+const handleSaveEvent = async (eventData: Omit<Event, 'id'>) => {
+  try {
+      console.log({ eventData })
+      setIsSubmitting(true)
+      if (selectedEvent?.id) {
+          await updateEvent({ ...eventData, id: selectedEvent.id })
+      } else {
+          await createEvent(eventData)
+      }
+      await refreshEvents(tpoData.id)
+      setIsModalOpen(false)
+      setSelectedEvent(undefined)
+      setSelectedDate(undefined)
+  } catch (error) {
+      console.error('Failed to save event:', error)
+      toast.error('Failed to save event')
+  } finally {
+      setIsSubmitting(false)
+  }
+}
+
+const handleDeleteEventWrapper = async (eventId: string) => {
+  try {
+      const res = await deleteEvent(eventId);
+      if (res) {
+          toast.success('Event deleted')
+          await refreshEvents(tpoData.id)
+      } else {
+          toast.error('Failed to delete event')
+      }
+  } catch (error) {
+      console.error('Failed to delete event:', error)
+  }
+}
+
+useEffect(() => {
+  if (isCreateEventModalOpen) {
+      setIsModalOpen(true)
+      console.log({ isCreateEventModalOpen });
+
+  }
+}, [isCreateEventModalOpen])
+
+useEffect(() => {
+  if (!isModalOpen) {
+      setIsCreateEventModalOpen(false)
+  }
+}, [isModalOpen])
+
+const handleCopyEvents = async (eventsToCopy: Event[]) => {
+  try {
+      for (const event of eventsToCopy) {
+          await createEvent(event)
+      }
+      await refreshEvents(tpoData.id)
+      toast.success('Events copied successfully')
+  } catch (error) {
+      console.error('Failed to copy events:', error)
+      toast.error('Failed to copy events')
+  }
+}
+
+  const loadTradePlan = async () => {
+    try {
+      // Load from localStorage for demo
+      const storedPlan = localStorage.getItem('currentTradePlan')
+      if (storedPlan) {
+        setTradePlan(JSON.parse(storedPlan))
+      }
+    } catch (error) {
+      console.error("Error loading trade plan:", error)
+    } finally {
+      // setIsLoading(false)
+    }
+  }
 
   if (isLoading) {
     return (
@@ -332,6 +513,9 @@ console.log(productDataRedux, "ProdutDataReduxSotre")
       <DashboardHeader 
         tradePlan={tradePlan} 
         onOpenSmartInsights={() => setIsSmartInsightsOpen(true)}
+        isOpen = {isModalOpen}
+        onClose = {() => setIsModalOpen(false)}
+        setIsCreateEventModalOpen={setIsCreateEventModalOpen}
         onSave ={handleSaveEvent}
         initialEvent = {selectedEvent}
         startDate = {selectedDate}
@@ -447,11 +631,11 @@ console.log(productDataRedux, "ProdutDataReduxSotre")
                 </div>
               </div>
               
-              <MetricsGrid tradePlan={tradePlan} />
+              <MetricsGrid widgetValues={widgetValues} />
             </div>
             
             <div className="lg:col-span-1">
-              <SidePanel tradePlan={tradePlan} />
+              <SidePanel setIsEditingTargets={setIsEditingTargets} setTempTargets={setTempTargets} targetValues = {targetValues} setTargetValues = {setTargetValues} tradePlan={tradePlan} />
             </div>
           </div>
 
@@ -464,24 +648,41 @@ console.log(productDataRedux, "ProdutDataReduxSotre")
               setFetchImportedEvents={setFetchImportedEvents}
               targetValues={targetValues}
               isLoading={isLoadingRedux}
-              isCreateEventModalOpen={false}
-              setIsCreateEventModalOpen={() => {}}
+              isCreateEventModalOpen={isCreateEventModalOpen}
+              setIsCreateEventModalOpen={setIsCreateEventModalOpen}
               products={getProductsForBrand(
                 (safeTpoData?.retailer_id as string) ?? '',
                 (safeTpoData?.brand_id as string) ?? ''
               )}
               getProductsForBrand={getProductsForBrand}
-              availableYears={[]}
+              availableYears={availableYears}
               onAddEvent={handleAddEvent}
               onEditEvent={handleEditEvent as any}
               onCopyEvent={handleCopyEvent as any}
+              onCopyEvents={handleCopyEvents}
               onDeleteEventWrapper={handleDeleteEventWrapper as any}
               onEventUpdate={handleEventUpdate as any}
               onDragEnd={handleDragEnd as any}
+              handlePrevYear = {handlePrevYear}
+              handleNextYear = {handleNextYear}
+              currentYear = {currentYear}
+              setCurrentYear = {setCurrentYear}
+              events={events}
+              refreshEvents={refreshEvents}
             />
           )}
         </motion.div>
       </div>
+
+      <TargetUpdate
+      isEditingTargets = {isEditingTargets}
+      setIsEditingTargets={setIsEditingTargets}
+      setTempTargets={setTempTargets}
+      tempTargets={tempTargets}
+      targetValues={targetValues}
+      setTargetValues={setTargetValues}
+      event_tpo_id={event_tpo_id}
+      />
       
       <SharedSmartInsightsDrawer
         isSmartInsightsOpen={isSmartInsightsOpen}

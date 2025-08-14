@@ -7,32 +7,51 @@ import { TradePlan } from '../../types'
 import { formatCurrency, formatNumber, formatPercentage } from '../../utils'
 
 interface MetricsGridProps {
-  tradePlan: TradePlan
+  widgetValues: {
+    totalVolume?: number | string
+    totalRevenue?: number | string
+    totalContribution?: number | string
+    totalSpend?: number | string
+    incrementalVolume?: number | string
+    incrementalRevenue?: number | string
+    planROI?: number | string
+    budgetRemaining?: number | string
+  }
 }
 
-export function MetricsGrid({ tradePlan }: MetricsGridProps) {
+export function MetricsGrid({ widgetValues }: MetricsGridProps) {
+  console.log(widgetValues, "AllWidgetsValue")
+  const toNumber = (value: any): number => {
+    if (typeof value === 'number' && Number.isFinite(value)) return value
+    if (typeof value === 'string') {
+      const parsed = parseFloat(value.replace(/,/g, ''))
+      return Number.isFinite(parsed) ? parsed : 0
+    }
+    const n = Number(value)
+    return Number.isFinite(n) ? n : 0
+  }
   const topMetrics = [
     {
       label: "Total Volume",
-      value: tradePlan.total_volume || 61894,
+      value: toNumber(widgetValues?.totalVolume),
       color: "from-blue-500 to-blue-600",
       isNumber: true
     },
     {
       label: "Total Revenue",
-      value: tradePlan.total_revenue || 951262,
+      value: toNumber(widgetValues?.totalRevenue),
       color: "from-green-500 to-green-600",
       isCurrency: true
     },
     {
       label: "Total Contribution",
-      value: tradePlan.total_contribution || 427229,
+      value: toNumber(widgetValues?.totalContribution),
       color: "from-purple-500 to-purple-600",
       isCurrency: true
     },
     {
       label: "Total Spend",
-      value: tradePlan.total_spend || 161564,
+      value: toNumber(widgetValues?.totalSpend),
       color: "from-orange-500 to-orange-600",
       isCurrency: true
     }
@@ -41,25 +60,25 @@ export function MetricsGrid({ tradePlan }: MetricsGridProps) {
   const bottomMetrics = [
     {
       label: "Incremental Volume",
-      value: tradePlan.incremental_volume || 24415,
+      value: toNumber(widgetValues?.incrementalVolume),
       color: "from-cyan-500 to-cyan-600",
       isNumber: true
     },
     {
       label: "Incremental Revenue",
-      value: tradePlan.incremental_revenue || 41152,
+      value: toNumber(widgetValues?.incrementalRevenue), 
       color: "from-emerald-500 to-emerald-600",
       isCurrency: true
     },
     {
       label: "Plan ROI",
-      value: tradePlan.plan_roi || 90.3,
+      value: toNumber(widgetValues?.planROI),
       color: "from-indigo-500 to-indigo-600",
       isPercentage: true
     },
     {
       label: "Budget Remaining",
-      value: tradePlan.budget_remaining || 49240,
+      value: toNumber(widgetValues?.budgetRemaining),
       color: "from-pink-500 to-pink-600",
       isCurrency: true
     }

@@ -1,19 +1,21 @@
+"use client"
 import React from 'react'
+
 import { Table } from 'antd'
-import { getResult } from '@/utils/financialCalculations';
-import { FinancialData } from '@/types/financial';
+import { FinancialData } from '@/types/financial'
+import { getResult } from '@/utils/financialCalculations'
 
-
-interface FinancialResultsProps {
+interface EventFinancialResultsProps {
     financialData: FinancialData
 }
 
-const FinancialResults: React.FC<FinancialResultsProps> = ({ financialData }) => {
+export const EventFinancialResults: React.FC<EventFinancialResultsProps> = ({ financialData }) => {
     const { promotionalResults, financialResults } = getResult(financialData);
+
     return (
         <div className="space-y-6">
             <div>
-                <h3 className="text-lg font-semibold mb-2">Promotion Results</h3>
+                <h3 className="text-lg font-semibold mb-4">Promotion Results</h3>
                 <Table
                     columns={[
                         { title: 'Promotion', dataIndex: 'promotion' },
@@ -50,7 +52,7 @@ const FinancialResults: React.FC<FinancialResultsProps> = ({ financialData }) =>
             </div>
 
             <div>
-                <h3 className="text-lg font-semibold mb-2">Financial Results</h3>
+                <h3 className="text-lg font-semibold mb-4">Financial Results</h3>
                 <Table
                     columns={[
                         { title: 'Metric', dataIndex: 'name' },
@@ -75,5 +77,3 @@ const FinancialResults: React.FC<FinancialResultsProps> = ({ financialData }) =>
         </div>
     )
 }
-
-export default FinancialResults

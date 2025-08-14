@@ -5,10 +5,12 @@ import { startOfYear } from 'date-fns'
 import { ChevronLeft, ChevronRight, Copy } from 'lucide-react'
 import EventRow from './EventRow'
 import WeekHeader from './WeekHeader'
-import { message, Spin } from 'antd'
+import { Spin } from 'antd'
 import { format } from 'date-fns'
 import { getYearCalendarData } from '@/utils/dateUtils'
 import { useEvents } from '@/hooks/useEvents'
+import CopyEventModal from './CopyEventModal'
+import { Event as TpoEvent } from '@/types/event'
 
 interface CalendarProps {
   tpoData: any
@@ -23,11 +25,18 @@ interface CalendarProps {
   getProductsForBrand: (retailerId: string, brandId: string) => string[]
   availableYears: any[]
   onAddEvent: (date: Date, product?: any) => void
-  onEditEvent: (event: Event) => void
-  onCopyEvent: (event: Event) => void
+  onEditEvent: (event: TpoEvent) => void
+  onCopyEvent: (event: TpoEvent) => void
+  onCopyEvents: (events: any[]) => Promise<void>
   onDeleteEventWrapper: (eventId: string) => Promise<void>
-  onEventUpdate: (updatedEvent: Event) => void
-  onDragEnd: (event: Event, weeksDelta: number) => Promise<void>
+  onEventUpdate: (updatedEvent: TpoEvent) => void
+  onDragEnd: (event: TpoEvent, weeksDelta: number) => Promise<void>
+  handlePrevYear: () => void
+  handleNextYear: () => void
+  currentYear: number
+  setCurrentYear: (y: number) => void
+  events?: any[]
+  refreshEvents?: (eventTpoId?: string | null) => Promise<void>
 }
 
 const Calendar: React.FC<CalendarProps> = ({
@@ -45,12 +54,21 @@ const Calendar: React.FC<CalendarProps> = ({
   onAddEvent,
   onEditEvent,
   onCopyEvent,
+  onCopyEvents,
   onDeleteEventWrapper,
   onEventUpdate,
-  onDragEnd
+  onDragEnd,
+  handlePrevYear,
+  handleNextYear,
+  currentYear,
+  setCurrentYear,
+  events: externalEvents,
+  refreshEvents: externalRefreshEvents
+
 }) => {
-  const [currentYear, setCurrentYear] = useState<number>(Number(tpoData.year))
-  const { events, refreshEvents } = useEvents()
+  const { events: hookEvents, refreshEvents: hookRefreshEvents } = useEvents()
+  const events = externalEvents ?? hookEvents
+  const refreshEvents = externalRefreshEvents ?? hookRefreshEvents
   const [isCopyModalOpen, setIsCopyModalOpen] = useState(false)
   const weeks = getYearCalendarData(currentYear)
 
@@ -60,26 +78,11 @@ const Calendar: React.FC<CalendarProps> = ({
   }, [tpoData])
 
   useEffect(() => {
-    if (fetchImportedEvents) {
-      refreshEvents(tpoData.id)
-    }
-  }, [fetchImportedEvents])
+    if (!tpoData?.id) return
+    // Always refetch when the toggle changes so CRUD operations reflect immediately
+    refreshEvents(tpoData.id)
+  }, [fetchImportedEvents, tpoData?.id])
 
-  const handlePrevYear = () => {
-    const eventTPO = availableYears.find((year: any) => Number(year.year) === Number(currentYear) - 1)
-    if (eventTPO) {
-      setCurrentYear(Number(eventTPO.year))
-      refreshEvents(eventTPO.id)
-    }
-  }
-
-  const handleNextYear = () => {
-    const eventTPO = availableYears.find((year: any) => Number(year.year) === Number(currentYear) + 1)
-    if (eventTPO) {
-      setCurrentYear(Number(eventTPO.year))
-      refreshEvents(eventTPO.id)
-    }
-  }
 
   return (
     <div className='flex-1 flex flex-col'>
@@ -93,13 +96,26 @@ const Calendar: React.FC<CalendarProps> = ({
             <div className="flex items-center justify-between px-4 py-1 border-b">
               <h2 className="text-xl font-semibold">{currentYear}</h2>
               <div className="flex gap-2">
-                <button onClick={handlePrevYear} className="p-2 hover:bg-gray-100 rounded-full">
-                  <ChevronLeft size={20} />
-                </button>
-                <button onClick={handleNextYear} className="p-2 hover:bg-gray-100 rounded-full">
-                  <ChevronRight size={20} />
-                </button>
-              </div>
+                                <button
+                                    onClick={() => setIsCopyModalOpen(true)}
+                                    className="p-2 hover:bg-gray-100 rounded-full"
+                                    title="Copy events from another year"
+                                >
+                                    <Copy size={20} />
+                                </button>
+                                <button
+                                    onClick={handlePrevYear}
+                                    className="p-2 hover:bg-gray-100 rounded-full"
+                                >
+                                    <ChevronLeft size={20} />
+                                </button>
+                                <button
+                                    onClick={handleNextYear}
+                                    className="p-2 hover:bg-gray-100 rounded-full"
+                                >
+                                    <ChevronRight size={20} />
+                                </button>
+                            </div>
             </div>
 
             <div className="flex-1 overflow-auto flex flex-col">
@@ -114,7 +130,7 @@ const Calendar: React.FC<CalendarProps> = ({
                       product={product}
                       weeks={weeks}
                       events={events.filter((event: any) => event.planned.some((p: any) => p.productName === product.name))}
-                      onAddEvent={(date: Date, p: unknown) => onAddEvent(date, p as any)}
+                      onAddEvent={onAddEvent}
                       onEditEvent={onEditEvent}
                       onCopyEvent={onCopyEvent}
                       onDeleteEvent={onDeleteEventWrapper}
@@ -136,6 +152,15 @@ const Calendar: React.FC<CalendarProps> = ({
           </div>
         </div>
       )}
+      {/* Copy modal should not be inside table markup */}
+      <CopyEventModal
+        isOpen={isCopyModalOpen}
+        onClose={() => setIsCopyModalOpen(false)}
+        availableYears={availableYears}
+        currentYear={currentYear}
+        onCopyEvents={onCopyEvents as any}
+        tpoData={tpoData}
+      />
     </div>
   )
 }

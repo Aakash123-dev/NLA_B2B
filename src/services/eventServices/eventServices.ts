@@ -12,9 +12,8 @@ export const eventService = {
         }
     },
 
-    async createImportedEvent(event) {
+    async createImportedEvent(event:any) {
         try {
-            const auth = JSON.parse(localStorage.getItem("auth") || '{}')
             let eventData = {
                 ...event,
                 // brand_id: event.brand_id,
@@ -35,7 +34,7 @@ export const eventService = {
         try {
             console.log({ saveEvent: event });
 
-            const auth = JSON.parse(localStorage.getItem("auth") || '{}')
+            const auth = JSON.parse(localStorage.getItem("user") || '{}')
             let eventData = {
                 ...event,
                 // brand_id: event.brand_id,
