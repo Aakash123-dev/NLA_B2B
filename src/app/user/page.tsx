@@ -17,7 +17,7 @@ export default function UserDashboard() {
   const [activeSection, setActiveSection] = useState('welcome');
 
   return (
-    <div className="relative min-h-screen overflow-hidden bg-[#0C0E22] text-white">
+    <div className="relative min-h-full overflow-hidden bg-[#0C0E22] text-white">
       {/* Aurora Background */}
       <AuroraBackground />
 
