@@ -5,7 +5,6 @@ import { X } from 'lucide-react'
 import { Form, Collapse, type CollapseProps, Tabs, Button } from 'antd'
 // Types (local aliases to fit current codebase)
 type Event = any
-type EventProduct = any
 type EventStatus = any
 
 const MOCK_CHANNELS = [] as any[]
@@ -13,13 +12,13 @@ import { createPortal } from 'react-dom'
 import { CaretRightOutlined } from '@ant-design/icons'
 type ProductAccordionItem = { key: string; label: React.ReactNode; children: React.ReactNode }
 import dayjs from 'dayjs'
-type ActualResultsType = any
 import axios from 'axios'
 import { axiosPythonInstance } from '@/services/projectservices/axiosInstance'
 import FinancialFields from './FinancialFields'
 import FinancialResults from './FinancialResults'
 import ActualResultsEditor from './ActualResults'
 import EventDetails from './EventDetails'
+import { ActualResults as ActualResultsType, EventProduct } from '@/types/event'
 
 interface EventModalProps {
   isOpen: boolean
@@ -253,7 +252,7 @@ const applyEdlpPromoPricesAsBasePrices = (plannedProducts: EventProduct[]) => {
     }
   }, [(formData as any).start_date, (formData as any).end_date, (formData as any).planned, events])
 
-  const handleProductDataChange = (productId: string, productName: string, financialData: any) => {
+  const handleProductDataChange = (productId: string, productName: string, financialData: EventProduct['financialData']) => {
     setFormData(prev => ({
       ...(prev as any),
       planned: (prev as any).planned.map((p: any) =>
@@ -454,147 +453,198 @@ useEffect(() => {
     edlpBasePriceMap = new Map()
   }
 
-  const planProductItems: CollapseProps['items'] = (formData as any).planned
-    .map((eventProduct: any) => {
-      const product = productData?.find((p: any) => p.id === eventProduct.productId)
-      if (product) {
-        eventProduct.financialData.originalBasePrice = product.originalBasePrice
-        eventProduct.financialData.originalTotalUnits = product.originalTotalUnits
-        eventProduct.financialData.basePriceElasticity = product.basePriceElasticity
-      }
-      if (!product) return null
-      const edlpBasePrice = edlpBasePriceMap.get(eventProduct.productId)
-      const item: ProductAccordionItem = {
-        key: eventProduct.productId,
-        label: eventProduct.productName,
-        children: (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-            <div>
-              <h4 className="text-lg font-semibold mb-4">Financial Details</h4>
-              {edlpBasePrice && (
-                <div className="mt-2 text-xs text-blue-600">
-                  Using EDLP price: ${edlpBasePrice.toFixed(2)} (original: ${product.basePrice.toFixed(2)})
-                </div>
-              )}
-              <FinancialFields
-                productId={eventProduct.productId}
-                financialData={eventProduct.financialData}
-                onChange={(data: any) => handleProductDataChange(eventProduct.productId, eventProduct.productName, data)}
-                basePrice={product.basePrice}
-                totalUnits={eventProduct.financialData.totalUnits ? eventProduct.financialData.totalUnits : product.units}
-                onFocus={() => setSelectedProductId(eventProduct.productId)}
-              />
-            </div>
-            <div>
-              <h4 className="text-lg font-semibold mb-4">Results</h4>
-              <FinancialResults financialData={eventProduct.financialData} />
-            </div>
-          </div>
-        )
-      }
-      return item
-    })
-    .filter((item: any) => item !== null)
+  const planProductItems: CollapseProps['items'] = formData.planned
+  .map((eventProduct: any) => {
+      const product = productData?.find(p => p.id === eventProduct.productId)
 
-  const actualProductItems: CollapseProps['items'] = (formData as any).actual
-    .map((eventProduct: any) => {
-      const product = productData?.find((p: any) => p.id === eventProduct.productId)
+      eventProduct.financialData.originalBasePrice = product.originalBasePrice;
+      eventProduct.financialData.originalTotalUnits = product.originalTotalUnits;
+      eventProduct.financialData.basePriceElasticity = product.basePriceElasticity;
+
       if (!product) return null
+
+      // Use EDLP price if available, otherwise use regular basePrice
+      const edlpBasePrice = edlpBasePriceMap.get(eventProduct.productId);
+
       const item: ProductAccordionItem = {
-        key: eventProduct.productId,
-        label: eventProduct.productName,
-        children: (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-            <div>
-              <h4 className="text-lg font-semibold mb-4">Financial Details (Read Only)</h4>
-              <FinancialFields
-                productId={eventProduct.productId}
-                financialData={eventProduct.financialData}
-                onChange={() => {}}
-                basePrice={product?.basePrice || 0}
-                totalUnits={product?.totalUnits || 0}
-                readonly={true}
-              />
-            </div>
-            <div>
-              <h4 className="text-lg font-semibold mb-4">Actual Results</h4>
-              <ActualResultsEditor
-                financialData={eventProduct.financialData}
-                actualResults={eventProduct.actualResults}
-                onChange={(actualResults: any) => handleActualResultsChange(eventProduct.productId, actualResults)}
-              />
-            </div>
-          </div>
-        )
+          key: eventProduct.productId,
+          label: eventProduct.productName,
+          children: (
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                  <div>
+                      <h4 className="text-lg font-semibold mb-4">Financial Details</h4>
+                      {edlpBasePrice && (
+                          <div className="mt-2 text-xs text-blue-600">
+                              Using EDLP price: ${edlpBasePrice.toFixed(2)} (original: ${product.basePrice.toFixed(2)})
+                          </div>
+                      )}
+                      <FinancialFields
+                          productId={eventProduct.productId}
+                          financialData={eventProduct.financialData}
+                          onChange={(data) => handleProductDataChange(eventProduct.productId, eventProduct.productName, data)}
+                          basePrice={product.basePrice}
+                          totalUnits={eventProduct.financialData.totalUnits ? eventProduct.financialData.totalUnits : product.units}
+                          // NEW: Set selected product when any field is focused
+                          onFocus={() => setSelectedProductId(eventProduct.productId)}
+                      />
+                  </div>
+                  <div>
+                      <h4 className="text-lg font-semibold mb-4">Results</h4>
+                      <FinancialResults financialData={eventProduct.financialData} />
+                  </div>
+              </div>
+          )
       }
       return item
-    })
-    .filter((item: any) => item !== null)
+  })
+  .filter((item): item is NonNullable<typeof item> => item !== null)
+
+const actualProductItems: CollapseProps['items'] = formData.actual
+  .map((eventProduct: any) => {
+      const product = productData?.find(p => p.id === eventProduct.productId)
+      if (!product) return null
+
+      const item: ProductAccordionItem = {
+          key: eventProduct.productId,
+          label: eventProduct.productName,
+          children: (
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                  <div>
+                      <h4 className="text-lg font-semibold mb-4">Financial Details (Read Only)</h4>
+                      <FinancialFields
+                          productId={eventProduct.productId}
+                          financialData={eventProduct.financialData}
+                          onChange={() => { }} // No-op function since readonly
+                          basePrice={product?.basePrice || 0}
+                          totalUnits={product?.totalUnits || 0}
+                          readonly={true}
+                      />
+                  </div>
+                  <div>
+                      <h4 className="text-lg font-semibold mb-4">Actual Results</h4>
+                      <ActualResultsEditor
+                          financialData={eventProduct.financialData}
+                          actualResults={eventProduct.actualResults}
+                          onChange={(actualResults) => handleActualResultsChange(eventProduct.productId, actualResults)}
+                      />
+                  </div>
+              </div>
+          )
+      }
+      return item
+  })
+  .filter((item): item is NonNullable<typeof item> => item !== null)
 
   const modalContent = (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[100]">
-      <div className="bg-white rounded-lg w-full max-w-[95vw] max-h-[90vh] overflow-hidden m-4">
-        <div className="flex justify-between items-center px-6 py-2 bg-secondary border-b">
-          <h2 className="text-xl font-medium text-white">
-            {initialEvent && startDate == undefined ? 'Edit Event' : 'Add New Event'}
-          </h2>
-          <button onClick={onClose} className="text-white hover:text-gray-700 transition-colors">
-            <X size={24} />
-          </button>
+        <div className="bg-white rounded-lg w-full max-w-[95vw] max-h-[90vh] overflow-hidden m-4">
+            <div className="flex justify-between items-center px-6 py-2 bg-secondary border-b">
+                <h2 className="text-xl font-medium text-white">
+                    {initialEvent && startDate == undefined ? 'Edit Event' : 'Add New Event'}
+                </h2>
+                <button
+                    onClick={onClose}
+                    className="text-white hover:text-gray-700 transition-colors"
+                >
+                    <X size={24} />
+                </button>
+            </div>
+
+            <Form
+                form={form}
+                onFinish={handleSubmit}
+                className="flex flex-col h-[calc(90vh-80px)]"
+                layout="vertical"
+            >
+                <div className="flex-1 overflow-auto">
+                    <div className="flex">
+                        {/* Left side - Event Details (30%) */}
+                        <div className="border-r border-gray-200 p-6 w-[30%]">
+                            <EventDetails
+                                formData={formData}
+                                setFormData={setFormData}
+                                channels={MOCK_CHANNELS}
+                                planned={formData.planned}
+                                actual={formData.actual}
+                                products={products}
+                                tpoData={tpoData}
+                                getProductsForBrand={getProductsForBrand}
+                            />
+                        </div>
+
+                        {/* Right side - Product Details (70%) */}
+                        <Tabs
+                            defaultActiveKey="1"
+                            className="p-4 w-[70%]"
+                            items={[
+                                {
+                                    key: '1',
+                                    label: 'Plan',
+                                    children: (
+                                        <div className="p-2 overflow-auto">
+                                            <h3 className="text-lg font-semibold mb-4">Product Details</h3>
+                                            {formData.planned.length > 0 ? (
+                                                <Collapse
+                                                    items={planProductItems}
+                                                    expandIcon={({ isActive }) => (
+                                                        <CaretRightOutlined rotate={isActive ? 90 : 0} />
+                                                    )}
+                                                />
+                                            ) : (
+                                                <div className="text-center text-gray-500 py-8">
+                                                    Select products to view details
+                                                </div>
+                                            )}
+                                        </div>
+                                    )
+                                },
+                                {
+                                    key: '2',
+                                    label: 'Actual',
+                                    children: (
+                                        <div className="p-2 overflow-auto">
+                                            <h3 className="text-lg font-semibold mb-4">Actual Product Details</h3>
+                                            {formData.actual.length > 0 ? (
+                                                <Collapse
+                                                    items={actualProductItems}
+                                                    expandIcon={({ isActive }) => (
+                                                        <CaretRightOutlined rotate={isActive ? 90 : 0} />
+                                                    )}
+                                                />
+                                            ) : (
+                                                <div className="text-center text-gray-500 py-8">
+                                                    Add products in Plan tab to view actual details
+                                                </div>
+                                            )}
+                                        </div>
+                                    )
+                                }
+                            ]}
+                        />
+                    </div>
+                </div>
+
+                <div className="sticky bottom-0 bg-white px-6 py-4 border-t border-gray-200">
+                    <div className="flex justify-end gap-3">
+                        <Button key="cancel" onClick={onClose} className="btn btn-outline-secondary h-auto">
+                            Cancel
+                        </Button>
+                        <Button
+                            type="primary"
+                            className="btn btn-primary h-auto"
+                            disabled={isSubmitting}
+                            loading={isSubmitting}
+                            onClick={handleSubmit}
+                        >
+                            {isSubmitting ? 'Submitting...' : initialEvent && startDate == undefined ? 'Update Event' : 'Create Event'}
+                        </Button>
+                    </div>
+                </div>
+            </Form>
         </div>
-
-        <Form form={form} onFinish={handleSubmit} className="flex flex-col h-[calc(90vh-80px)]" layout="vertical">
-          <div className="flex-1 overflow-auto">
-            <div className="flex">
-              <div className="border-r border-gray-200 p-6 w-[30%]">
-                <EventDetails
-                  formData={formData}
-                  setFormData={setFormData}
-                  channels={MOCK_CHANNELS}
-                  planned={(formData as any).planned}
-                  actual={(formData as any).actual}
-                  products={products}
-                  tpoData={tpoData}
-                  getProductsForBrand={getProductsForBrand}
-                />
-              </div>
-              <Tabs defaultActiveKey="1" className="p-4 w-[70%]">
-                <Tabs.TabPane tab="Plan" key="1">
-                  <div className="p-2 overflow-auto">
-                    <h3 className="text-lg font-semibold mb-4">Product Details</h3>
-                    {(formData as any).planned.length > 0 ? (
-                      <Collapse items={planProductItems} expandIcon={({ isActive }) => <CaretRightOutlined rotate={isActive ? 90 : 0} />} />
-                    ) : (
-                      <div className="text-center text-gray-500 py-8">Select products to view details</div>
-                    )}
-                  </div>
-                </Tabs.TabPane>
-                <Tabs.TabPane tab="Actual" key="2">
-                  <div className="p-2 overflow-auto">
-                    <h3 className="text-lg font-semibold mb-4">Actual Product Details</h3>
-                    {(formData as any).actual.length > 0 ? (
-                      <Collapse items={actualProductItems} expandIcon={({ isActive }) => <CaretRightOutlined rotate={isActive ? 90 : 0} />} />
-                    ) : (
-                      <div className="text-center text-gray-500 py-8">Add products in Plan tab to view actual details</div>
-                    )}
-                  </div>
-                </Tabs.TabPane>
-              </Tabs>
-            </div>
-          </div>
-
-          <div className="sticky bottom-0 bg-white px-6 py-4 border-t border-gray-200">
-            <div className="flex justify-end gap-3">
-              <Button key="cancel" onClick={onClose} className="btn btn-outline-secondary h-auto">Cancel</Button>
-              <Button type="primary" className="btn btn-primary h-auto" disabled={isSubmitting} loading={isSubmitting} onClick={handleSubmit}>
-                {isSubmitting ? 'Submitting...' : initialEvent && startDate == undefined ? 'Update Event' : 'Create Event'}
-              </Button>
-            </div>
-          </div>
-        </Form>
-      </div>
     </div>
-  )
+)
+
 
   return createPortal(modalContent, document.body)
 }

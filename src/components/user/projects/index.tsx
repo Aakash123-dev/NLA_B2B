@@ -22,11 +22,6 @@ import {
   toggleFavorites,
 } from '@/store/slices/projectSlice';
 import { useProjectFetcher } from '@/hooks/useProjectFetcher';
-import {
-  createProject,
-  duplicateProjectById,
-  toggleFavoriteProject,
-} from '@/services/projectservices/projectServices';
 
 export default function ProjectsPage() {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);

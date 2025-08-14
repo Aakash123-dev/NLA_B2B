@@ -20,6 +20,8 @@ interface DashboardHeaderProps {
 }
 
 export function DashboardHeader({ tradePlan, onOpenSmartInsights,  onSave,
+  isOpen,
+  onClose,
   initialEvent,
   startDate,
   productData,
@@ -28,15 +30,13 @@ export function DashboardHeader({ tradePlan, onOpenSmartInsights,  onSave,
   tpoData,
   currentYear,
   events,
-  isSubmitting }: DashboardHeaderProps) {
+  isSubmitting,
+  setIsCreateEventModalOpen }: DashboardHeaderProps) {
   const router = useRouter()
   const [showCreateEvent, setShowCreateEvent] = useState(false)
   const [showImport, setShowImport] = useState(false)
 
-  const handleEventCreated = () => {
-    // Refresh the page or update state as needed
-    window.location.reload()
-  }
+  console.log(tpoData, "AllTpoData")
 
   const handleBackToDesignStudio = () => {
     // Get URL parameters and preserve them when going back
@@ -104,7 +104,7 @@ export function DashboardHeader({ tradePlan, onOpenSmartInsights,  onSave,
               )}
               
               <Button
-                onClick={() => router.push('/user/tpo/reports')}
+                onClick={() => router.push(`/user/tpo/reports?project_name=${tpoData?.name}&project_id=${tpoData?.project_id}&model_id=${tpoData?.model_id}&tpo_id=${tpoData?.id}`)}
                 className="h-9 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white border-0 rounded-lg shadow-lg shadow-blue-500/25 px-4"
               >
                 <FileText className="w-4 h-4 mr-2" />
@@ -124,7 +124,7 @@ export function DashboardHeader({ tradePlan, onOpenSmartInsights,  onSave,
               <Button
                 size="sm"
                 className="h-9 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white rounded-lg shadow-lg shadow-green-500/25 px-4"
-                onClick={() => setShowCreateEvent(true)}
+                onClick={() => setIsCreateEventModalOpen(true)}
               >
                 <Plus className="w-4 h-4 mr-2" />
                 Create Event
@@ -133,10 +133,10 @@ export function DashboardHeader({ tradePlan, onOpenSmartInsights,  onSave,
           </div>
         </div>
       </motion.header>
-
+{  productData && productData.length > 0 && (
       <CreateEventModal
-        isOpen={showCreateEvent}
-        onClose={() => setShowCreateEvent(false)}
+        isOpen={isOpen}
+        onClose={onClose}
         onSave ={onSave}
         initialEvent = {initialEvent}
         startDate = {startDate}
@@ -148,7 +148,7 @@ export function DashboardHeader({ tradePlan, onOpenSmartInsights,  onSave,
         events = {events}
         isSubmitting ={isSubmitting}
       />
-
+  )}
       <SetupImportModal
         isOpen={showImport}
         onClose={() => setShowImport(false)}

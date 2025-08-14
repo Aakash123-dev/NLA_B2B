@@ -3,11 +3,11 @@
 import React, { CSSProperties } from 'react'
 // Local loosened event/product types to avoid missing imports
 type Product = any
-type Event = any
 import { addDays, differenceInCalendarDays, format, isAfter, isBefore } from 'date-fns'
 import EventItem from './EventItem/EventItem'
 import { message, Tooltip } from 'antd'
 import { toJsDate } from '@/utils/dateUtils'
+import { Event } from '@/types/event'
 
 interface EventRowProps {
   productName: string
@@ -55,35 +55,57 @@ const EventRow: React.FC<EventRowProps> = ({
     const endDate = toJsDate(event.end_date);
 
     if (!startDate || !endDate) {
-      return { left: '0%', width: '0%', display: 'none' }
+        return {
+            left: '0%',
+            width: '0%',
+            display: 'none'
+        };
     }
 
-    const firstWeekStart = weeks[0].startDate
-    const lastWeekStart = weeks[weeks.length - 1].startDate
-    const lastWeekEnd = addDays(lastWeekStart, 6)
-    const totalDays = differenceInCalendarDays(lastWeekEnd, firstWeekStart) + 1
+    // Ensure dates are in the current year's range for better positioning
+    const currentYearStart = new Date(yearStart);
+    const currentYearEnd = new Date(yearStart);
+    currentYearEnd.setFullYear(currentYearStart.getFullYear() + 1);
+    currentYearEnd.setDate(currentYearEnd.getDate() - 1); // Last day of the year
 
-    const daysFromStart = Math.max(0, differenceInCalendarDays(startDate, firstWeekStart))
-    const daysToEnd = Math.min(totalDays - 1, differenceInCalendarDays(endDate, firstWeekStart))
 
-    const startPosition = (daysFromStart / totalDays) * 100
-    const endPosition = (daysToEnd / totalDays) * 100
-    const width = endPosition - startPosition + (100 / totalDays)
-    const minWidth = 100 / totalDays
-    const finalWidth = Math.max(width, minWidth)
+    // Get the first and last week in our calendar
+    const firstWeekStart = weeks[0].startDate;
+    const lastWeekStart = weeks[weeks.length - 1].startDate;
+    const lastWeekEnd = addDays(lastWeekStart, 6);
 
-    const eventHeight = 28
-    const topOffset = rowIndex * (eventHeight + 10)
+    // Calculate the total number of days in our calendar
+    const totalDays = differenceInCalendarDays(lastWeekEnd, firstWeekStart) + 1;
+
+    // Calculate days from the first day of the calendar to the start and end dates
+    const daysFromStart = Math.max(0, differenceInCalendarDays(startDate, firstWeekStart));
+    const daysToEnd = Math.min(totalDays - 1, differenceInCalendarDays(endDate, firstWeekStart));
+
+    // Calculate positions as percentages of the total width
+    const startPosition = (daysFromStart / totalDays) * 100;
+    const endPosition = (daysToEnd / totalDays) * 100;
+
+    // Calculate the width based on the difference between start and end positions
+    // Add 1 day to include the end date itself (e.g., Mar 4 to Mar 4 should have 1 day width)
+    const width = endPosition - startPosition + (100 / totalDays);
+
+    // Ensure minimum width for visibility (at least 1 day)
+    const minWidth = 100 / totalDays;
+    const finalWidth = Math.max(width, minWidth);
+
+    // Vertical stacking for overlapping events
+    const eventHeight = 28; // Height of each event in pixels
+    const topOffset = rowIndex * (eventHeight + 10); // Add some spacing between rows
 
     return {
-      left: `${startPosition}%`,
-      width: `${finalWidth}%`,
-      top: `${topOffset}px`,
-      transition: 'left 0.3s ease, width 0.3s ease',
-      position: 'absolute' as const,
-      height: '24px',
+        left: `${startPosition}%`,
+        width: `${finalWidth}%`,
+        top: `${topOffset}px`,
+        transition: 'left 0.3s ease, width 0.3s ease',
+        position: 'absolute' as 'absolute',
+        height: '24px', // Fixed height for events
     }
-  }
+}
 
   const isEventVisible = (event: Event) => {
     const yearEnd = new Date(yearStart)
@@ -137,48 +159,48 @@ const EventRow: React.FC<EventRowProps> = ({
 
   return (
     <tr className="relative">
-      <td className="product-title border-b border-r border-gray-200 p-2 font-medium bg-gray-50 left-0 z-10 min-w-[120px] max-w-[120px]">
-        <Tooltip placement="topLeft" title={productName}>
-          <span>{productName}</span>
-        </Tooltip>
-      </td>
-      {weeks.map((week) => (
-        <td
-          key={`cell-${product?.id}-${format(week.startDate, 'yyyy-MM-dd')}`}
-          className="border-b border-r border-gray-200 p-1 relative"
-          style={{ height: `${Math.max(52, rowHeight)}px` }}
-          onDoubleClick={() => handleCellDoubleClick(week.startDate)}
-        />
-      ))}
-      <td className="absolute inset-y-0 left-0 right-0 pointer-events-none">
-        <div className="relative h-full ml-[120px]">
-          {events.filter(isEventVisible).map((event) => {
-            const rowIndex = rowIndices.get(event.id) || 0
-            const style = calculateEventPosition(event, rowIndex)
-            return (
-              <div
-                key={`event-${event.id}-${product?.id}`}
-                className="absolute"
-                style={style}
-                title={`${event.title}: ${format(toJsDate(event.start_date) || new Date(), 'MMM d, yyyy')} - ${format(toJsDate(event.end_date) || new Date(), 'MMM d, yyyy')}`}
-              >
-                <EventItem
-                  event={event}
-                  tpoData={tpoData}
-                  onEdit={() => onEditEvent(event)}
-                  onCopy={() => onCopyEvent(event)}
-                  onDragEnd={onDragEnd}
-                  onDelete={() => onDeleteEvent(event.id)}
-                  currentYear={currentYear}
-                  onEventUpdate={handleEventUpdate}
-                />
-              </div>
-            )
-          })}
-        </div>
-      </td>
+        <td className="product-title border-b border-r border-gray-200 p-2 font-medium bg-gray-50 left-0 z-10 min-w-[120px] max-w-[120px]">
+            <Tooltip placement="topLeft" title={productName}>
+                <span>{productName}</span>
+            </Tooltip>
+        </td>
+        {weeks.map((week) => (
+            <td
+                key={`cell-${product?.id}-${format(week.startDate, 'yyyy-MM-dd')}`}
+                className="border-b border-r border-gray-200 p-1 relative"
+                style={{ height: `${Math.max(52, rowHeight)}px` }}
+                onDoubleClick={() => handleCellDoubleClick(week.startDate)}
+            />
+        ))}
+        <td className="absolute inset-y-0 left-0 right-0 pointer-events-none">
+            <div className="relative h-full ml-[120px]">
+                {events.filter(isEventVisible).map((event) => {
+                    const rowIndex = rowIndices.get(event.id) || 0;
+                    const style = calculateEventPosition(event, rowIndex);
+                    return (
+                        <div
+                            key={`event-${event.id}-${product?.id}`}
+                            className="absolute"
+                            style={style}
+                            title={`${event.title}: ${format(toJsDate(event.start_date) || new Date(), 'MMM d, yyyy')} - ${format(toJsDate(event.end_date) || new Date(), 'MMM d, yyyy')}`}
+                        >
+                            <EventItem
+                                event={event}
+                                tpoData={tpoData}
+                                onEdit={() => onEditEvent(event)}
+                                onCopy={() => onCopyEvent(event)}
+                                onDragEnd={onDragEnd}
+                                onDelete={() => onDeleteEvent(event.id)}
+                                currentYear={currentYear}
+                                onEventUpdate={handleEventUpdate}
+                            />
+                        </div>
+                    )
+                })}
+            </div>
+        </td>
     </tr>
-  )
+)
 }
 
 export default EventRow

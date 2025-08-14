@@ -2,9 +2,27 @@ import React from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line } from 'recharts';
 import { TrendingUp, BarChart3, PieChart as PieChartIcon } from 'lucide-react';
 
+interface SummaryDataShape {
+  total: number;
+  positiveROI: number;
+  negativeROI: number;
+  avgROI: number;
+  totalSpend: number;
+  positiveSpend: number;
+  negativeSpend: number;
+  positiveCount?: number;
+  negativeCount?: number;
+}
+
+interface Chart1DataShape {
+  summary: SummaryDataShape;
+  bars: { name: string; roi: number }[];
+}
+
 interface ChartSectionProps {
   chartId: number;
   hasChart: boolean;
+  data?: Chart1DataShape;
 }
 
 const mockData = [
@@ -21,7 +39,17 @@ const pieData = [
   { name: 'Costco', value: 20, color: '#F59E0B' },
 ];
 
-export function ChartSection({ chartId, hasChart }: ChartSectionProps) {
+function formatPct(n: number | undefined | null): string {
+  if (!isFinite(Number(n))) return '-';
+  return `${Number(n).toFixed(2)}%`;
+}
+
+function formatCurrency(n: number | undefined | null): string {
+  if (!isFinite(Number(n))) return '-';
+  return new Intl.NumberFormat('en-US', { maximumFractionDigits: 0 }).format(Number(n));
+}
+
+export function ChartSection({ chartId, hasChart, data }: ChartSectionProps) {
   if (!hasChart) {
     return (
       <div className="flex items-center justify-center py-20">
@@ -45,7 +73,16 @@ export function ChartSection({ chartId, hasChart }: ChartSectionProps) {
 
   const renderChart = () => {
     switch (chartId) {
-      case 1:
+      case 1: {
+        // Prepare table and chart data from props when provided
+        const summary = data?.summary;
+        const bars = data?.bars ?? [];
+        const chart1Data = bars.length
+          ? bars.map(b => ({ name: b.name, roi: b.roi }))
+          : [
+              { name: 'No data', roi: 0 },
+            ];
+
         return (
           <div className="space-y-6">
             <div className="flex items-center gap-3 mb-6">
@@ -61,7 +98,7 @@ export function ChartSection({ chartId, hasChart }: ChartSectionProps) {
             <div className="bg-white rounded-xl border border-gray-100 overflow-hidden shadow-sm">
               {/* Table Header */}
               <div className="bg-slate-600 text-white px-6 py-4">
-                <h4 className="text-lg font-semibold">ROI across all events: -108.42%</h4>
+                <h4 className="text-lg font-semibold">ROI across all events: {formatPct(summary?.avgROI)}</h4>
               </div>
               
               {/* Table Content */}
@@ -78,21 +115,21 @@ export function ChartSection({ chartId, hasChart }: ChartSectionProps) {
                   <tbody className="divide-y divide-gray-100">
                     <tr className="hover:bg-gray-50 transition-colors">
                       <td className="py-4 px-6 text-sm font-medium text-gray-900">Total</td>
-                      <td className="py-4 px-6 text-sm text-gray-700">4</td>
-                      <td className="py-4 px-6 text-sm text-gray-700">$-3,87,753.7</td>
-                      <td className="py-4 px-6 text-sm font-semibold text-red-600">-108.42%</td>
+                      <td className="py-4 px-6 text-sm text-gray-700">{summary?.total ?? '-'}</td>
+                      <td className="py-4 px-6 text-sm text-gray-700">${formatCurrency(summary?.totalSpend)}</td>
+                      <td className={`py-4 px-6 text-sm font-semibold ${Number(summary?.avgROI) >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>{formatPct(summary?.avgROI)}</td>
                     </tr>
                     <tr className="hover:bg-gray-50 transition-colors">
                       <td className="py-4 px-6 text-sm font-medium text-gray-900">Positive ROI</td>
-                      <td className="py-4 px-6 text-sm text-gray-700">1</td>
-                      <td className="py-4 px-6 text-sm text-gray-700">$39,188.9</td>
-                      <td className="py-4 px-6 text-sm font-semibold text-emerald-600">93.86%</td>
+                      <td className="py-4 px-6 text-sm text-gray-700">{summary?.positiveCount ?? '-'}</td>
+                      <td className="py-4 px-6 text-sm text-gray-700">${formatCurrency(summary?.positiveSpend)}</td>
+                      <td className="py-4 px-6 text-sm font-semibold text-emerald-600">{formatPct(summary?.positiveROI)}</td>
                     </tr>
                     <tr className="hover:bg-gray-50 transition-colors">
                       <td className="py-4 px-6 text-sm font-medium text-gray-900">Negative ROI</td>
-                      <td className="py-4 px-6 text-sm text-gray-700">3</td>
-                      <td className="py-4 px-6 text-sm text-gray-700">$4,26,942.6</td>
-                      <td className="py-4 px-6 text-sm font-semibold text-red-600">-89.85%</td>
+                      <td className="py-4 px-6 text-sm text-gray-700">{summary?.negativeCount ?? '-'}</td>
+                      <td className="py-4 px-6 text-sm text-gray-700">${formatCurrency(summary?.negativeSpend)}</td>
+                      <td className="py-4 px-6 text-sm font-semibold text-red-600">{formatPct(summary?.negativeROI)}</td>
                     </tr>
                   </tbody>
                 </table>
@@ -103,7 +140,7 @@ export function ChartSection({ chartId, hasChart }: ChartSectionProps) {
             <div className="bg-white rounded-xl border border-gray-100 p-6">
               <h4 className="text-lg font-semibold text-gray-900 mb-4">ROI Performance Visualization</h4>
               <ResponsiveContainer width="100%" height={350}>
-                <BarChart data={mockData} margin={{ top: 20, right: 30, left: 20, bottom: 20 }}>
+                <BarChart data={chart1Data} margin={{ top: 20, right: 30, left: 20, bottom: 20 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
                   <XAxis 
                     dataKey="name" 
@@ -136,6 +173,7 @@ export function ChartSection({ chartId, hasChart }: ChartSectionProps) {
             </div>
           </div>
         );
+      }
       
       default:
         return (
