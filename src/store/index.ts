@@ -52,6 +52,7 @@
 
 'use client';
 import { configureStore, combineReducers } from '@reduxjs/toolkit';
+import type { Reducer } from 'redux';
 import { persistStore, persistReducer } from 'redux-persist';
 import storage from 'redux-persist/lib/storage';
 import projectSlice from './slices/projectSlice';
@@ -94,11 +95,9 @@ const rootReducer = combineReducers({
 const persistConfig = {
   key: 'root',
   storage,
-  whitelist: ['auth', 'user', 'ui'], // Only persist these reducers
-  blacklist: ['project', 'model', 'insights', 'chart', 'admin'], // Don't persist these
 };
 
-const persistedReducer = persistReducer(persistConfig, rootReducer);
+const persistedReducer = persistReducer(persistConfig, rootReducer as unknown as Reducer);
 
 export const store = configureStore({
   reducer: persistedReducer,

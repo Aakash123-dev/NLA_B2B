@@ -64,7 +64,7 @@ export default function ProjectCard({
 	};
 
 	// Generate unique dashboard-style color themes for each card based on project id
-	const getCardTheme = (id: number, headerColor?: string) => {
+    const getCardTheme = (id: number | string | undefined, headerColor?: string) => {
 		// If project has a specific headerColor, use it
 		if (headerColor) {
 			return getThemeFromColor(headerColor);
@@ -153,7 +153,11 @@ export default function ProjectCard({
 				moduleAccent: 'bg-gradient-to-r from-violet-600 to-violet-700',
 			},
 		];
-		return themes[id % themes.length];
+        const numericId = Number(id);
+        const safeIndex = Number.isFinite(numericId)
+            ? Math.abs(numericId) % themes.length
+            : 0;
+        return themes[safeIndex];
 	};
 
 	// Function to generate theme from color selection
@@ -264,7 +268,7 @@ export default function ProjectCard({
 		return colorThemes[colorName as keyof typeof colorThemes] || colorThemes.blue;
 	};
 
-	const theme = getCardTheme(project.id, project.headerColor);
+    const theme = getCardTheme(project?.id, project?.headerColor);
 
 	return (
 		<div

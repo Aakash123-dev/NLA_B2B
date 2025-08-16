@@ -44,7 +44,13 @@ const EventDetails: React.FC<EventDetailsProps> = ({ formData, setFormData, chan
     const newProductsToAdd = values.filter(v => !selectedProducts.includes(v))
     if (newProductsToAdd.length === 0) return
 
-    const data: any[] = await eventService.fetchProductData(newProductsToAdd, tpoData?.project_id, tpoData?.model_id, tpoData?.retailer_id)
+    const dataResponse = await eventService.fetchProductData(
+      newProductsToAdd,
+      tpoData?.project_id,
+      tpoData?.model_id,
+      tpoData?.retailer_id
+    )
+    const data: any[] = Array.isArray(dataResponse) ? dataResponse : []
     const existingPlanned = new Set(formData.planned.map((p: any) => p.productId))
     const existingActual = new Set(formData.actual.map((p: any) => p.productId))
 
@@ -157,19 +163,27 @@ const EventDetails: React.FC<EventDetailsProps> = ({ formData, setFormData, chan
           </Form.Item>
 
           <Form.Item label="Status">
-            <Select value={formData.status} onChange={(value) => setFormData({ ...formData, status: value })} className="w-full">
-              <Select.Option value="DRAFT">Draft</Select.Option>
-              <Select.Option value="ACTIVE">Active</Select.Option>
-              <Select.Option value="COMPLETED">Completed</Select.Option>
-            </Select>
+            <Select
+              value={formData.status}
+              onChange={(value) => setFormData({ ...formData, status: value })}
+              className="w-full"
+              options={[
+                { label: 'Draft', value: 'DRAFT' },
+                { label: 'Active', value: 'ACTIVE' },
+                { label: 'Completed', value: 'COMPLETED' },
+              ]}
+            />
           </Form.Item>
 
           <Form.Item label="Channels">
-            <Select mode="multiple" value={formData.channels} onChange={(values) => setFormData({ ...formData, channels: values })} className="w-full" placeholder="Select channels">
-              {channels.map((channel) => (
-                <Select.Option key={channel.id} value={channel.id}>{channel.name}</Select.Option>
-              ))}
-            </Select>
+            <Select
+              mode="multiple"
+              value={formData.channels}
+              onChange={(values) => setFormData({ ...formData, channels: values })}
+              className="w-full"
+              placeholder="Select channels"
+              options={channels.map((channel: any) => ({ label: channel.name, value: channel.id }))}
+            />
           </Form.Item>
 
           <Form.Item label="PPG Name">
@@ -177,11 +191,14 @@ const EventDetails: React.FC<EventDetailsProps> = ({ formData, setFormData, chan
           </Form.Item>
 
           <Form.Item label="Products" required>
-            <Select mode="multiple" value={selectedProducts} onChange={handleProductsChange} className="w-full" placeholder="Select products">
-              {products.map((product, index) => (
-                <Select.Option key={index} value={product}>{product}</Select.Option>
-              ))}
-            </Select>
+            <Select
+              mode="multiple"
+              value={selectedProducts}
+              onChange={handleProductsChange}
+              className="w-full"
+              placeholder="Select products"
+              options={products.map((product: string) => ({ label: product, value: product }))}
+            />
           </Form.Item>
         </div>
       </div>

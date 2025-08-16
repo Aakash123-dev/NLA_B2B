@@ -38,7 +38,7 @@ const PromotedDepthChart: React.FC = () => {
   const restructuredData = useMemo(() => {
     const retailers: { [key: string]: RetailerChart } = {};
 
-    chart6Data?.forEach((item) => {
+    chart6Data?.forEach((item:any) => {
       const retailer = item.Retailer;
       if (!retailers[retailer]) {
         retailers[retailer] = {

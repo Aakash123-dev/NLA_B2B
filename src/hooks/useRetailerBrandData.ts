@@ -1,11 +1,27 @@
 import { useState, useEffect } from 'react';
 import { axiosPythonInstance } from '@/services/projectservices/axiosInstance';
 
-export const useRetailerBrandData = (project_id, model_id) => {
+// Define types for the data structure
+interface RetailerBrandProducts {
+  [retailer: string]: {
+    [brand: string]: string[];
+  };
+}
+
+interface UseRetailerBrandDataReturn {
+  retailerBrandProducts: RetailerBrandProducts;
+  retailers: string[];
+  getBrandsForRetailer: (retailer: string) => string[];
+  getProductsForBrand: (retailer: string, brand: string) => string[];
+  isLoading: boolean;
+  error: string | null;
+}
+
+export const useRetailerBrandData = (project_id: number, model_id: number): UseRetailerBrandDataReturn => {
     console.log(project_id ,"Project_id_data")
-    const [retailerBrandProducts, setRetailerBrandProducts] = useState({});
-    const [isLoading, setIsLoading] = useState(false);
-    const [error, setError] = useState(null);
+    const [retailerBrandProducts, setRetailerBrandProducts] = useState<RetailerBrandProducts>({});
+    const [isLoading, setIsLoading] = useState<boolean>(false);
+    const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
         const fetchRetailerBrandProductData = async () => {
@@ -24,7 +40,7 @@ export const useRetailerBrandData = (project_id, model_id) => {
                 }
             } catch (error) {
                 console.error("Error in fetching retailers", error);
-                setError(error.message);
+                setError(error instanceof Error ? error.message : 'An unknown error occurred');
             } finally {
                 setIsLoading(false);
             }
@@ -38,12 +54,12 @@ export const useRetailerBrandData = (project_id, model_id) => {
     const retailers = Object.keys(retailerBrandProducts);
 
     // Get brands for a specific retailer
-    const getBrandsForRetailer = (retailer) => {
+    const getBrandsForRetailer = (retailer: string): string[] => {
         return retailer ? Object.keys(retailerBrandProducts[retailer] || {}) : [];
     };
 
     // Get products for a specific retailer and brand
-    const getProductsForBrand = (retailer, brand) => {
+    const getProductsForBrand = (retailer: string, brand: string): string[] => {
         return (retailer && brand) ? retailerBrandProducts[retailer]?.[brand] || [] : [];
     };
 

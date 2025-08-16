@@ -15,14 +15,13 @@ import {
 import { motion } from 'framer-motion'
 import { SearchableDropdownList } from './components'
 import { SetupImportModal } from './components/SetupImportModal'
-import { TradePlanFormData } from '../types'
+import { TradePlanFormData, FormErrors } from '../types'
 import { databaseOptions, yearOptions } from '../constants'
 import { validateTradePlanForm, generateMockTradePlan } from '../utils'
 import { SimpleSmartInsightsDrawer } from '@/components/common'
 import { axiosInstance, axiosPythonInstance } from '@/services/projectservices/axiosInstance'
 
 export function TpoSetupPage() {
-  type FormErrors = Partial<Record<keyof TradePlanFormData, string>>
   const router = useRouter()
   const searchParams = useSearchParams()
   const project_id = Number(searchParams.get('project'))
@@ -34,7 +33,7 @@ export function TpoSetupPage() {
   const [retailerBrandProducts, setRetailerBrandProducts] = useState<any>({})
   const [isSetupModalOpen, setIsSetupModalOpen] = useState(false)
   const [tpoData, setTpoData] = useState<any>(null);
-  const [tpoId, setTpoId] = useState(null)
+  const [tpoId, setTpoId] = useState<number | null>(null)
   
   // Get user_id from localStorage
   const getUserFromStorage = () => {
@@ -60,6 +59,7 @@ export function TpoSetupPage() {
     selectedDatabase: 'db1',
     selectedRetailers: [], // Will be single select
     selectedBrands: [], // Will be single select
+    selectedProducts: [], // Added missing required field
     year: 2025,
     marketShare: '',
     minRevenue: '',

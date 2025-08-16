@@ -6,7 +6,7 @@ import { ApexOptions } from 'apexcharts';
 import { useSelector } from 'react-redux';
 import { AppDispatch, RootState, useAppSelector } from '@/store';
 import { useDispatch } from 'react-redux';
-import { fetchChartData } from '@/store/slices/chartsSlices';
+import { fetchChartData, ChartItem } from '@/store/slices/chartsSlices';
 import { useSearchParams } from 'next/navigation';
 
 const ReactApexCharts = dynamic(() => import('react-apexcharts'), {
@@ -36,19 +36,24 @@ const ChartOnly: React.FC = forwardRef<HTMLDivElement, {}>((props, ref) => {
 
     const groupedData: Record<string, Record<string, RetailerGroup>> = {};
 
-    chartItems.forEach(
-      ({ Brand, Retailer, Product, Price_avg_last_4_weeks }) => {
-        if (!groupedData[Brand]) groupedData[Brand] = {};
-        if (!groupedData[Brand][Retailer]) {
-          groupedData[Brand][Retailer] = { label: Retailer, data: [] };
-        }
-
-        groupedData[Brand][Retailer].data.push({
-          x: Product,
-          y: Price_avg_last_4_weeks,
-        });
+    chartItems.forEach((item: ChartItem) => {
+      const { Brand, Retailer, Product, Price_avg_last_4_weeks } = item;
+      
+      // Skip items with missing required data
+      if (!Brand || !Retailer || !Product || typeof Price_avg_last_4_weeks !== 'number') {
+        return;
       }
-    );
+
+      if (!groupedData[Brand]) groupedData[Brand] = {};
+      if (!groupedData[Brand][Retailer]) {
+        groupedData[Brand][Retailer] = { label: Retailer, data: [] };
+      }
+
+      groupedData[Brand][Retailer].data.push({
+        x: Product,
+        y: Price_avg_last_4_weeks,
+      });
+    });
 
     return Object.entries(groupedData).map(([brand, retailers]) => ({
       brand,
@@ -74,13 +79,13 @@ const ChartOnly: React.FC = forwardRef<HTMLDivElement, {}>((props, ref) => {
   const filterPayload = {
     projectId,
     modelId,
-    Product: selectedProductId,
-    Brand: selectedBrandId,
-    Retailer: selectedRetailerId,
+    Product: selectedProductId || undefined,
+    Brand: selectedBrandId || undefined,
+    Retailer: selectedRetailerId || undefined,
   };
 
   useEffect(() => {
-    if (selectedProductId || selectedRetailerId || selectedBrandId) {
+    if (projectId && modelId) {
       dispatch(fetchChartData(filterPayload));
     }
   }, [
@@ -182,36 +187,54 @@ const ChartOnly: React.FC = forwardRef<HTMLDivElement, {}>((props, ref) => {
       })}
 
       {/* Pagination Controls */}
-      <div
-        style={{
-          display: 'flex',
-          justifyContent: 'center',
-          marginTop: '2rem',
-          gap: '1rem',
-        }}
-      >
-        <button
-          onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
-          disabled={currentPage === 1}
+      {totalPages > 1 && (
+        <div
+          style={{
+            display: 'flex',
+            justifyContent: 'center',
+            marginTop: '2rem',
+            gap: '1rem',
+          }}
         >
-          Previous
-        </button>
+          <button
+            onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+            disabled={currentPage === 1}
+            style={{
+              padding: '0.5rem 1rem',
+              border: '1px solid #ccc',
+              borderRadius: '4px',
+              cursor: currentPage === 1 ? 'not-allowed' : 'pointer',
+              opacity: currentPage === 1 ? 0.5 : 1,
+            }}
+          >
+            Previous
+          </button>
 
-        <span>
-          Page {currentPage} of {totalPages}
-        </span>
+          <span>
+            Page {currentPage} of {totalPages}
+          </span>
 
-        <button
-          onClick={() =>
-            setCurrentPage((prev) => Math.min(prev + 1, totalPages))
-          }
-          disabled={currentPage === totalPages}
-        >
-          Next
-        </button>
-      </div>
+          <button
+            onClick={() =>
+              setCurrentPage((prev) => Math.min(prev + 1, totalPages))
+            }
+            disabled={currentPage === totalPages}
+            style={{
+              padding: '0.5rem 1rem',
+              border: '1px solid #ccc',
+              borderRadius: '4px',
+              cursor: currentPage === totalPages ? 'not-allowed' : 'pointer',
+              opacity: currentPage === totalPages ? 0.5 : 1,
+            }}
+          >
+            Next
+          </button>
+        </div>
+      )}
     </div>
   );
 });
+
+ChartOnly.displayName = 'ChartOnly';
 
 export default ChartOnly;

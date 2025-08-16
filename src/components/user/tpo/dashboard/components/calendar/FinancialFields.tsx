@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import { InputNumber, Form } from 'antd'
-import { FinancialData } from '../../../types/financial'
+import type { FinancialData } from '@/types/financial'
 
 interface FinancialFieldsProps {
     productId: string

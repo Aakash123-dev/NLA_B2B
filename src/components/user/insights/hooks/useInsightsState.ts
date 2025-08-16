@@ -87,46 +87,8 @@ export const useInsightsState = () => {
   console.log(chartData1, 'chartData1');
   // Helper functions
   const getChartData = (): ChartData[] => {
-    switch (selectedInsightType) {
-      case 'base-1':
-        return priceComparisonData.map((item) => ({
-          name: item.retailer,
-          value: item.price,
-          volume: item.volume,
-          product: item.product,
-        }));
-      case 'base-2':
-        return priceSlopeData.map((item) => ({
-          name: item.size,
-          value: item.price,
-          product: item.product,
-          pricePerOz: parseFloat(
-            (item.price / parseFloat(item.size)).toFixed(2)
-          ),
-        }));
-      case 'base-3':
-        return sensitivityData.map((item) => ({
-          name: `$${item.price}`,
-          value: item.volume,
-          profit: item.profit,
-          elasticity: item.elasticity,
-        }));
-      case 'promo-7':
-        return merchandisingData.map((item) => ({
-          name: item.type,
-          value: item.lift,
-          revenue: item.revenue,
-          cost: item.cost,
-          roi: item.roi,
-        }));
-      default:
-        return priceComparisonData.map((item) => ({
-          name: item.retailer,
-          value: item.price,
-          volume: item.volume,
-          product: item.product,
-        }));
-    }
+    // Return empty array for now - this should be implemented based on your chart data logic
+    return [];
   };
 
   // const getChartData1 = ():ChartData => {
@@ -144,7 +106,7 @@ export const useInsightsState = () => {
   // };
 
   const getCurrentColors = () => {
-    const scheme = colorSchemes.find((c) => c.id === selectedColorScheme);
+    const scheme = colorSchemes.find((s) => s.name === selectedColorScheme);
     return scheme ? scheme.colors : colorSchemes[0].colors;
   };
 

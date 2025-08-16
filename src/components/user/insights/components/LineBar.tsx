@@ -42,7 +42,7 @@ const MyChart: React.FC = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [chartType, setChartType] = useState<'bar' | 'line'>('bar');
 
-  const { data3, loading, error } = useSelector(
+  const { data3, loading, error3 } = useSelector(
     (state: RootState) => state.chart
   );
 
@@ -258,7 +258,7 @@ const MyChart: React.FC = () => {
   ]);
 
   if (loading) return <p>Loading...</p>;
-  if (error) return <p>Error: {error}</p>;
+  if (error3) return <p>Error: {error3}</p>;
   if (!chartData.length) return <p>No data available</p>;
 
   return (

@@ -2,7 +2,7 @@ import { useState, useRef, useCallback } from 'react';
 
 interface UseDragProps {
     onDragEnd: (weeksDelta: number) => void;
-    elementRef: React.RefObject<HTMLElement>;
+    elementRef: React.RefObject<HTMLDivElement>;
     backgroundColor: string;
 }
 
@@ -36,7 +36,7 @@ export const useDrag = ({ onDragEnd, elementRef, backgroundColor }: UseDragProps
         return 7; // Calendar displays 7 days per week
     };
 
-    const createGhost = (element: HTMLElement) => {
+    const createGhost = (element: HTMLDivElement) => {
         const ghost = element.cloneNode(true) as HTMLDivElement;
         ghost.style.position = 'fixed';
         ghost.style.pointerEvents = 'none';
@@ -61,7 +61,7 @@ export const useDrag = ({ onDragEnd, elementRef, backgroundColor }: UseDragProps
         return ghost;
     };
 
-    const updateGhostPosition = (ghost: HTMLDivElement, element: HTMLElement, deltaX: number, snapping: boolean = false) => {
+    const updateGhostPosition = (ghost: HTMLDivElement, element: HTMLDivElement, deltaX: number, snapping: boolean = false) => {
         const rect = element.getBoundingClientRect();
         ghost.style.top = `${rect.top}px`;
         ghost.style.left = `${rect.left}px`;
@@ -79,7 +79,7 @@ export const useDrag = ({ onDragEnd, elementRef, backgroundColor }: UseDragProps
     };
 
     // Helper function to start drag
-    const startDrag = (clientX: number, element: HTMLElement) => {
+    const startDrag = (clientX: number, element: HTMLDivElement) => {
         setIsDragging(true);
         isDraggingRef.current = true;
         startXRef.current = clientX;

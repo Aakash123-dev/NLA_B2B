@@ -7,7 +7,7 @@ import type { InsightsState, ChartData } from '../types';
 
 interface InsightsContextType {
   state: InsightsState;
-  actions: any;
+  actions: ReturnType<typeof useInsightsState>['actions'];
   filteredInsights: any[];
   chartData: ChartData[];
   modelId?: string;

@@ -1,12 +1,23 @@
 import { SET_PRODUCT_DATA, SET_PRODUCT_LOADING, SET_PRODUCT_ERROR } from './productDataActionTypes';
 
-const initialState = {
+interface ProductDataState {
+    data: unknown[];
+    loading: boolean;
+    error: string | null;
+}
+
+const initialState: ProductDataState = {
     data: [],
     loading: false,
     error: null
 };
 
-const productDataReducer = (state = initialState, action) => {
+type ProductDataAction =
+    | { type: typeof SET_PRODUCT_DATA; payload: unknown[] }
+    | { type: typeof SET_PRODUCT_LOADING; payload: boolean }
+    | { type: typeof SET_PRODUCT_ERROR; payload: string };
+
+const productDataReducer = (state: ProductDataState = initialState, action: ProductDataAction): ProductDataState => {
     switch (action.type) {
         case SET_PRODUCT_DATA:
             return {
