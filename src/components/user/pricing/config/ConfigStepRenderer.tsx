@@ -27,6 +27,14 @@ export function ConfigStepRenderer({
   startModeling,
   cancelProcess,
 }: ConfigStepRendererProps) {
+  // Create wrapper functions to handle type mismatches
+  const handleFormDataChange = (data: Partial<any>) => {
+    // Handle the form data change by calling updateConfig for each field
+    Object.entries(data).forEach(([key, value]) => {
+      updateConfig(key as keyof PricingModelConfig, value);
+    });
+  };
+
   switch (step) {
     case 1:
       return (
@@ -39,8 +47,10 @@ export function ConfigStepRenderer({
     case 2:
       return (
         <ColumnSelectionStep
-          config={config}
-          handleSelection={handleSelection}
+          formData={config}
+          onFormDataChange={handleFormDataChange}
+          onNext={() => {}}
+          onBack={() => {}}
         />
       )
     case 3:
@@ -50,14 +60,21 @@ export function ConfigStepRenderer({
     case 4:
       return (
         <ExecutionStep
-          progress={progress}
-          startModeling={startModeling}
-          cancelProcess={cancelProcess}
+          processingState={progress}
+          onRunModel={startModeling}
+          onCancel={cancelProcess}
         />
       )
     case 5:
       return (
-        <ResultsStep config={config} />
+        <ResultsStep 
+          formData={config}
+          onFormDataChange={handleFormDataChange}
+          onNext={() => {}}
+          onBack={() => {}}
+          onRestart={() => {}}
+          onBackToSummary={() => {}}
+        />
       )
     default:
       return null

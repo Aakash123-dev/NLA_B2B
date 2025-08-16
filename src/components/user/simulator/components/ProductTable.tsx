@@ -17,7 +17,7 @@ import { ProductTableHeader } from './ProductTableHeader';
 
 interface ProductTableProps {
   products: Product[];
-  expandedProductId: string | null;
+  expandedProducts: any;
   toggleProductExpansion: (productId: string) => void;
   marginInputs: Record<number, MarginInputs>;
   onPriceChange: any;
@@ -27,6 +27,16 @@ interface ProductTableProps {
     value: number
   ) => void;
   newPrice: any;
+  filteredSelectedPriceProducts: any[];
+  type: string;
+  showResults: boolean;
+  selectedProducts: string[];
+  marginPriceValues: any;
+  marginSimulationData: any[];
+  marginChartData: any;
+  isPriceSimulationLoading: boolean;
+  handleMarginPriceInputChange: any;
+  setSelectedProduct1: (product: any) => void;
 }
 
 export function ProductTable({

@@ -18,13 +18,23 @@ interface ProductTableRowProps {
   index: number;
   isExpanded: boolean;
   marginInputs: Record<number, MarginInputs>;
-  onPriceChange: (productId: number, newPrice: string) => void;
-  toggleProductExpansion: (productId: number) => void;
+  onPriceChange: (index: number, event: any, product: any, type: string) => void;
+  toggleProductExpansion: (productId: string) => void;
   updateMarginInput: (
     productId: number,
     field: 'costPerUnit' | 'targetMargin',
     value: number
   ) => void;
+  type: string;
+  showResults: boolean;
+  newPrice: any;
+  marginPriceValues: any;
+  marginSimulationData: any[];
+  marginChartData: any;
+  isPriceSimulationLoading: boolean;
+  handleMarginPriceInputChange: any;
+  setSelectedProduct1: (product: any) => void;
+  selectedProducts: string[];
 }
 
 export function ProductTableRow({
@@ -44,12 +54,13 @@ export function ProductTableRow({
   isPriceSimulationLoading,
   handleMarginPriceInputChange,
   setSelectedProduct1,
+  selectedProducts,
 }: ProductTableRowProps) {
   console.log(product?._id, 'newrice');
   const marginData = calculateMarginData(product, marginInputs[product.id]);
   const { Price_avg_last_4_weeks, total_units_sum } = product;
-  const totalVolumeSum = parseFloat(total_units_sum);
-  const totalVolume = totalVolumeSum * Price_avg_last_4_weeks;
+  const totalVolumeSum = parseFloat(total_units_sum || '0');
+  const totalVolume = totalVolumeSum * (Price_avg_last_4_weeks || 0);
   return (
     <React.Fragment key={product.id}>
       <motion.tr
@@ -59,7 +70,9 @@ export function ProductTableRow({
         className="group cursor-pointer transition-all duration-200 hover:bg-gradient-to-r hover:from-indigo-50/30 hover:to-blue-50/30"
         onClick={() => {
           setSelectedProduct1(product);
-          toggleProductExpansion(product?._id);
+          if (product._id) {
+            toggleProductExpansion(product._id);
+          }
         }}
       >
         <td className="px-6 py-6">
@@ -76,23 +89,23 @@ export function ProductTableRow({
               )}
             </Button>
             <div className="line-clamp-3 text-sm font-medium leading-5 text-slate-900">
-              {product?.Product}
+              {product?.Product || product.name}
             </div>
           </div>
         </td>
         <td className="px-4 py-6 text-center">
           <div className="inline-flex items-center rounded-lg border border-green-200/50 bg-gradient-to-r from-green-50 to-emerald-50 px-3 py-1.5">
             <span className="text-sm font-bold text-green-700">
-              {!isNaN(Price_avg_last_4_weeks)
-                ? '$' + Price_avg_last_4_weeks.toFixed(2).toLocaleString()
+              {!isNaN(Price_avg_last_4_weeks || 0)
+                ? '$' + (Price_avg_last_4_weeks || 0).toFixed(2).toLocaleString()
                 : '-'}
             </span>
           </div>
         </td>
         <td className="px-4 py-6 text-center">
           <div className="text-sm font-semibold text-slate-800">
-            {!isNaN(total_units_sum)
-              ? Math.round(total_units_sum).toLocaleString()
+            {!isNaN(parseFloat(total_units_sum || '0'))
+              ? Math.round(parseFloat(total_units_sum || '0')).toLocaleString()
               : '-'}
           </div>
         </td>
@@ -118,8 +131,8 @@ export function ProductTableRow({
             }
             onChange={(event) => {
               const value = event.target.value.replace(/,/g, '');
-              if (!isNaN(value) && value >= 0) {
-                onPriceChange(index, value, product, type);
+              if (!isNaN(parseFloat(value)) && parseFloat(value) >= 0) {
+                onPriceChange(index, event, product, type);
               }
             }}
             onKeyDown={(e) => {
@@ -134,9 +147,9 @@ export function ProductTableRow({
         <td className="px-4 py-6 text-center">
           <div className="text-sm font-semibold text-slate-700">
             {newPrice[index] && !showResults
-              ? Math.round(product?.newVolume).toLocaleString()
+              ? Math.round(product?.newVolume || 0).toLocaleString()
               : showResults && product?.percentageChangeInVolume
-                ? Math.round(product?.newVolume).toLocaleString()
+                ? Math.round(product?.newVolume || 0).toLocaleString()
                 : '-'}
           </div>
         </td>
@@ -145,9 +158,9 @@ export function ProductTableRow({
             className={`text-sm font-semibold ${product.changeInUnits || product.newPrice ? 'text-red-600' : 'text-slate-400'}`}
           >
             {newPrice[index] && !showResults
-              ? Math.round(product?.changeInVolume).toLocaleString()
+              ? Math.round(product?.changeInVolume || 0).toLocaleString()
               : showResults && product?.changeInVolume
-                ? Math.round(product?.changeInVolume).toLocaleString()
+                ? Math.round(product?.changeInVolume || 0).toLocaleString()
                 : '-'}
           </div>
         </td>
@@ -160,18 +173,18 @@ export function ProductTableRow({
             }`}
           >
             {newPrice[index] && !showResults
-              ? product?.percentageChangeInVolume?.toFixed(2) + '%'
+              ? (product?.percentageChangeInVolume || 0).toFixed(2) + '%'
               : showResults && product?.percentageChangeInVolume
-                ? product?.percentageChangeInVolume?.toFixed(2) + '%'
+                ? (product?.percentageChangeInVolume || 0).toFixed(2) + '%'
                 : '-'}
           </div>
         </td>
         <td className="px-4 py-6 text-center">
           <div className="text-sm font-semibold text-slate-700">
             {newPrice[index] && !showResults
-              ? '$' + Math.round(product?.newDollars).toLocaleString()
+              ? '$' + Math.round(parseFloat(product?.newDollars || '0')).toLocaleString()
               : showResults && product?.percentageChangeInVolume
-                ? '$' + Math.round(product?.newDollars).toLocaleString()
+                ? '$' + Math.round(parseFloat(product?.newDollars || '0')).toLocaleString()
                 : '-'}
           </div>
         </td>
@@ -180,9 +193,9 @@ export function ProductTableRow({
             className={`text-sm font-semibold ${product.changeInDollars || product.newPrice ? 'text-emerald-600' : 'text-slate-400'}`}
           >
             {newPrice[index] && !showResults
-              ? '$' + Math.round(product?.changeInDollars).toLocaleString()
+              ? '$' + Math.round(parseFloat(product?.changeInDollars || '0')).toLocaleString()
               : showResults && product?.percentageChangeInVolume
-                ? '$' + Math.round(product?.changeInDollars).toLocaleString()
+                ? '$' + Math.round(parseFloat(product?.changeInDollars || '0')).toLocaleString()
                 : '-'}
           </div>
         </td>
@@ -190,14 +203,14 @@ export function ProductTableRow({
           <div
             className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-bold ${
               product.percentChangeDollars || product.newPrice
-                ? 'border border-emerald-200/50 bg-gradient-to-r from-emerald-50 to-green-100 text-emerald-700'
+                ? 'border border-emerald-200/50 bg-gradient-to-r from-emerald-100 to-green-100 text-emerald-700'
                 : 'bg-slate-50 text-slate-400'
             }`}
           >
             {newPrice[index] && !showResults
-              ? product?.percentageChangeInDollars?.toFixed(2) + '%'
-              : showResults && product?.percentageChangeInVolume
-                ? product?.percentageChangeInDollars?.toFixed(2) + '%'
+              ? (product?.percentageChangeInDollars || 0).toFixed(2) + '%'
+              : showResults && product?.percentageChangeInDollars
+                ? (product?.percentageChangeInDollars || 0).toFixed(2) + '%'
                 : '-'}
           </div>
         </td>

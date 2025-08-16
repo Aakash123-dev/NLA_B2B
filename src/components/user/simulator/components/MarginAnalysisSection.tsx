@@ -42,7 +42,7 @@ interface MarginAnalysisSectionProps {
     field: 'costPerUnit' | 'targetMargin',
     value: number
   ) => void;
-  toggleProductExpansion: (productId: number) => void;
+  toggleProductExpansion: (productId: string) => void;
   marginPriceValues?: any;
   marginSimulationData?: any[];
   marginChartData?: any;
@@ -134,7 +134,7 @@ export function MarginAnalysisSection({
   };
 
   // Function to calculate nice round numbers for axis scaling (same as PPT)
-  const calculateAxisValues = (values) => {
+  const calculateAxisValues = (values: number[]) => {
     if (!values || values.length === 0)
       return { min: 0, max: 100, majorUnit: 20, tickAmount: 5 };
 
@@ -142,11 +142,11 @@ export function MarginAnalysisSection({
     const min = Math.min(...values);
 
     // Function to get the magnitude (power of 10)
-    const getMagnitude = (num) =>
+    const getMagnitude = (num: number) =>
       Math.pow(10, Math.floor(Math.log10(Math.abs(num))));
 
     // Function to round to nice numbers
-    const getNiceNumber = (num, round = true) => {
+    const getNiceNumber = (num: number, round = true) => {
       const magnitude = getMagnitude(num);
       const fraction = num / magnitude;
 
@@ -188,7 +188,7 @@ export function MarginAnalysisSection({
 
   const option45s = {
     chart: {
-      type: 'line',
+      type: 'line' as const,
       toolbar: {
         tools: {
           download: true,
@@ -197,7 +197,7 @@ export function MarginAnalysisSection({
           zoomin: true,
           zoomout: true,
           pan: true,
-          reset: true | '<img src="/static/icons/reset.png" width="20">',
+          reset: true,
           customIcons: [
             {
               icon: `<svg fill="#000000" width="20px" height="20px" viewBox="0 -2 30 40" version="1.1"  preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"><path class="clr-i-outline clr-i-outline-path-1" d="M32,5H4A2,2,0,0,0,2,7V29a2,2,0,0,0,2,2H32a2,2,0,0,0,2-2V7A2,2,0,0,0,32,5ZM4,29V7H32V29Z"></path><path d="M 7 10 L 13 10 L 13 26 L 11.4 26 L 11.4 11.6 L 8.6 11.6 L 8.6 26 L 7 26 Z" class="clr-i-outline clr-i-outline-path-2"></path><path d="M 15 19 L 21 19 L 21 26 L 19.4 26 L 19.4 20.6 L 16.6 20.6 L 16.6 26 L 15 26 Z" class="clr-i-outline clr-i-outline-path-3"></path><path d="M 23 16 L 29 16 L 29 26 L 27.4 26 L 27.4 17.6 L 24.6 17.6 L 24.6 26 L 23 26 Z" class="clr-i-outline clr-i-outline-path-4"></path><rect x="0" y="0" width="36" height="36" fill-opacity="0"/></svg>`,
@@ -227,7 +227,9 @@ export function MarginAnalysisSection({
       // zoom: {
       //   enable: false,
       // },
-      zoom: false,
+      zoom: {
+        enabled: false,
+      },
       zoomin: false,
       zoomout: false,
 
@@ -244,7 +246,7 @@ export function MarginAnalysisSection({
     title: {
       text: 'Price Effects On Margin',
       // text: "Effects of Change In Price",
-      align: 'center',
+      align: 'center' as const,
       margin: 10,
       offsetX: 0,
       offsetY: 0,
@@ -325,7 +327,7 @@ export function MarginAnalysisSection({
         max: manufacturerAxis.max,
         tickAmount: manufacturerAxis.tickAmount,
         labels: {
-          formatter: function (val) {
+          formatter: function (val: number) {
             return '$' + Math.round(val).toLocaleString();
           },
         },
@@ -339,7 +341,7 @@ export function MarginAnalysisSection({
         max: annualSalesAxis.max,
         tickAmount: annualSalesAxis.tickAmount,
         labels: {
-          formatter: function (val) {
+          formatter: function (val: number) {
             return '$' + Math.round(val).toLocaleString();
           },
         },
@@ -378,8 +380,8 @@ export function MarginAnalysisSection({
       x: {
         show: true,
         formatter: function (
-          value,
-          { series, seriesIndex, dataPointIndex, w }
+          value: any,
+          { series, seriesIndex, dataPointIndex, w }: any
         ) {
           const basePrice = Number(marginPriceValues?.basePrice || 0);
           const percentageChange = w.globals.categoryLabels[value];
@@ -400,8 +402,8 @@ export function MarginAnalysisSection({
       },
       y: {
         formatter: function (
-          value,
-          { series, seriesIndex, dataPointIndex, w }
+          value: any,
+          { series, seriesIndex, dataPointIndex, w }: any
         ) {
           // Format as $ and comma separated, no decimals
           if (value === null || isNaN(value)) return '$0';
@@ -409,7 +411,7 @@ export function MarginAnalysisSection({
         },
       },
       // Custom tooltip for both series
-      custom: function ({ series, seriesIndex, dataPointIndex, w }) {
+      custom: function ({ series, seriesIndex, dataPointIndex, w }: any) {
         // Get values for both series at this data point
         const priceLabel = w.globals.categoryLabels[dataPointIndex];
         const manufacturerProfit = series[0][dataPointIndex];
@@ -432,11 +434,11 @@ export function MarginAnalysisSection({
       },
     },
     legend: {
-      position: 'top',
+      position: 'top' as const,
     },
   };
 
-  function formatArrayToTwoDecimals(arr) {
+  function formatArrayToTwoDecimals(arr: number[]) {
     return arr.map((num) => Math.floor(num * 100) / 100);
   }
 
@@ -719,12 +721,12 @@ export function MarginAnalysisSection({
                 <TableBody>
                   <TableRow className="hover:bg-gray-50">
                     <TableCell className="font-medium text-gray-900">
-                      {product.Product}
+                      {product.name}
                     </TableCell>
                     <TableCell className="text-center">
                       <div className="inline-flex items-center rounded-lg border border-blue-200 bg-blue-50 px-2 py-1">
                         <span className="text-sm font-medium text-blue-700">
-                          ${parseFloat(netUnitPrice || '0').toFixed(2)}
+                          ${parseFloat(String(netUnitPrice || '0')).toFixed(2)}
                         </span>
                       </div>
                     </TableCell>
@@ -783,12 +785,12 @@ export function MarginAnalysisSection({
                 <TableBody>
                   <TableRow className="hover:bg-gray-50">
                     <TableCell className="font-medium text-gray-900">
-                      {product.Product}
+                      {product.name}
                     </TableCell>
                     <TableCell className="text-center">
                       <div className="inline-flex items-center rounded-lg border border-blue-200 bg-blue-50 px-2 py-1">
                         <span className="text-sm font-medium text-blue-700">
-                          ${parseFloat(netUnitPrice || '0').toFixed(2)}
+                          ${parseFloat(String(netUnitPrice || '0')).toFixed(2)}
                         </span>
                       </div>
                     </TableCell>

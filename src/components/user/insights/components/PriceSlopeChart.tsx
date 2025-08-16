@@ -176,7 +176,7 @@ const PriceSlopeChart: React.FC = () => {
     },
     tooltip: {
       trigger: 'axis',
-      formatter: (params: any[]) => {
+      formatter: (params: Array<{ data: [number, number]; color: string; seriesName: string }>) => {
         return params
           .map((p) => {
             const [x, y] = p.data;

@@ -18,7 +18,8 @@ export const SAMPLE_PROJECTS: ProjectType[] = [
     date_created: new Date('2025-05-27T15:32:00'),
     Models: null,
     project_name: 'Real Good Foods 27 May',
-    product_name: 'Food Products'
+    product_name: 'Food Products',
+    pin_project: false
   },
   {
     id: 2,
@@ -37,7 +38,8 @@ export const SAMPLE_PROJECTS: ProjectType[] = [
     date_created: new Date('2025-06-15T09:45:00'),
     Models: null,
     project_name: 'FreshMart Q2 Analysis',
-    product_name: 'Fresh Products'
+    product_name: 'Fresh Products',
+    pin_project: false
   },
   {
     id: 3,
@@ -56,7 +58,8 @@ export const SAMPLE_PROJECTS: ProjectType[] = [
     date_created: new Date('2025-05-10T11:30:00'),
     Models: null,
     project_name: 'Global Foods Corp',
-    product_name: 'International Foods'
+    product_name: 'International Foods',
+    pin_project: false
   },
   {
     id: 4,
@@ -75,7 +78,8 @@ export const SAMPLE_PROJECTS: ProjectType[] = [
     date_created: new Date('2025-07-01T08:20:00'),
     Models: null,
     project_name: 'SuperValue Market',
-    product_name: 'Retail Products'
+    product_name: 'Retail Products',
+    pin_project: false
   },
   {
     id: 5,
@@ -94,7 +98,8 @@ export const SAMPLE_PROJECTS: ProjectType[] = [
     date_created: new Date('2025-06-12T13:10:00'),
     Models: null,
     project_name: 'Organica Foods',
-    product_name: 'Organic Products'
+    product_name: 'Organic Products',
+    pin_project: false
   },
   {
     id: 6,
@@ -113,7 +118,8 @@ export const SAMPLE_PROJECTS: ProjectType[] = [
     date_created: new Date('2025-04-22T14:15:00'),
     Models: null,
     project_name: 'TechMart Electronics',
-    product_name: 'Electronics'
+    product_name: 'Electronics',
+    pin_project: false
   },
   {
     id: 7,
@@ -132,7 +138,8 @@ export const SAMPLE_PROJECTS: ProjectType[] = [
     date_created: new Date('2025-03-18T10:45:00'),
     Models: null,
     project_name: 'HealthPlus Pharmacy',
-    product_name: 'Healthcare Products'
+    product_name: 'Healthcare Products',
+    pin_project: false
   },
   {
     id: 8,
@@ -151,7 +158,8 @@ export const SAMPLE_PROJECTS: ProjectType[] = [
     date_created: new Date('2025-06-05T09:30:00'),
     Models: null,
     project_name: 'Fashion Forward Retail',
-    product_name: 'Apparel & Accessories'
+    product_name: 'Apparel & Accessories',
+    pin_project: false
   },
   {
     id: 9,
@@ -170,7 +178,8 @@ export const SAMPLE_PROJECTS: ProjectType[] = [
     date_created: new Date('2025-05-20T13:25:00'),
     Models: null,
     project_name: 'AutoZone Parts & Services',
-    product_name: 'Automotive Parts'
+    product_name: 'Automotive Parts',
+    pin_project: false
   },
   {
     id: 10,
@@ -189,7 +198,8 @@ export const SAMPLE_PROJECTS: ProjectType[] = [
     date_created: new Date('2025-04-08T11:40:00'),
     Models: null,
     project_name: 'BookWorld Publishing',
-    product_name: 'Books & Media'
+    product_name: 'Books & Media',
+    pin_project: false
   },
   {
     id: 11,
@@ -208,7 +218,8 @@ export const SAMPLE_PROJECTS: ProjectType[] = [
     date_created: new Date('2025-06-28T08:55:00'),
     Models: null,
     project_name: 'SportsPro Equipment',
-    product_name: 'Sports Equipment'
+    product_name: 'Sports Equipment',
+    pin_project: false
   },
   {
     id: 12,
@@ -227,7 +238,8 @@ export const SAMPLE_PROJECTS: ProjectType[] = [
     date_created: new Date('2025-05-15T16:20:00'),
     Models: null,
     project_name: 'HomeDecor Plus',
-    product_name: 'Home Decor'
+    product_name: 'Home Decor',
+    pin_project: false
   },
   {
     id: 13,
@@ -246,7 +258,8 @@ export const SAMPLE_PROJECTS: ProjectType[] = [
     date_created: new Date('2025-06-10T12:30:00'),
     Models: null,
     project_name: 'PetCare Essentials',
-    product_name: 'Pet Products'
+    product_name: 'Pet Products',
+    pin_project: false
   },
   {
     id: 14,
@@ -265,7 +278,8 @@ export const SAMPLE_PROJECTS: ProjectType[] = [
     date_created: new Date('2025-04-30T14:10:00'),
     Models: null,
     project_name: 'GourmetBites Restaurant',
-    product_name: 'Restaurant Menu'
+    product_name: 'Restaurant Menu',
+    pin_project: false
   },
   {
     id: 15,
@@ -284,7 +298,8 @@ export const SAMPLE_PROJECTS: ProjectType[] = [
     date_created: new Date('2025-03-25T09:15:00'),
     Models: null,
     project_name: 'TravelMax Adventures',
-    product_name: 'Travel Packages'
+    product_name: 'Travel Packages',
+    pin_project: false
   }
 ];
 
@@ -297,6 +312,7 @@ export const DEFAULT_NEW_PROJECT: NewProjectData = {
   version: '1.0',
   description: '',
   bannerColor: 'bg-gradient-to-br from-slate-900/90 via-slate-800/95 to-slate-900/90 backdrop-blur-lg',
+  headerColor: 'bg-gradient-to-br from-slate-900/90 via-slate-800/95 to-slate-900/90 backdrop-blur-lg',
   icon: 'FolderOpen',
   logo: '',
   retailers: [''],

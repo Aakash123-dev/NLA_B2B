@@ -7,7 +7,6 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 // Removed ChartSection per request
 import { SmartInsightsDrawer } from "./components/SmartInsightsDrawer";
-import { useSearchParams } from "next/navigation";
 import { axiosInstance } from "@/services/projectservices/axiosInstance";
 import { eventService } from "@/services/eventServices/eventServices";
 import pptxgen from "pptxgenjs";
@@ -15,6 +14,7 @@ import Logo from "@/assests/images/darkLogo.png";
 import { getResult } from "@/utils/financialCalculations";
 import { useEvents } from "@/hooks/useEvents";
 import { calculateEventROI } from "@/utils/widgetCalculations";
+import { useSearchParamsClient } from "@/hooks/useSearchParamsClient";
 
 const ReactApexChart = dynamic(() => import("react-apexcharts"), { ssr: false });
 
@@ -122,7 +122,7 @@ const generateCommonUIElements = (slide: any, title: any, pptx: any) => {
 function PromotionReportPage() {
   const userStr = typeof window !== 'undefined' ? localStorage.getItem("user") : null;
   const authData = userStr ? JSON.parse(userStr) : null;
-  const searchParams = useSearchParams();
+  const searchParams = useSearchParamsClient();
   const project_name = searchParams.get('project_name') || '';
   const project_id = searchParams.get('project_id') || '';
   const model_id = searchParams.get('model_id') || '';

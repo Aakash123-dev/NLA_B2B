@@ -1,4 +1,4 @@
-import SubscriptionPage from '@/components/dashboard/subscriptions/SubscriptionsPage';
+import SubscriptionPage from "@/app/user/subscription/page";
 
 function page() {
   return (

@@ -60,7 +60,7 @@ export const InsightsFilters: React.FC<InsightsFiltersProps> = ({
 
   // Retailers list from data
   const retailers = useMemo(
-    () => (chartFilterData ? chartFilterData.map((r) => r.name) : []),
+    () => (chartFilterData ? chartFilterData.map((r: Retailer) => r.name) : []),
     [chartFilterData]
   );
 
@@ -70,17 +70,17 @@ export const InsightsFilters: React.FC<InsightsFiltersProps> = ({
     if (selectedRetailers.length === 0) {
       // If no retailer selected, show all brands
       const allBrandsSet = new Set<string>();
-      chartFilterData.forEach((r) =>
-        r.brands.forEach((b) => allBrandsSet.add(b.name))
+      chartFilterData.forEach((r: Retailer) =>
+        r.brands.forEach((b: Brand) => allBrandsSet.add(b.name))
       );
       return Array.from(allBrandsSet).sort();
     }
-    const selectedRetailerData = chartFilterData.filter((r) =>
+    const selectedRetailerData = chartFilterData.filter((r: Retailer) =>
       selectedRetailers.includes(r.name)
     );
     const brandsSet = new Set<string>();
-    selectedRetailerData.forEach((r) => {
-      r.brands.forEach((b) => brandsSet.add(b.name));
+    selectedRetailerData.forEach((r: Retailer) => {
+      r.brands.forEach((b: Brand) => brandsSet.add(b.name));
     });
     return Array.from(brandsSet).sort();
   }, [chartFilterData, selectedRetailers]);
@@ -94,27 +94,27 @@ export const InsightsFilters: React.FC<InsightsFiltersProps> = ({
 
     if (selectedRetailers.length === 0) {
       // no retailers filter: get all products
-      chartFilterData.forEach((r) => {
-        r.brands.forEach((b) => {
-          b.products.forEach((p) => productSet.add(p.name));
+      chartFilterData.forEach((r: Retailer) => {
+        r.brands.forEach((b: Brand) => {
+          b.products.forEach((p: Product) => productSet.add(p.name));
         });
       });
     } else if (selectedBrands.length === 0) {
       // retailers selected, no brands: products from all brands of selected retailers
-      chartFilterData.forEach((r) => {
+      chartFilterData.forEach((r: Retailer) => {
         if (selectedRetailers.includes(r.name)) {
-          r.brands.forEach((b) => {
-            b.products.forEach((p) => productSet.add(p.name));
+          r.brands.forEach((b: Brand) => {
+            b.products.forEach((p: Product) => productSet.add(p.name));
           });
         }
       });
     } else {
       // retailers and brands selected: products only from those brands within those retailers
-      chartFilterData.forEach((r) => {
+      chartFilterData.forEach((r: Retailer) => {
         if (selectedRetailers.includes(r.name)) {
-          r.brands.forEach((b) => {
+          r.brands.forEach((b: Brand) => {
             if (selectedBrands.includes(b.name)) {
-              b.products.forEach((p) => productSet.add(p.name));
+              b.products.forEach((p: Product) => productSet.add(p.name));
             }
           });
         }
@@ -127,9 +127,9 @@ export const InsightsFilters: React.FC<InsightsFiltersProps> = ({
   const getBrandsForRetailers = (retailers: string[]): string[] => {
     if (!chartFilterData) return [];
     const set = new Set<string>();
-    chartFilterData.forEach((r) => {
+    chartFilterData.forEach((r: Retailer) => {
       if (retailers.includes(r.name)) {
-        r.brands.forEach((b) => set.add(b.name));
+        r.brands.forEach((b: Brand) => set.add(b.name));
       }
     });
     return Array.from(set);
@@ -142,11 +142,11 @@ export const InsightsFilters: React.FC<InsightsFiltersProps> = ({
   ): string[] => {
     if (!chartFilterData) return [];
     const set = new Set<string>();
-    chartFilterData.forEach((r) => {
+    chartFilterData.forEach((r: Retailer) => {
       if (retailers.length === 0 || retailers.includes(r.name)) {
-        r.brands.forEach((b) => {
+        r.brands.forEach((b: Brand) => {
           if (brands.includes(b.name)) {
-            b.products.forEach((p) => set.add(p.name));
+            b.products.forEach((p: Product) => set.add(p.name));
           }
         });
       }
@@ -279,7 +279,7 @@ export const InsightsFilters: React.FC<InsightsFiltersProps> = ({
                       No retailers found.
                     </CommandEmpty>
                     <CommandGroup>
-                      {retailers.map((retailer) => (
+                      {retailers.map((retailer: string) => (
                         <CommandItem
                           key={retailer}
                           value={retailer}

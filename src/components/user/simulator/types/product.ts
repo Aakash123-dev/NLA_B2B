@@ -11,6 +11,15 @@ export interface Product {
   newDollars: string;
   changeInDollars: string;
   percentChangeDollars: string;
+  // Additional properties used in the actual data
+  _id?: string;
+  Product?: string;
+  Price_avg_last_4_weeks?: number;
+  total_units_sum?: string;
+  newVolume?: number;
+  percentageChangeInVolume?: number;
+  changeInVolume?: number;
+  percentageChangeInDollars?: number;
 }
 
 export interface MarginData {
@@ -28,7 +37,7 @@ export interface ProductSectionProps {
   onPriceChange: any;
   newPrice: any;
   filteredSelectedPriceProducts: any[];
-  showProductResults: any;
+  showProductResults?: any;
   selectedProducts: any;
   type: any;
   marginPriceValues?: any;
@@ -36,6 +45,8 @@ export interface ProductSectionProps {
   marginChartData?: any;
   isPriceSimulationLoading?: boolean;
   handleMarginPriceInputChange?: any;
+  setSelectedProduct1: (product: any) => void;
+  showResults: any;
 }
 
 export interface MarginInputs {

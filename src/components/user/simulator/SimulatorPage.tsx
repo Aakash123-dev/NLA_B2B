@@ -22,6 +22,11 @@ const getStorageKey = (projectId: number, modelId: number) => {
 };
 
 const getStoredState = (projectId: number, modelId: number) => {
+  // Check if we're in a browser environment
+  if (typeof window === 'undefined') {
+    return null;
+  }
+  
   const key = getStorageKey(projectId, modelId);
   const stored = localStorage.getItem(key);
 
@@ -41,6 +46,11 @@ const getStoredState = (projectId: number, modelId: number) => {
 };
 
 const saveState = (projectId: number, modelId: number, state: any) => {
+  // Check if we're in a browser environment
+  if (typeof window === 'undefined') {
+    return;
+  }
+  
   const key = getStorageKey(projectId, modelId);
   localStorage.setItem(key, JSON.stringify(state));
 };
@@ -125,7 +135,7 @@ export default function SimulatorPage() {
     );
   };
 
-  const handleProductsChangeForPrice = (values: string) => {
+  const handleProductsChangeForPrice = (values: string[]) => {
     console.log(values, 'handleProductsChnageForPrice');
     setIsAllProductSelected(false);
     if (values && values.length && values.includes('select-all')) {
@@ -192,7 +202,9 @@ export default function SimulatorPage() {
 
     // Clear localStorage when retailer changes
     const key = getStorageKey(project_id, model_id);
-    localStorage.removeItem(key);
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem(key);
+    }
 
     // Save only the new retailer state
     const newState = {
@@ -287,7 +299,7 @@ export default function SimulatorPage() {
   /* -----end----- Common handlers -----end----- */
 
   /* -----start----- Api Handler -----start----- */
-  const getPriceSimulationApiHandler = async (retailer) => {
+  const getPriceSimulationApiHandler = async (retailer: string) => {
     dispatch(
       getPriceSimulation({ projectId: project_id, modelId: model_id, retailer })
     );
@@ -781,7 +793,7 @@ export default function SimulatorPage() {
 
   /*======================= START ===================================== MARGIN SIMULATOR ================================= START ========================*/
 
-  const handleMarginPriceInputChange = (event) => {
+  const handleMarginPriceInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = event.target;
     setMarginPriceValues((prevInputValues) => ({
       ...prevInputValues,
@@ -802,7 +814,7 @@ export default function SimulatorPage() {
         const competitorName = competitor.competitor;
         if (!seenProducts.has(competitorName)) {
           const competitorData = priceSimulationData?.find(
-            (item) =>
+            (item: any) =>
               item.Product === competitorName &&
               item.Product !== filteredProduct.Product &&
               !products.some((p) => p.Product === competitorName)
@@ -922,7 +934,7 @@ export default function SimulatorPage() {
     if (filteredData && filteredData.length > 0) {
       // Create new prices array for current selection, preserving stored values
       const restoredPrices: string[] = [];
-      filteredData.forEach((product: any, index) => {
+      filteredData.forEach((product: any, index:number) => {
         // Find stored price for this specific product from newPriceChange
         const productPriceData = storedNewPriceChange.find(
           (item: any) =>
@@ -936,12 +948,12 @@ export default function SimulatorPage() {
 
       // Recreate newPriceChange for calculations
       const priceChanges = filteredData
-        .map((product, index) => ({
+        .map((product: any, index: number) => ({
           ...product,
           type: 'product',
           newPrice: restoredPrices[index] || '',
         }))
-        .filter((item) => item.newPrice !== ''); // Only include items with actual prices
+        .filter((item: any) => item.newPrice !== ''); // Only include items with actual prices
 
       setNewPriceChange(priceChanges);
     } else {
@@ -1188,6 +1200,7 @@ export default function SimulatorPage() {
                   filteredSelectedPriceProducts={filteredSelectedPriceProducts}
                   type="product"
                   showProductResults={showProductResults}
+                  showResults={showProductResults}
                   selectedProducts={selectedProducts}
                   onPriceChange={handleNewPriceOnChange}
                   marginPriceValues={marginPriceValues}

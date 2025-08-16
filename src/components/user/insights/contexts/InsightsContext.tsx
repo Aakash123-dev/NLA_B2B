@@ -3,12 +3,12 @@
 import React, { createContext, useContext, ReactNode } from 'react';
 import { useInsightsState } from '../hooks/useInsightsState';
 import { useInsightsFilters } from '../hooks/useInsightsFilters';
-import type { InsightsState, ChartData } from '../types';
+import type { InsightsState, ChartData, InsightType } from '../types';
 
 interface InsightsContextType {
   state: InsightsState;
   actions: ReturnType<typeof useInsightsState>['actions'];
-  filteredInsights: any[];
+  filteredInsights: InsightType[];
   chartData: ChartData[];
   modelId?: string;
 }

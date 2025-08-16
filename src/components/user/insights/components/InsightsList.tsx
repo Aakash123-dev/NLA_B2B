@@ -4,14 +4,14 @@ import { ChevronDown, Sparkles, Download } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { InsightCard } from './InsightCard';
-import type { InsightType } from '../types';
+import type { InsightType, ChartDataItem } from '../types';
 
 interface InsightsListProps {
   filteredInsights: InsightType[];
   expandedInsight: string | null;
   setExpandedInsight: (id: string | null) => void;
   generateSummary: () => void;
-  chartData: any[];
+  chartData: ChartDataItem[];
   showLegend: boolean;
   getCurrentColors: () => string[];
   selectedRetailer: string;
