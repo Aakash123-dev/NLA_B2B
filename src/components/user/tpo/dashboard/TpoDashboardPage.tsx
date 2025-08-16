@@ -16,26 +16,25 @@ import { useEvents } from '@/hooks/useEvents'
 import { useRetailerBrandData } from '@/hooks/useRetailerBrandData'
 import { axiosInstance } from '@/services/projectservices/axiosInstance'
 import { fetchProductData } from '@/store/slices/productData/productDataAction'
-import { useDispatch } from 'react-redux'
-import { useSelector } from 'react-redux'
+import { useAppDispatch, useAppSelector } from '@/store/hooks'
 import { getYearCalendarData, toJsDate } from '@/utils/dateUtils'
 import { Spin } from 'antd'
 import toast from 'react-hot-toast'
 import { calculateWidgetValues } from '@/utils/widgetCalculations'
-import { Event } from '@/types/event'
+import type { Event, EventTPO } from '@/types/event'
 import { TargetUpdate } from './TargetUpdated'
 
-const getTpoStorageKey = (projectId, modelId, eventTpoId) => {
+const getTpoStorageKey = (projectId: string, modelId: string, eventTpoId: string) => {
 	return `tpo_state_${projectId}_${modelId}_${eventTpoId}`;
 };
 
-const getTpoStoredState = (projectId, modelId, eventTpoId) => {
+const getTpoStoredState = (projectId: string, modelId: string, eventTpoId: string) => {
 	const key = getTpoStorageKey(projectId, modelId, eventTpoId);
 	const stored = localStorage.getItem(key);
 	return stored ? JSON.parse(stored) : null;
 };
 
-const saveTpoState = (projectId, modelId, eventTpoId, state) => {
+const saveTpoState = (projectId: string, modelId: string, eventTpoId: string, state: unknown) => {
 	const key = getTpoStorageKey(projectId, modelId, eventTpoId);
 	localStorage.setItem(key, JSON.stringify(state));
 };
@@ -51,17 +50,25 @@ export function TpoDashboardPage() {
   const project_id = searchParams.get('project');
   const model_id = searchParams.get('model');
   const event_tpo_id = searchParams.get('tpoId')
-  const [tpoData, setTpoData] = useState(null);
+  type TpoData = EventTPO & { volume?: number; spend?: number; revenue?: number; name?: string };
+  const [tpoData, setTpoData] = useState<TpoData | null>(null);
 
   const { retailerBrandProducts, getProductsForBrand, isLoading } =
-		useRetailerBrandData(project_id, model_id);
+        useRetailerBrandData(
+          project_id ? Number(project_id) : 0, 
+          model_id ? Number(model_id) : 0
+        ) as unknown as {
+          retailerBrandProducts: Record<string, Record<string, string[]>>;
+          getProductsForBrand: (retailer: string, brand: string) => string[];
+          isLoading: boolean;
+        };
 
-    const [selectedProducts, setSelectedProducts] = useState([]);
+    const [selectedProducts, setSelectedProducts] = useState<string[]>([]);
     const [isAllProductSelected, setIsAllProductSelected] = useState(false);
 
-  const dispatch = useDispatch();
-  const { data: productDataRedux, loading: isLoadingRedux } = useSelector(
-    (state: any) => state.productDataReducer
+  const dispatch = useAppDispatch();
+  const { data: productDataRedux, loading: isLoadingRedux } = useAppSelector(
+    (state) => state.productDataReducer
   );
 
 
@@ -92,7 +99,7 @@ export function TpoDashboardPage() {
       if (
         tpoData?.retailer_id &&
         tpoData?.brand_id &&
-        retailerBrandProducts[tpoData.retailer_id]
+        retailerBrandProducts[(tpoData?.retailer_id as string) || '']
       ) {
         const products = getProductsForBrand(
           tpoData.retailer_id,
@@ -100,15 +107,15 @@ export function TpoDashboardPage() {
         );
         setSelectedProducts(products);
         if (products.length > 0) {
-          fetchProductDataHandler(products, tpoData.retailer_id);
+          fetchProductDataHandler(products);
         }
       }
     }, [tpoData, retailerBrandProducts]);
 
-    const handleProductsChange = (values) => {
+    const handleProductsChange = (values: string[]) => {
       if (values && values.length && values.includes("select-all")) {
         const availableProducts =
-          getProductsForBrand(tpoData.retailer_id, tpoData.brand_id) || [];
+          getProductsForBrand(tpoData?.retailer_id as string, tpoData?.brand_id as string) || [];
         if (values.length === availableProducts.length + 1) {
           setIsAllProductSelected(false);
           return setSelectedProducts([]);
@@ -118,7 +125,7 @@ export function TpoDashboardPage() {
       }
   
       const availableProducts =
-        getProductsForBrand(tpoData.retailer_id, tpoData.brand_id) || [];
+        getProductsForBrand(tpoData?.retailer_id as string, tpoData?.brand_id as string) || [];
       if (values.length === availableProducts.length) {
         setIsAllProductSelected(true);
       }
@@ -127,22 +134,22 @@ export function TpoDashboardPage() {
   
       // Save the updated state
       const currentState =
-        getTpoStoredState(project_id, model_id, event_tpo_id) || {};
+        getTpoStoredState(project_id || '', model_id || '', event_tpo_id || '') || {};
       const newState = {
         ...currentState,
         products: values,
       };
-      saveTpoState(project_id, model_id, event_tpo_id, newState);
+      saveTpoState(project_id || '', model_id || '', event_tpo_id || '', newState);
     };
 
-    const fetchProductDataHandler = async (products) => {
+    const fetchProductDataHandler = async (products: string[]) => {
       try {
         await dispatch(
           fetchProductData(
             products,
-            tpoData?.project_id,
-            tpoData?.model_id,
-            tpoData?.retailer_id
+            (tpoData?.project_id as string) || '',
+            (tpoData?.model_id as string) || '',
+            (tpoData?.retailer_id as string) || ''
           )
         );
       } catch (error) {
@@ -174,7 +181,7 @@ export function TpoDashboardPage() {
 		revenue: 0,
 	});
 	const [tempTargets, setTempTargets] = useState({});
-	const [availableYears, setAvailableYears] = useState([]);
+    const [availableYears, setAvailableYears] = useState<{ id: string; year: string | number }[]>([]);
 
   useEffect(() => {
 		const fetchAvailableYears = async () => {
@@ -185,12 +192,12 @@ export function TpoDashboardPage() {
 						project_id,
 						model_id,
 						retailer_id: tpoData?.retailer_id,
-						brand_id: tpoData?.brand_id,
-						year: tpoData.year,
+                        brand_id: tpoData?.brand_id,
+                        year: tpoData?.year,
 					},
 				};
-				const response = await axiosInstance.get(api, config);
-				setAvailableYears(response.data);
+                const response = await axiosInstance.get(api, config);
+                setAvailableYears(response.data);
 			} catch (error) {
 				console.error("Error fetching available years:", error);
 			}
@@ -202,7 +209,7 @@ export function TpoDashboardPage() {
 	}, [tpoData]);
 
 
-  const { events, createEvent, updateEvent, deleteEvent, refreshEvents } = useEvents()
+  const { events, createEvent, updateEvent, deleteEvent, refreshEvents, createImportedEvent } = useEvents()
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [selectedDate, setSelectedDate] = useState<Date | undefined>()
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -214,7 +221,7 @@ export function TpoDashboardPage() {
 
     useEffect(() => {
       setCurrentYear(Number(tpoData?.year))
-      refreshEvents(tpoData?.id)
+      if (tpoData?.id) refreshEvents(tpoData.id)
       setWidgetValues(calculateWidgetValues(events, targetValues.spend, Number(tpoData?.year)))
   }, [tpoData])
 
@@ -239,7 +246,7 @@ const handleNextYear = () => {
 
 const handleEventUpdate = async (updatedEvent: Event) => {
   console.log('Calendar updatedEvent', updatedEvent)
-  await refreshEvents(tpoData.id)
+  if (tpoData?.id) await refreshEvents(tpoData.id)
 }
 
 const handleAddEvent = (date: Date, product?: any) => {
@@ -330,7 +337,7 @@ const handleEditEvent = (event: Event) => {
   }, [])
 
   useEffect(() => {
-    if (fetchImportedEvents) {
+    if (fetchImportedEvents && tpoData?.id) {
         refreshEvents(tpoData.id)
     }
 }, [fetchImportedEvents])
@@ -385,7 +392,7 @@ const handleDragEnd = async (event: Event, weeksDelta: number) => {
 
       // Success feedback
       toast.success('Event updated successfully', { id: loadingToastId })
-      await refreshEvents(tpoData.id);
+      if (tpoData?.id) await refreshEvents(tpoData.id);
   } catch (error) {
       console.error('Failed to update event position:', error);
       toast.error(`Failed to update event: ${error instanceof Error ? error.message : 'Unknown error'}`)
@@ -401,7 +408,7 @@ const handleSaveEvent = async (eventData: Omit<Event, 'id'>) => {
       } else {
           await createEvent(eventData)
       }
-      await refreshEvents(tpoData.id)
+      if (tpoData?.id) await refreshEvents(tpoData.id)
       setIsModalOpen(false)
       setSelectedEvent(undefined)
       setSelectedDate(undefined)
@@ -418,7 +425,7 @@ const handleDeleteEventWrapper = async (eventId: string) => {
       const res = await deleteEvent(eventId);
       if (res) {
           toast.success('Event deleted')
-          await refreshEvents(tpoData.id)
+          if (tpoData?.id) await refreshEvents(tpoData.id)
       } else {
           toast.error('Failed to delete event')
       }
@@ -446,7 +453,7 @@ const handleCopyEvents = async (eventsToCopy: Event[]) => {
       for (const event of eventsToCopy) {
           await createEvent(event)
       }
-      await refreshEvents(tpoData.id)
+      if (tpoData?.id) await refreshEvents(tpoData.id)
       toast.success('Events copied successfully')
   } catch (error) {
       console.error('Failed to copy events:', error)
@@ -467,6 +474,20 @@ const handleCopyEvents = async (eventsToCopy: Event[]) => {
       // setIsLoading(false)
     }
   }
+
+  const handleImportEvents = async (importedEvents: Event[]) => {
+		try {
+			for (const event of importedEvents) {
+				await createImportedEvent(event);
+			}
+			setFetchImportedEvents(true);
+		} catch (error) {
+			console.error("Failed to import events:", error);
+			throw error;
+		}
+	};
+
+  
 
   if (isLoading) {
     return (
@@ -521,14 +542,17 @@ const handleCopyEvents = async (eventsToCopy: Event[]) => {
         startDate = {selectedDate}
         productData={productDataRedux}
         products={getProductsForBrand(
-          tpoData?.retailer_id,
-          tpoData?.brand_id
+          (tpoData?.retailer_id as string) ?? '',
+          (tpoData?.brand_id as string) ?? ''
         )}
         getProductsForBrand={getProductsForBrand}
         tpoData={tpoData}
         currentYear = {currentYear}
         events = {events}
         isSubmitting ={isSubmitting}
+        retailerBrandProducts ={retailerBrandProducts}
+        setFetchImportedEvents = {setFetchImportedEvents}
+        handleImportEvents = {handleImportEvents}
       />
 
       {/* Main Content */}
@@ -635,7 +659,7 @@ const handleCopyEvents = async (eventsToCopy: Event[]) => {
             </div>
             
             <div className="lg:col-span-1">
-              <SidePanel setIsEditingTargets={setIsEditingTargets} setTempTargets={setTempTargets} targetValues = {targetValues} setTargetValues = {setTargetValues} tradePlan={tradePlan} />
+              <SidePanel setIsEditingTargets={setIsEditingTargets} setTempTargets={setTempTargets} targetValues={targetValues} setTargetValues={setTargetValues} tradePlan={tradePlan} />
             </div>
           </div>
 
@@ -681,7 +705,7 @@ const handleCopyEvents = async (eventsToCopy: Event[]) => {
       tempTargets={tempTargets}
       targetValues={targetValues}
       setTargetValues={setTargetValues}
-      event_tpo_id={event_tpo_id}
+      event_tpo_id={event_tpo_id || ''}
       />
       
       <SharedSmartInsightsDrawer

@@ -16,6 +16,10 @@ import { TradePlan } from '../../types'
 
 interface SidePanelProps {
   tradePlan: TradePlan
+  setTempTargets: React.Dispatch<React.SetStateAction<any>>
+  setIsEditingTargets: React.Dispatch<React.SetStateAction<boolean>>
+  targetValues: { volume: number; spend: number; revenue: number }
+  setTargetValues: React.Dispatch<React.SetStateAction<{ volume: number; spend: number; revenue: number }>>
 }
 
 export function SidePanel({ tradePlan, setTempTargets, setIsEditingTargets, targetValues }: SidePanelProps) {

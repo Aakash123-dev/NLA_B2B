@@ -70,7 +70,7 @@ export function TpoSetupPage() {
     }))
     
     if (errors[field]) {
-      setErrors(prev => ({
+      setErrors((prev: FormErrors) => ({
         ...prev,
         [field]: ""
       }))
@@ -79,11 +79,13 @@ export function TpoSetupPage() {
 
   const handleRemoveSelection = (field: keyof TradePlanFormData, itemId: string) => {
     const currentSelection = formData[field] as string[]
-    const newSelection = currentSelection.filter(id => id !== itemId)
-    setFormData(prev => ({
-      ...prev,
-      [field]: newSelection
-    }))
+    if (Array.isArray(currentSelection)) {
+      const newSelection = currentSelection.filter(id => id !== itemId)
+      setFormData(prev => ({
+        ...prev,
+        [field]: newSelection
+      }))
+    }
   }
 
   const getItemName = (items: { id: string; name: string }[], id: string) => {

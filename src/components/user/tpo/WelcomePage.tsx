@@ -71,9 +71,6 @@ export function WelcomePage() {
   };
 
   return (
-    export function WelcomePage() {
-
-  return (
     <div className="min-h-screen py-12 px-4 sm:px-6 lg:px-8 bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
       <div className="w-full">
         {/* Header Section */}

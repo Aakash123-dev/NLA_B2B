@@ -1,13 +1,13 @@
 'use client'
 
 import React, { useState, useRef } from 'react'
-type Event = any
 
 import { EventViewModal } from '../EventView/EventViewModal'
 import { useDrag } from '@/hooks/useDrag'
 import { format } from 'date-fns'
 import { toJsDate } from '@/utils/dateUtils'
 import { EventHoverCard } from './EventHoverCard'
+import { Event } from '@/types/event'
 
 interface EventItemProps {
   event: Event
@@ -31,7 +31,7 @@ export const EventItem: React.FC<EventItemProps> = ({
   currentYear
 }) => {
   const [isViewModalOpen, setIsViewModalOpen] = useState(false)
-  const elementRef = useRef<HTMLDivElement>(null)
+  const elementRef = useRef<HTMLDivElement>(undefined as unknown as HTMLDivElement)
 
   const handleDragEnd = (weeksDelta: number) => {
     // Only call onDragEnd if there's a valid weeks delta

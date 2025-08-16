@@ -71,6 +71,15 @@ interface ChartState {
   data9: Chart9Item[]; // chart 9 raw data
   loading: boolean;
   error: string | null;
+  error1: string | null;
+  error2: string | null;
+  error3: string | null;
+  error4: string | null;
+  error5: string | null;
+  error6: string | null;
+  error7: string | null;
+  error8: string | null;
+  error9: string | null;
   hasLoaded: boolean;
 }
 
@@ -86,6 +95,15 @@ const initialState: ChartState = {
   data9: [],
   loading: false,
   error: null,
+  error1: null,
+  error2: null,
+  error3: null,
+  error4: null,
+  error5: null,
+  error6: null,
+  error7: null,
+  error8: null,
+  error9: null,
   hasLoaded: false,
 };
 
@@ -384,15 +402,17 @@ const chartSlice = createSlice({
     builder
       .addCase(fetchChartData.pending, (state) => {
         state.loading = true;
+        state.error1 = null;
       })
       .addCase(fetchChartData.fulfilled, (state, action) => {
         state.loading = false;
         state.data = action.payload;
+        state.error1 = null;
         state.hasLoaded = true;
       })
       .addCase(fetchChartData.rejected, (state, action) => {
         state.loading = false;
-        state.error = action.payload as string;
+        state.error1 = action.payload as string;
         state.hasLoaded = false;
       });
 
@@ -400,15 +420,17 @@ const chartSlice = createSlice({
     builder
       .addCase(fetchChart2Data.pending, (state) => {
         state.loading = true;
+        state.error2 = null;
       })
       .addCase(fetchChart2Data.fulfilled, (state, action) => {
         state.loading = false;
         state.data2 = action.payload;
+        state.error2 = null;
         state.hasLoaded = true;
       })
       .addCase(fetchChart2Data.rejected, (state, action) => {
         state.loading = false;
-        state.error = action.payload as string;
+        state.error2 = action.payload as string;
         state.hasLoaded = false;
       });
 
@@ -416,15 +438,17 @@ const chartSlice = createSlice({
     builder
       .addCase(fetchChart3DataThunk.pending, (state) => {
         state.loading = true;
+        state.error3 = null;
       })
       .addCase(fetchChart3DataThunk.fulfilled, (state, action) => {
         state.loading = false;
         state.data3 = action.payload;
+        state.error3 = null;
         state.hasLoaded = true;
       })
       .addCase(fetchChart3DataThunk.rejected, (state, action) => {
         state.loading = false;
-        state.error = action.payload as string;
+        state.error3 = action.payload as string;
         state.hasLoaded = false;
       });
 
@@ -432,86 +456,98 @@ const chartSlice = createSlice({
     builder
       .addCase(fetchChart4DataThunk.pending, (state) => {
         state.loading = true;
+        state.error4 = null;
       })
       .addCase(fetchChart4DataThunk.fulfilled, (state, action) => {
         state.loading = false;
         state.data4 = action.payload; // raw chart 4 data
+        state.error4 = null;
         state.hasLoaded = true;
       })
       .addCase(fetchChart4DataThunk.rejected, (state, action) => {
         state.loading = false;
-        state.error = action.payload as string;
+        state.error4 = action.payload as string;
         state.hasLoaded = false;
       })
       //chart 5
       .addCase(fetchChart5DataThunk.pending, (state) => {
         state.loading = true;
+        state.error5 = null;
       })
       .addCase(fetchChart5DataThunk.fulfilled, (state, action) => {
         state.loading = false;
         state.data5 = action.payload;
+        state.error5 = null;
         state.hasLoaded = true;
       })
       .addCase(fetchChart5DataThunk.rejected, (state, action) => {
         state.loading = false;
-        state.error = action.payload as string;
+        state.error5 = action.payload as string;
         state.hasLoaded = false;
       })
       //chart 6
       .addCase(fetchChart6DataThunk.pending, (state) => {
         state.loading = true;
+        state.error6 = null;
       })
       .addCase(fetchChart6DataThunk.fulfilled, (state, action) => {
         state.loading = false;
         state.data6 = action.payload;
+        state.error6 = null;
         state.hasLoaded = true;
       })
       .addCase(fetchChart6DataThunk.rejected, (state, action) => {
         state.loading = false;
-        state.error = action.payload as string;
+        state.error6 = action.payload as string;
         state.hasLoaded = false;
       })
       // chart 7
       .addCase(fetchChart7DataThunk.pending, (state) => {
         state.loading = true;
+        state.error7 = null;
       })
       .addCase(fetchChart7DataThunk.fulfilled, (state, action) => {
         state.loading = false;
         state.data7 = action.payload;
+        state.error7 = null;
         state.hasLoaded = true;
       })
       .addCase(fetchChart7DataThunk.rejected, (state, action) => {
         state.loading = false;
-        state.error = action.payload as string;
+        state.error7 = action.payload as string;
         state.hasLoaded = false;
       })
       // chart 8
       .addCase(fetchChart8DataThunk.pending, (state) => {
         state.loading = true;
+        state.error8 = null;
       })
       .addCase(fetchChart8DataThunk.fulfilled, (state, action) => {
         state.loading = false;
         state.data8 = action.payload;
+        state.error8 = null;
         state.hasLoaded = true;
       })
       .addCase(fetchChart8DataThunk.rejected, (state, action) => {
         state.loading = false;
-        state.error = action.payload as string;
+        state.error8 = action.payload as string;
         state.hasLoaded = false;
       });
     // Chart 9
     builder
       .addCase(fetchChart9DataThunk.pending, (state) => {
         state.loading = true;
+        state.error9 = null;
       })
       .addCase(fetchChart9DataThunk.fulfilled, (state, action) => {
         state.loading = false;
         state.data9 = action.payload;
+        state.error9 = null;
         state.hasLoaded = true;
       })
       .addCase(fetchChart9DataThunk.rejected, (state, action) => {
         state.loading = false;
-        state.error = action.payload as string;
+        state.error9 = action.payload as string;
         state.hasLoaded = false;
       });
   },

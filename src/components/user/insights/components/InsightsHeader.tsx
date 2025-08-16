@@ -24,6 +24,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import RunDemo from "../../../../utils/AllPptDownload";
+import { useInsightsListProps } from '../hooks';
 
 interface InsightsHeaderProps {
   onShowPasswordShare: () => void;

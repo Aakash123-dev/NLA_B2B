@@ -79,7 +79,7 @@ export const InsightsTabs: React.FC<InsightsTabsProps> = ({
 					) : error ? (
 						<div className="text-sm text-red-500">Error loading tabs</div>
 					) : (
-						tabs.map((tab, index) => {
+						tabs.map((tab:any, index:any) => {
 							const label = labelMap[tab.type] || tab.type;
 
 							return (

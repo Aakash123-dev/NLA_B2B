@@ -4,7 +4,7 @@ import { useInsightsContext } from '../contexts';
 import { useInsightsListProps } from '../hooks';
 import { InsightsTabs, InsightsList, InsightsFilters } from '../components';
 import { useDispatch, useSelector } from 'react-redux';
-import { AppDispatch, RootState, useAppSelector } from '@/store';
+import { AppDispatch, RootState } from '@/store';
 import {
   fetchChart2Data,
   fetchChart3DataThunk,
@@ -20,25 +20,14 @@ import { useSearchParams } from 'next/navigation';
 import { fetchChartFilterData } from '@/store/slices/chartFilterSlices';
 import {
   postInsightsFilterData,
-  fetchGlobalFilters,
 } from '@/services/filterServices/chartFilters';
 import { fetchGlobalFiltersThunk } from '@/store/slices/globalFilterSlice';
-import { useFilters } from '@/hooks/useFilters';
 
 export const InsightsContentSection: React.FC = () => {
   const searchParams = useSearchParams();
   const projectId = Number(searchParams.get('project'));
   const modelId = Number(searchParams.get('model'));
 
-  const selectedRetailerId = useAppSelector(
-    (state: RootState) => state.filters.selectedRetailerId
-  );
-  const selectedBrandId = useAppSelector(
-    (state: RootState) => state.filters.selectedBrandId
-  );
-  const selectedProductId = useAppSelector(
-    (state: RootState) => state.filters.selectedProductId
-  );
   const dispatch = useDispatch<AppDispatch>();
 
   const [selectedRetailers, setSelectedRetailers] = useState<string[]>([]);
@@ -110,11 +99,11 @@ export const InsightsContentSection: React.FC = () => {
           const relatedBrandsSet = new Set<string>();
           const relatedProductsSet = new Set<string>();
 
-          chartFilterData.forEach((retailer) => {
+          chartFilterData.forEach((retailer: { name: string; brands: { name: string; products: { name: string }[] }[] }) => {
             if (selectedRetailers.includes(retailer.name)) {
-              retailer.brands.forEach((brand) => {
+              retailer.brands.forEach((brand: { name: string; products: { name: string }[] }) => {
                 relatedBrandsSet.add(brand.name);
-                brand.products.forEach((product) => {
+                brand.products.forEach((product: { name: string }) => {
                   relatedProductsSet.add(product.name);
                 });
               });
@@ -129,11 +118,11 @@ export const InsightsContentSection: React.FC = () => {
         else if (selectedRetailers.length > 0 && selectedBrands.length > 0) {
           const relatedProductsSet = new Set<string>();
 
-          chartFilterData.forEach((retailer) => {
+          chartFilterData.forEach((retailer: { name: string; brands: { name: string; products: { name: string }[] }[] }) => {
             if (selectedRetailers.includes(retailer.name)) {
-              retailer.brands.forEach((brand) => {
+              retailer.brands.forEach((brand: { name: string; products: { name: string }[] }) => {
                 if (selectedBrands.includes(brand.name)) {
-                  brand.products.forEach((product) => {
+                  brand.products.forEach((product: { name: string }) => {
                     relatedProductsSet.add(product.name);
                   });
                 }

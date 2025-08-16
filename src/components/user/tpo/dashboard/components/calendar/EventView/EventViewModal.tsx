@@ -4,7 +4,7 @@ import React, { useEffect, useState } from 'react'
 import { message, Popconfirm, PopconfirmProps } from 'antd'
 import { X, Edit, Trash2 } from 'lucide-react'
 import { createPortal } from 'react-dom'
-import { Event } from '@/types/event'
+import type { Event } from '@/types/event'
 import { axiosInstance } from '@/services/projectservices/axiosInstance';
 import { getProductData } from '@/utils/importUtils'
 import { EventBasicInfo } from '../sections/EventBasicInfo'
@@ -38,16 +38,8 @@ export const EventViewModal: React.FC<EventViewModalProps> = ({
 
   const handleDeleteProduct = async (productId: string) => {
     try {
-        const auth = JSON.parse(localStorage.getItem("auth") || '{}')
-        
-        const response = await axiosInstance.delete(`/events/${currentEvent.id}/products/${productId}`)
-
-        if (!response.ok) {
-            throw new Error('Failed to delete product')
-        }
-
-        const result = await response.json()
-        const updatedEvent = result.event
+        const { data } = await axiosInstance.delete(`/events/${currentEvent.id}/products/${productId}`)
+        const updatedEvent: Event = data.event
 
         // Update local state
         setCurrentEvent(updatedEvent)

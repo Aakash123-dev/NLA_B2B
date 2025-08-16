@@ -362,22 +362,22 @@ const FilterSelect: React.FC<FilterSelectProps> = ({
 
 interface InsightCardProps {
   insight: InsightType;
-  chartData: any[];
-  showLegend: boolean;
-  getCurrentColors: () => string[];
-  selectedRetailer: string;
-  setSelectedRetailer: (val: string) => void;
-  selectedBrand: string;
-  setSelectedBrand: (val: string) => void;
-  selectedPPG: string;
-  setSelectedPPG: (val: string) => void;
+  chartData?: any[];
+  showLegend?: boolean;
+  getCurrentColors?: () => string[];
+  selectedRetailer?: string;
+  setSelectedRetailer?: (val: string) => void;
+  selectedBrand?: string;
+  setSelectedBrand?: (val: string) => void;
+  selectedPPG?: string;
+  setSelectedPPG?: (val: string) => void;
   viewBy: string;
   setViewBy: (val: string) => void;
   downloadType: string;
   setDownloadType: (val: string) => void;
   notes: string;
   setNotes: (val: string) => void;
-  toast: (options: {
+  toast?: (options: {
     title: string;
     description: string;
     duration: number;
@@ -464,14 +464,18 @@ export const InsightCard: React.FC<InsightCardProps> = ({
     const brandSet = new Set<string>();
 
     // Loop through products and extract brand from the product name
-    products.forEach((product) => {
-      const brand = product.split('-').pop()?.trim(); // Extract brand name after last "-"
-      if (brand && brandList.includes(brand)) {
-        brandSet.add(brand);
-      }
-    });
+    if (products && Array.isArray(products)) {
+      products.forEach((product) => {
+        if (typeof product === 'string') {
+          const brand = product.split('-').pop()?.trim(); // Extract brand name after last "-"
+          if (brand && brandList.includes(brand)) {
+            brandSet.add(brand);
+          }
+        }
+      });
+    }
 
-    return brandList.filter((brand) => brandSet.has(brand));
+    return brandList.filter((brand:any) => brandSet.has(brand));
   }, [selectedRetailerArr, products, brandList]);
 
   // Filter products based on selected brands (only if one brand selected)
@@ -480,10 +484,15 @@ export const InsightCard: React.FC<InsightCardProps> = ({
       return products || ppgCategories;
     }
     const selectedBrandsArray = selectedBrand.split(',').filter(Boolean);
+    const productList = products || ppgCategories;
+    
     // If products are strings, filter based on inclusion
-    return (products || ppgCategories).filter((product) =>
-      selectedBrandsArray.some((brand) => product.includes(brand))
-    );
+    return productList.filter((product: any) => {
+      if (typeof product === 'string') {
+        return selectedBrandsArray.some((brand) => product.includes(brand));
+      }
+      return false;
+    });
   }, [selectedBrand, products, ppgCategories]);
 
   const chartMap: { [k: string]: { [k: number]: React.ReactElement | null } } = useMemo(
@@ -620,7 +629,7 @@ export const InsightCard: React.FC<InsightCardProps> = ({
                       variant="outline"
                       className="border-indigo-200 bg-indigo-50 text-indigo-700 hover:border-indigo-300 hover:bg-indigo-100"
                       onClick={() =>
-                        toast({
+                        toast?.({
                           title: 'Notes saved',
                           description:
                             'Your notes have been saved successfully.',

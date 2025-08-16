@@ -6,17 +6,33 @@ import { Button } from '@/components/ui/button'
 import { ArrowLeft, FileText, Upload, Plus, Building, Brain } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { CreateEventModal } from './CreateEventModal'
-import { SetupImportModal } from './SetupImportModal'
+import type { Event } from '@/types/event'
 import { TradePlan } from '../../types'
+import { SetupImportModal } from '../../setup/components'
 
 interface DashboardHeaderProps {
   tradePlan: TradePlan
   onOpenSmartInsights?: () => void
-  // For CreateEventModal
-  products?: string[]
-  getProductsForBrand?: (retailerId: string, brandId: string) => string[]
-  tpoData?: any
-  productData?: any[]
+  // Modal control
+  isOpen: boolean
+  onClose: () => void
+  setIsCreateEventModalOpen: React.Dispatch<React.SetStateAction<boolean>>
+  // Event creation/editing
+  onSave: (eventData: Omit<Event, 'id'>) => Promise<void>
+  initialEvent?: Event
+  startDate?: Date
+  // Data
+  productData: any[]
+  products: string[]
+  getProductsForBrand: (retailerId: string, brandId: string) => string[]
+  tpoData: any
+  currentYear: number
+  events: Event[]
+  isSubmitting: boolean
+  // Import related
+  retailerBrandProducts: any
+  handleImportEvents: (importedEvents: any) => Promise<void>
+  setFetchImportedEvents: React.Dispatch<React.SetStateAction<boolean>>
 }
 
 export function DashboardHeader({ tradePlan, onOpenSmartInsights,  onSave,
@@ -31,7 +47,11 @@ export function DashboardHeader({ tradePlan, onOpenSmartInsights,  onSave,
   currentYear,
   events,
   isSubmitting,
-  setIsCreateEventModalOpen }: DashboardHeaderProps) {
+  setIsCreateEventModalOpen,
+  retailerBrandProducts,
+  handleImportEvents,
+  setFetchImportedEvents
+}: DashboardHeaderProps) {
   const router = useRouter()
   const [showCreateEvent, setShowCreateEvent] = useState(false)
   const [showImport, setShowImport] = useState(false)
@@ -152,8 +172,10 @@ export function DashboardHeader({ tradePlan, onOpenSmartInsights,  onSave,
       <SetupImportModal
         isOpen={showImport}
         onClose={() => setShowImport(false)}
-        retailer={tradePlan.retailer}
-        brand={tradePlan.brand}
+        onImport={handleImportEvents}
+        retailerBrandProducts={retailerBrandProducts}
+        event_tpo_id={tpoData?.id}
+        tpoData={tpoData}
       />
     </>
   )

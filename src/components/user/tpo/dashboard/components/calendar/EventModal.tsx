@@ -12,7 +12,6 @@ import { createPortal } from 'react-dom'
 import { CaretRightOutlined } from '@ant-design/icons'
 type ProductAccordionItem = { key: string; label: React.ReactNode; children: React.ReactNode }
 import dayjs from 'dayjs'
-import axios from 'axios'
 import { axiosPythonInstance } from '@/services/projectservices/axiosInstance'
 import FinancialFields from './FinancialFields'
 import FinancialResults from './FinancialResults'
@@ -198,7 +197,7 @@ const applyEdlpPromoPricesAsBasePrices = (plannedProducts: EventProduct[]) => {
           // Look for matching products in the EDLP events
           for (const edlpEvent of overlappingEdlpEvents) {
               console.log(`Checking EDLP event: ${edlpEvent.title}`);
-              const matchingProduct = edlpEvent.planned.find(p => p.productId === product.productId);
+                const matchingProduct = edlpEvent.planned.find((p: EventProduct) => p.productId === product.productId);
 
               if (matchingProduct) {
                   console.log(`Found matching product in EDLP event. Promo price: ${matchingProduct.financialData.promoPrice}`);
@@ -330,7 +329,7 @@ useEffect(() => {
       };
 
       // Find the selected product in planned
-      const idx = formData.planned.findIndex(p => p.productId === selectedProductId);
+      const idx = formData.planned.findIndex((p: EventProduct) => p.productId === selectedProductId);
       console.log('[DEBUG] Selected product index:', idx);
       if (idx !== -1) {
           const product = formData.planned[idx];
@@ -352,7 +351,7 @@ useEffect(() => {
                   if (response.data && response.data.data && response.data.data.sum_base_units) {
                       console.log('[DEBUG] Setting units to:', Math.round(response.data.data.sum_base_units), 'for product', product.productName);
                       setFormData(prev => {
-                          const newPlanned = prev.planned.map((p, i) =>
+                          const newPlanned = prev.planned.map((p: EventProduct, i: number) =>
                               i === idx
                                   ? {
                                       ...p,
@@ -427,9 +426,9 @@ useEffect(() => {
         const edlpPriceMap = new Map<string, number>();
 
         if (overlappingEdlpEvents.length > 0) {
-            formData.planned.forEach(product => {
+            formData.planned.forEach((product: EventProduct) => {
                 for (const edlpEvent of overlappingEdlpEvents) {
-                    const matchingProduct = edlpEvent.planned.find(p => p.productId === product.productId);
+                    const matchingProduct = edlpEvent.planned.find((p: EventProduct) => p.productId === product.productId);
                     if (matchingProduct && matchingProduct.financialData.promoPrice > 0) {
                         edlpPriceMap.set(product.productId, matchingProduct.financialData.promoPrice);
                         break; // Use the first matching EDLP event with a valid promo price
@@ -457,11 +456,19 @@ useEffect(() => {
   .map((eventProduct: any) => {
       const product = productData?.find(p => p.id === eventProduct.productId)
 
-      eventProduct.financialData.originalBasePrice = product.originalBasePrice;
-      eventProduct.financialData.originalTotalUnits = product.originalTotalUnits;
-      eventProduct.financialData.basePriceElasticity = product.basePriceElasticity;
-
+      // If matching product not found, skip rendering this item
       if (!product) return null
+
+      // Ensure financialData object exists
+      eventProduct.financialData = eventProduct.financialData || {}
+
+      // Safely assign baseline values with sensible fallbacks
+      eventProduct.financialData.originalBasePrice =
+        product.originalBasePrice ?? product.basePrice ?? eventProduct.financialData.originalBasePrice ?? 0
+      eventProduct.financialData.originalTotalUnits =
+        product.originalTotalUnits ?? product.totalUnits ?? eventProduct.financialData.originalTotalUnits ?? 0
+      eventProduct.financialData.basePriceElasticity =
+        product.basePriceElasticity ?? eventProduct.financialData.basePriceElasticity ?? 0
 
       // Use EDLP price if available, otherwise use regular basePrice
       const edlpBasePrice = edlpBasePriceMap.get(eventProduct.productId);
@@ -497,7 +504,7 @@ useEffect(() => {
       }
       return item
   })
-  .filter((item): item is NonNullable<typeof item> => item !== null)
+  .filter((item: ProductAccordionItem | null): item is ProductAccordionItem => item !== null)
 
 const actualProductItems: CollapseProps['items'] = formData.actual
   .map((eventProduct: any) => {
@@ -533,7 +540,7 @@ const actualProductItems: CollapseProps['items'] = formData.actual
       }
       return item
   })
-  .filter((item): item is NonNullable<typeof item> => item !== null)
+  .filter((item: ProductAccordionItem | null): item is ProductAccordionItem => item !== null)
 
   const modalContent = (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[100]">

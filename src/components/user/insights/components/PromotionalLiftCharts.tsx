@@ -37,7 +37,7 @@ const PromotionalLiftChart: React.FC = () => {
   const chartData: RetailerChart[] = useMemo(() => {
     const retailers: { [key: string]: RetailerChart } = {};
 
-    chart7Data.forEach((item) => {
+    chart7Data.forEach((item:any) => {
       const retailer = item.Retailer;
 
       if (!retailers[retailer]) {

@@ -28,7 +28,7 @@ export interface TradePlanFormData {
   selectedDatabase?: string
   selectedRetailers: string[]
   selectedBrands: string[]
-  selectedProducts?: string[]
+  selectedProducts: string[]
   year: number
   marketShare?: string
   minRevenue?: string
@@ -63,4 +63,30 @@ export interface EventFormData {
   products?: string[]
   channels?: string[]
   planValue?: number
+}
+
+// Option types for dropdowns and selects
+export interface RetailerOption {
+  id: string
+  name: string
+}
+
+export interface BrandOption {
+  id: string
+  name: string
+}
+
+export interface DatabaseOption {
+  id: string
+  name: string
+}
+
+export interface ProductOption {
+  id: string
+  name: string
+}
+
+// Form validation error types
+export interface FormErrors {
+  [key: string]: string
 }

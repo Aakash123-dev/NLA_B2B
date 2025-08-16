@@ -1,2 +1,2 @@
-export { PromotionReportPage } from './PromotionReportPage'
-export { PromotionReportPage as TpoReportPage } from './PromotionReportPage'
+export { default as PromotionReportPage } from './PromotionReportPage'
+export { default as TpoReportPage } from './PromotionReportPage'

@@ -2,19 +2,27 @@
 
 import React from 'react'
 import { EventModal } from './calendar'
+import type { Event } from '@/types/event'
 
 interface CreateEventModalProps {
   isOpen: boolean
   onClose: () => void
-  onEventCreated: () => void
-  tradePlanId: string
-  products?: string[]
-  getProductsForBrand?: (retailerId: string, brandId: string) => string[]
-  tpoData?: any
-  productData?: any[]
+  onSave: (eventData: Omit<Event, 'id'>) => Promise<void>
+  initialEvent?: Event
+  startDate?: Date
+  productData: any[]
+  products: string[]
+  getProductsForBrand: (retailerId: string, brandId: string) => string[]
+  tpoData: any
+  currentYear: number
+  events: Event[]
+  isSubmitting: boolean
+  // Optional legacy props kept for compatibility (not used here)
+  onEventCreated?: () => void
+  tradePlanId?: string
 }
 
-export function CreateEventModal({ isOpen, onClose, isSubmitting, onSave, initialEvent, startDate, productData, products, getProductsForBrand, tpoData, currentYear, events}: CreateEventModalProps) {
+export function CreateEventModal({ isOpen, onClose, isSubmitting, onSave, initialEvent, startDate, productData, products, getProductsForBrand, tpoData, currentYear, events }: CreateEventModalProps) {
 
   return (
     <EventModal
@@ -23,13 +31,13 @@ export function CreateEventModal({ isOpen, onClose, isSubmitting, onSave, initia
       onSave={onSave}
       initialEvent={initialEvent}
       startDate={startDate}
-      productData = {productData}
-      products = { products}
-      getProductsForBrand = {getProductsForBrand} 
-      tpoData ={tpoData}
-      currentYear = {currentYear}
-       events ={events}
-       isSubmitting={isSubmitting}
+      productData={productData}
+      products={products}
+      getProductsForBrand={getProductsForBrand}
+      tpoData={tpoData}
+      currentYear={currentYear}
+      events={events}
+      isSubmitting={isSubmitting}
       
     />
   )
