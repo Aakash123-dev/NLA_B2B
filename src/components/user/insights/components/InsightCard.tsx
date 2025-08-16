@@ -19,7 +19,7 @@ import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { ResponsiveContainer } from 'recharts';
-import type { InsightType } from '../types';
+import type { InsightType, ChartDataItem } from '../types';
 import { retailers, brands, ppgCategories } from '../data';
 import dynamic from 'next/dynamic';
 import { useDispatch } from 'react-redux';
@@ -362,7 +362,7 @@ const FilterSelect: React.FC<FilterSelectProps> = ({
 
 interface InsightCardProps {
   insight: InsightType;
-  chartData?: any[];
+  chartData?: ChartDataItem[];
   showLegend?: boolean;
   getCurrentColors?: () => string[];
   selectedRetailer?: string;

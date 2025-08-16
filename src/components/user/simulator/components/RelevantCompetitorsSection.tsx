@@ -28,6 +28,15 @@ interface CompetitorProduct {
   percentChangeDollars?: string;
 }
 
+interface RelevantCompetitorsSectionProps {
+  type: string;
+  newPrice: any;
+  filteredSelectedPriceProducts: any[];
+  handleNewPriceChange: any;
+  showResults: boolean;
+  selctedProducts: string[];
+}
+
 export function RelevantCompetitorsSection({
   type,
   newPrice,
@@ -35,7 +44,7 @@ export function RelevantCompetitorsSection({
   handleNewPriceChange,
   showResults,
   selctedProducts,
-}) {
+}: RelevantCompetitorsSectionProps) {
  console.log(filteredSelectedPriceProducts, "allFilteredPriceProducts")
 
   return (
@@ -179,7 +188,7 @@ export function RelevantCompetitorsSection({
                           }
                           onChange={(event) => {
                             const value = event.target.value.replace(/,/g, '');
-                            if (!isNaN(value)) {
+                            if (!isNaN(parseFloat(value))) {
                               handleNewPriceChange(index, value, product, type);
                             }
                           }}

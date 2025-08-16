@@ -33,7 +33,7 @@ export function ProductSection({
       marginChartData={marginChartData}
       isPriceSimulationLoading={isPriceSimulationLoading}
       handleMarginPriceInputChange={handleMarginPriceInputChange}
-      setSelectedProduct1 = {setSelectedProduct1}
+      setSelectedProduct1={setSelectedProduct1}
     />
   );
 }

@@ -14,6 +14,7 @@ export function ProductSectionRefactored({
   filteredSelectedPriceProducts,
   type,
   showResults,
+  showProductResults,
   selectedProducts,
   marginPriceValues,
   marginSimulationData,
@@ -35,9 +36,16 @@ export function ProductSectionRefactored({
     toggleProductExpansion(productId);
 
     if (shouldExpand) {
-      initializeMarginInputs(productId);
+      // Convert string productId to number for initializeMarginInputs
+      const numericProductId = parseInt(productId, 10);
+      if (!isNaN(numericProductId)) {
+        initializeMarginInputs(numericProductId);
+      }
     }
   };
+
+  // Use showResults if available, otherwise fall back to showProductResults
+  const finalShowResults = showResults !== undefined ? showResults : showProductResults;
 
   return (
     <div className="space-y-8">
@@ -50,14 +58,14 @@ export function ProductSectionRefactored({
         toggleProductExpansion={handleToggleProductExpansion}
         updateMarginInput={updateMarginInput}
         newPrice={newPrice}
-        filteredSelectedPriceProducts={filteredSelectedPriceProducts}
+        filteredSelectedPriceProducts={filteredSelectedPriceProducts || []}
         type={type}
-        showResults={showResults}
+        showResults={finalShowResults || false}
         selectedProducts={selectedProducts}
         marginPriceValues={marginPriceValues}
-        marginSimulationData={marginSimulationData}
+        marginSimulationData={marginSimulationData || []}
         marginChartData={marginChartData}
-        isPriceSimulationLoading={isPriceSimulationLoading}
+        isPriceSimulationLoading={isPriceSimulationLoading || false}
         handleMarginPriceInputChange={handleMarginPriceInputChange}
         setSelectedProduct1={setSelectedProduct1}
       />

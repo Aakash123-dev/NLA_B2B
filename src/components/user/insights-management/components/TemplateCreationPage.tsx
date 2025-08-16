@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { Suspense } from 'react';
 import { useTemplateCreation } from '../hooks';
 import { TemplateCreationHeader } from './TemplateCreationHeader';
 import { TemplateCreationLoading } from './TemplateCreationLoading';
@@ -11,7 +11,8 @@ import { AppliedProjectsSection } from './AppliedProjectsSection';
 
 interface TemplateCreationPageProps {}
 
-export function TemplateCreationPage({}: TemplateCreationPageProps) {
+// Wrapper component that handles the hook call
+function TemplateCreationContent() {
   const {
     // State
     templateId,
@@ -125,4 +126,10 @@ export function TemplateCreationPage({}: TemplateCreationPageProps) {
   );
 }
 
-export default TemplateCreationPage;
+export function TemplateCreationPage({}: TemplateCreationPageProps) {
+  return (
+    <Suspense fallback={<TemplateCreationLoading />}>
+      <TemplateCreationContent />
+    </Suspense>
+  );
+}

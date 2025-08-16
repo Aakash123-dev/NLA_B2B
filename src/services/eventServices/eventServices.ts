@@ -1,17 +1,8 @@
 import axios from 'axios'
 import { axiosInstance, axiosPythonInstance } from '../projectservices/axiosInstance'
+import { Event, NewEvent } from '@/types/event'
 
 // Define interfaces for better type safety
-interface Event {
-    id?: string | number;
-    brand_id?: string | number;
-    retailer_id?: string | number;
-    user_id?: string | number;
-    status: string;
-    project_id?: string | number;
-    model_id?: string | number;
-    [key: string]: any; // Allow additional properties
-}
 
 interface ProductData {
     id: string;
@@ -35,7 +26,7 @@ interface ApiResponse<T> {
 }
 
 export const eventService = {
-    async getEvents(event_id: string | number): Promise<any[]> {
+    async getEvents(event_id: string | number): Promise<Event[]> {
         try {
             const response = await axiosInstance.get(`/events/${event_id}`)
             return response.data || []
@@ -45,7 +36,7 @@ export const eventService = {
         }
     },
 
-    async createImportedEvent(event: Event): Promise<any[]> {
+    async createImportedEvent(event: NewEvent): Promise<Event> {
         try {
             let eventData = {
                 ...event,
@@ -63,7 +54,7 @@ export const eventService = {
         }
     },
 
-    async createEvent(event: Event): Promise<any[]> {
+    async createEvent(event: NewEvent): Promise<Event> {
         try {
             console.log({ saveEvent: event });
 
@@ -87,7 +78,7 @@ export const eventService = {
         }
     },
 
-    async updateEvent(event: Event): Promise<any[]> {
+    async updateEvent(event: Event): Promise<Event> {
         try {
             if (!event.id) {
                 throw new Error('Event ID is required for update')
@@ -101,7 +92,7 @@ export const eventService = {
         // return event
     },
 
-    async deleteEvent(id: string | number): Promise<any[]> {
+    async deleteEvent(id: string | number): Promise<boolean> {
         try {
             const response = await axiosInstance.delete(`/events/${id}`)
             return response.data || []

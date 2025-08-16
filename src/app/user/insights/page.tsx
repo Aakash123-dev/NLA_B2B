@@ -1,14 +1,14 @@
 import InsightsPage from '@/components/user/insights';
 
 interface PageProps {
-  searchParams: {
+  searchParams: Promise<{
     project?: string;
     model?: string;
-  };
+  }>;
 }
 
-function page({ searchParams }: PageProps) {
-  const { project, model } = searchParams;
+async function page({ searchParams }: PageProps) {
+  const { project, model } = await searchParams;
   
   return (
     <div>

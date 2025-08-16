@@ -1,11 +1,12 @@
 'use client'
 
 import React from 'react'
-import { useRouter, useSearchParams } from 'next/navigation'
+import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { ArrowRight, BarChart3, Target, TrendingUp, Zap, ArrowLeft, Brain } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { SharedSmartInsightsDrawer } from '@/components/common'
+import { useSearchParamsClient } from '@/hooks/useSearchParamsClient'
 
 const configurationSteps = [
   {
@@ -37,7 +38,7 @@ const configurationSteps = [
 export function TpoMainPage() {
   const router = useRouter()
   const [isSmartInsightsOpen, setIsSmartInsightsOpen] = React.useState(false)
-  const searchParams = useSearchParams()
+  const searchParams = useSearchParamsClient()
 
   const handleStartConfiguration = () => {
     const project = searchParams.get('project')

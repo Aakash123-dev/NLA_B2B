@@ -334,7 +334,7 @@ const handleEditEvent = (event: Event) => {
 
   useEffect(() => {
     loadTradePlan()
-  }, [])
+  }, [tpoData])
 
   useEffect(() => {
     if (fetchImportedEvents && tpoData?.id) {
@@ -463,10 +463,36 @@ const handleCopyEvents = async (eventsToCopy: Event[]) => {
 
   const loadTradePlan = async () => {
     try {
-      // Load from localStorage for demo
-      const storedPlan = localStorage.getItem('currentTradePlan')
-      if (storedPlan) {
-        setTradePlan(JSON.parse(storedPlan))
+      // Generate trade plan from TPO data if available
+      if (tpoData) {
+        const generatedTradePlan = {
+          id: tpoData.id || '1',
+          trade_plan_name: tpoData.name || 'Trade Plan',
+          project: tpoData.project_id || '',
+          model: tpoData.model_id || '',
+          retailer: tpoData.retailer_id || '',
+          brand: tpoData.brand_id || '',
+          year: String(tpoData.year || 2025),
+          total_volume: tpoData.volume || 0,
+          total_revenue: tpoData.revenue || 0,
+          total_contribution: 0,
+          total_spend: tpoData.spend || 0,
+          incremental_volume: 0,
+          incremental_revenue: 0,
+          plan_roi: 0,
+          budget_remaining: tpoData.spend || 0,
+          target_volume: tpoData.volume || 0,
+          target_spend: tpoData.spend || 0,
+          target_revenue: tpoData.revenue || 0,
+          created_date: new Date().toISOString()
+        }
+        setTradePlan(generatedTradePlan)
+      } else {
+        // Load from localStorage for demo (fallback)
+        const storedPlan = localStorage.getItem('currentTradePlan')
+        if (storedPlan) {
+          setTradePlan(JSON.parse(storedPlan))
+        }
       }
     } catch (error) {
       console.error("Error loading trade plan:", error)
@@ -494,21 +520,21 @@ const handleCopyEvents = async (eventsToCopy: Event[]) => {
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
         <div className="flex items-center space-x-3">
           <div className="w-8 h-8 border-4 border-blue-500/20 border-t-blue-500 rounded-full animate-spin" />
-          <span className="text-gray-600 font-medium">Loading trade plan...</span>
+          <span className="text-gray-600 font-medium">Loading TPO data...</span>
         </div>
       </div>
     )
   }
 
-  if (!tradePlan) {
+  if (!tpoData) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center text-center px-4 bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
         <div className="max-w-md mx-auto">
           <div className="w-16 h-16 bg-gradient-to-r from-blue-500 to-indigo-500 rounded-2xl flex items-center justify-center mb-6 mx-auto">
             <FileText className="w-8 h-8 text-white" />
           </div>
-          <h2 className="text-2xl font-bold text-gray-900 mb-4">No Trade Plan Found</h2>
-          <p className="text-gray-600 mb-8">Create your first trade plan to get started with optimization.</p>
+          <h2 className="text-2xl font-bold text-gray-900 mb-4">No TPO Data Found</h2>
+          <p className="text-gray-600 mb-8">Please create a trade plan first to access the dashboard.</p>
           <Button 
             onClick={() => router.push('/user/tpo/setup')}
             className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-semibold px-8 py-3 rounded-xl shadow-lg shadow-blue-500/25"
@@ -532,7 +558,28 @@ const handleCopyEvents = async (eventsToCopy: Event[]) => {
 
       {/* Sticky Header */}
       <DashboardHeader 
-        tradePlan={tradePlan} 
+        tradePlan={tradePlan || {
+          id: '1',
+          trade_plan_name: 'Trade Plan',
+          project: '',
+          model: '',
+          retailer: '',
+          brand: '',
+          products: [],
+          year: '2025',
+          total_volume: 0,
+          total_revenue: 0,
+          total_contribution: 0,
+          total_spend: 0,
+          incremental_volume: 0,
+          incremental_revenue: 0,
+          plan_roi: 0,
+          budget_remaining: 0,
+          target_volume: 0,
+          target_spend: 0,
+          target_revenue: 0,
+          created_date: new Date().toISOString()
+        }} 
         onOpenSmartInsights={() => setIsSmartInsightsOpen(true)}
         isOpen = {isModalOpen}
         onClose = {() => setIsModalOpen(false)}
@@ -659,7 +706,28 @@ const handleCopyEvents = async (eventsToCopy: Event[]) => {
             </div>
             
             <div className="lg:col-span-1">
-              <SidePanel setIsEditingTargets={setIsEditingTargets} setTempTargets={setTempTargets} targetValues={targetValues} setTargetValues={setTargetValues} tradePlan={tradePlan} />
+              <SidePanel setIsEditingTargets={setIsEditingTargets} setTempTargets={setTempTargets} targetValues={targetValues} setTargetValues={setTargetValues} tradePlan={tradePlan || {
+                id: '1',
+                trade_plan_name: 'Trade Plan',
+                project: '',
+                model: '',
+                retailer: '',
+                brand: '',
+                products: [],
+                year: '2025',
+                total_volume: 0,
+                total_revenue: 0,
+                total_contribution: 0,
+                total_spend: 0,
+                incremental_volume: 0,
+                incremental_revenue: 0,
+                plan_roi: 0,
+                budget_remaining: 0,
+                target_volume: 0,
+                target_spend: 0,
+                target_revenue: 0,
+                created_date: new Date().toISOString()
+              }} />
             </div>
           </div>
 

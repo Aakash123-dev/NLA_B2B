@@ -31,6 +31,35 @@ export interface InsightType {
 	category: "base" | "promo" | "strat" | "overall";
 	question?: string;
 	type?: string;
+	// Add missing properties that the code is trying to access
+	SlideNames?: Array<{
+		slide_title: string;
+	}>;
+	Notes?: Array<{
+		notes: string;
+	}>;
+}
+
+// Add proper chart data types to replace any[]
+export interface ChartDataItem {
+	Brand?: string;
+	Retailer?: string;
+	Product?: string;
+	Price_avg_last_4_weeks?: number;
+	Price_per_ounce?: number;
+	Ounces?: string | number;
+	Dollar_sales_last_52_weeks?: number;
+	Base_Price_Elasticity?: number;
+	Price?: number;
+	Total_Volume?: number;
+	WeekEnding?: string;
+	Promo_Price_Elasticity?: number;
+	Average_discount_depth?: number;
+	tpr_avg?: number;
+	fo_avg?: number;
+	do_avg?: number;
+	fd_avg?: number;
+	[key: string]: any; // For dynamic properties
 }
 
 export interface ColorScheme {

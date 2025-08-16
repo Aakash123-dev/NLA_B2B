@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState, useCallback, useEffect } from 'react'
-import { useRouter, useSearchParams } from 'next/navigation'
+import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
@@ -20,10 +20,11 @@ import { databaseOptions, yearOptions } from '../constants'
 import { validateTradePlanForm, generateMockTradePlan } from '../utils'
 import { SimpleSmartInsightsDrawer } from '@/components/common'
 import { axiosInstance, axiosPythonInstance } from '@/services/projectservices/axiosInstance'
+import { useSearchParamsClient } from '@/hooks/useSearchParamsClient'
 
 export function TpoSetupPage() {
   const router = useRouter()
-  const searchParams = useSearchParams()
+  const searchParams = useSearchParamsClient()
   const project_id = Number(searchParams.get('project'))
   const model_id = Number(searchParams.get('model'))
   const projectName = searchParams.get('projectName') || ''

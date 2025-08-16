@@ -23,6 +23,7 @@ interface SimulatorFiltersProps {
   handleRetailerChange: any;
   handleBrandChange: any;
   handleProductsChangeForPrice: any;
+  handleProductChange: (productString: string) => void;
 }
 
 export function SimulatorFilters({
